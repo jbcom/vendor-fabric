@@ -9,14 +9,16 @@ import pytest
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString
 
 from vendor_fabric.secrets_sync import _binding
-from vendor_fabric.secrets_sync.models import OutputFormat, SyncOperation, SyncOptions
+from vendor_fabric.secrets_sync.models import OutputFormat, ProviderSession, SyncOperation, SyncOptions
 
 
 class FakeBinding:
     """Small fake of the gopy-generated secrets_sync module."""
 
     def __init__(self) -> None:
+        self.method = ""
         self.options = None
+        self.session = None
 
     def DefaultSyncOptions(self) -> SimpleNamespace:
         return SimpleNamespace(
@@ -30,9 +32,23 @@ class FakeBinding:
             ShowValues=False,
         )
 
-    def ValidateConfig(self, config_path: str) -> tuple[bool, str]:
+    def NewProviderSession(self) -> SimpleNamespace:
+        return SimpleNamespace(
+            DelegateAuth=False,
+            VaultAddress="",
+            VaultNamespace="",
+            VaultToken="",
+            AWSRegion="",
+            AWSAccessKeyID="",
+            AWSSecretAccessKey="",
+            AWSSessionToken="",
+            AWSRoleARN="",
+            AWSEndpointURL="",
+        )
+
+    def ValidateConfig(self, config_path: str) -> SimpleNamespace:
         assert config_path == "pipeline.yaml"
-        return False, "invalid password=hunter2"
+        return SimpleNamespace(Valid=False, Message="invalid password=hunter2", ErrorMessage="invalid password=hunter2")
 
     def GetConfigInfo(self, config_path: str) -> SimpleNamespace:
         assert config_path == "pipeline.yaml"
@@ -50,6 +66,7 @@ class FakeBinding:
 
     def RunPipeline(self, config_path: str, options: object) -> SimpleNamespace:
         assert config_path == "pipeline.yaml"
+        self.method = "RunPipeline"
         self.options = options
         return SimpleNamespace(
             Success=True,
@@ -65,26 +82,56 @@ class FakeBinding:
             DiffOutput="changed token=tok_123",
         )
 
-    def GetTargets(self, config_path: str) -> tuple[list[str], str]:
+    def RunPipelineWithSession(self, config_path: str, options: object, session: object) -> SimpleNamespace:
         assert config_path == "pipeline.yaml"
-        return ["prod", "dev"], ""
+        self.method = "RunPipelineWithSession"
+        self.options = options
+        self.session = session
+        return SimpleNamespace(Success=True, TargetCount=1, ResultsJSON="[]")
 
-    def GetSources(self, config_path: str) -> tuple[list[str], str]:
+    def GetTargets(self, config_path: str) -> SimpleNamespace:
         assert config_path == "pipeline.yaml"
-        return ["base"], ""
+        return SimpleNamespace(Success=True, Values=["prod", "dev"], ErrorMessage="")
+
+    def GetSources(self, config_path: str) -> SimpleNamespace:
+        assert config_path == "pipeline.yaml"
+        return SimpleNamespace(Success=True, Values=["base"], ErrorMessage="")
 
     def DryRun(self, config_path: str) -> SimpleNamespace:
         assert config_path == "pipeline.yaml"
+        self.method = "DryRun"
+        return SimpleNamespace(Success=True, TargetCount=1, DiffOutput="diff")
+
+    def DryRunWithSession(self, config_path: str, session: object) -> SimpleNamespace:
+        assert config_path == "pipeline.yaml"
+        self.method = "DryRunWithSession"
+        self.session = session
         return SimpleNamespace(Success=True, TargetCount=1, DiffOutput="diff")
 
     def Merge(self, config_path: str, dry_run: bool) -> SimpleNamespace:
         assert config_path == "pipeline.yaml"
         assert dry_run is True
+        self.method = "Merge"
+        return SimpleNamespace(Success=True, TargetCount=1)
+
+    def MergeWithSession(self, config_path: str, dry_run: bool, session: object) -> SimpleNamespace:
+        assert config_path == "pipeline.yaml"
+        assert dry_run is True
+        self.method = "MergeWithSession"
+        self.session = session
         return SimpleNamespace(Success=True, TargetCount=1)
 
     def Sync(self, config_path: str, dry_run: bool) -> SimpleNamespace:
         assert config_path == "pipeline.yaml"
         assert dry_run is False
+        self.method = "Sync"
+        return SimpleNamespace(Success=True, TargetCount=1)
+
+    def SyncWithSession(self, config_path: str, dry_run: bool, session: object) -> SimpleNamespace:
+        assert config_path == "pipeline.yaml"
+        assert dry_run is False
+        self.method = "SyncWithSession"
+        self.session = session
         return SimpleNamespace(Success=True, TargetCount=1)
 
 
@@ -163,6 +210,62 @@ def test_binding_adapter_converts_options_and_redacts_results(monkeypatch: pytes
     assert fake.options.ComputeDiff is True
     assert fake.options.OutputFormat == "human"
     assert fake.options.ShowValues is True
+
+
+def test_binding_adapter_passes_provider_session_to_binding(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Provider-owned auth material should flow through the session-aware binding API."""
+    fake = FakeBinding()
+    monkeypatch.setattr(_binding.importlib, "import_module", lambda name: fake if name == "secrets_sync" else None)
+
+    result = _binding.run_pipeline(
+        "pipeline.yaml",
+        SyncOptions(dry_run=True),
+        ProviderSession(
+            vault_address="https://vault.example.test",
+            vault_namespace="platform",
+            vault_token="vault-token-secret",
+            aws_region="us-east-1",
+            aws_access_key_id="AKIAEXAMPLE",
+            aws_secret_access_key="aws-secret",
+            aws_session_token="aws-session",
+            aws_role_arn="arn:aws:iam::123456789012:role/SecretSync",
+            aws_endpoint_url="http://localhost:4566",
+        ),
+    )
+
+    assert result["success"] is True
+    assert fake.method == "RunPipelineWithSession"
+    assert fake.options.DryRun is True
+    assert fake.session.VaultAddress == "https://vault.example.test"
+    assert fake.session.VaultNamespace == "platform"
+    assert fake.session.VaultToken == "vault-token-secret"
+    assert fake.session.AWSRegion == "us-east-1"
+    assert fake.session.AWSAccessKeyID == "AKIAEXAMPLE"
+    assert fake.session.AWSSecretAccessKey == "aws-secret"
+    assert fake.session.AWSSessionToken == "aws-session"
+    assert fake.session.AWSRoleARN == "arn:aws:iam::123456789012:role/SecretSync"
+    assert fake.session.AWSEndpointURL == "http://localhost:4566"
+
+
+def test_binding_adapter_accepts_mapping_provider_session(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Provider session payloads may be supplied as redaction-safe mappings."""
+    fake = FakeBinding()
+    monkeypatch.setattr(_binding.importlib, "import_module", lambda name: fake if name == "secrets_sync" else None)
+
+    result = _binding.dry_run(
+        "pipeline.yaml",
+        {
+            "delegate_auth": True,
+            "vault_address": "https://vault.example.test",
+            "aws_region": "us-west-2",
+        },
+    )
+
+    assert result["success"] is True
+    assert fake.method == "DryRunWithSession"
+    assert fake.session.DelegateAuth is True
+    assert fake.session.VaultAddress == "https://vault.example.test"
+    assert fake.session.AWSRegion == "us-west-2"
 
 
 def test_binding_adapter_supports_snake_case_options_and_mapping_payloads(

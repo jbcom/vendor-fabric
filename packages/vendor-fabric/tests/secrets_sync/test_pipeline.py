@@ -12,11 +12,13 @@ from extended_data.containers import ExtendedData, ExtendedDict
 from vendor_fabric.secrets_sync import (
     InMemorySecretStore,
     OutputFormat,
+    ProviderSession,
     SecretSyncConfig,
     SecretSyncPipeline,
     StoreRegistry,
     SyncOperation,
     SyncOptions,
+    dry_run,
     get_config_info,
     get_sources,
     get_targets,
@@ -145,11 +147,34 @@ def test_module_wrappers_delegate_to_binding_adapter(tmp_path: Path) -> None:
     assert dry_sync == {"success": True}
     assert targets == {"targets": ["prod"]}
     assert sources == {"sources": ["base"]}
-    binding_run.assert_called_once_with(str(config_path), None)
-    binding_merge.assert_called_once_with(str(config_path), dry_run=True)
-    binding_sync.assert_called_once_with(str(config_path), dry_run=True)
+    binding_run.assert_called_once_with(str(config_path), None, None)
+    binding_merge.assert_called_once_with(str(config_path), dry_run=True, provider_session=None)
+    binding_sync.assert_called_once_with(str(config_path), dry_run=True, provider_session=None)
     binding_targets.assert_called_once_with(str(config_path))
     binding_sources.assert_called_once_with(str(config_path))
+
+
+def test_module_wrappers_delegate_provider_session_to_binding(tmp_path: Path) -> None:
+    """Session material supplied by vendor-fabric should reach the binding facade."""
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text("targets:\n  prod:\n    imports: []\n", encoding="utf-8")
+    session = ProviderSession(vault_address="https://vault.example.test")
+
+    with (
+        patch("vendor_fabric.secrets_sync.pipeline._binding.run_pipeline", return_value={"success": True}) as binding_run,
+        patch("vendor_fabric.secrets_sync.pipeline._binding.dry_run", return_value={"success": True}) as binding_dry_run,
+        patch("vendor_fabric.secrets_sync.pipeline._binding.merge", return_value={"success": True}) as binding_merge,
+        patch("vendor_fabric.secrets_sync.pipeline._binding.sync", return_value={"success": True}) as binding_sync,
+    ):
+        assert run_pipeline(str(config_path), provider_session=session) == {"success": True}
+        assert dry_run(str(config_path), provider_session=session) == {"success": True}
+        assert merge(str(config_path), dry_run=True, provider_session=session) == {"success": True}
+        assert sync(str(config_path), dry_run=True, provider_session=session) == {"success": True}
+
+    binding_run.assert_called_once_with(str(config_path), None, session)
+    binding_dry_run.assert_called_once_with(str(config_path), session)
+    binding_merge.assert_called_once_with(str(config_path), dry_run=True, provider_session=session)
+    binding_sync.assert_called_once_with(str(config_path), dry_run=True, provider_session=session)
 
 
 def test_validate_and_info_wrappers_report_failures(tmp_path: Path) -> None:
