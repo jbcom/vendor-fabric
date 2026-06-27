@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.1.0...vendor-fabric-v2.1.1) (2026-06-27)
+
+
+### Bug Fixes
+
+* keep release lock version in sync ([5f437a5](https://github.com/jbcom/vendor-fabric/commit/5f437a5384b7b66968e6adac9c1b36274c8ebaf6))
+
 ## [2.1.0](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.0.0...vendor-fabric-v2.1.0) (2026-06-27)
 
 
