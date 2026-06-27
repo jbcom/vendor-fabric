@@ -5,7 +5,7 @@ in the package connector fabric. It extends InputProvider and provides:
 
 1. Credential loading from env vars, stdin, or direct inputs
 2. HTTP client with retries and rate limiting
-3. MCP server scaffolding
+3. Provider capability metadata and dispatch hooks
 
 ALL connectors should extend this class instead of InputProvider directly.
 
@@ -78,7 +78,7 @@ class ConnectorBase(CapabilityProviderMixin, InputProvider, ABC):
     - HTTP client with connection pooling
     - Automatic retries with exponential backoff
     - Rate limiting
-    - MCP tool registration scaffolding
+    - Provider capability registration scaffolding
 
     Class Attributes:
         BASE_URL: API base URL (required for HTTP connectors)

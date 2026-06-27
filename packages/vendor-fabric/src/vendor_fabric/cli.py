@@ -12,8 +12,6 @@ Usage:
     # Call any connector data method
     vendor-fabric call <connector> <method> [--arg value ...]
 
-    # Start MCP server
-    vendor-fabric mcp
 """
 
 from __future__ import annotations
@@ -232,13 +230,6 @@ def cmd_methods(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_mcp(args: argparse.Namespace) -> int:
-    """Start MCP server."""
-    from vendor_fabric.mcp import main as mcp_main
-
-    return mcp_main()
-
-
 def cmd_info(args: argparse.Namespace) -> int:
     """Show info about a specific connector."""
     try:
@@ -291,7 +282,6 @@ Examples:
   vendor-fabric methods jules           # List Jules data methods
   vendor-fabric call jules list_sources # Call a method
   vendor-fabric call cursor list_agents
-  vendor-fabric mcp                     # Start MCP server
         """,
     )
     subparsers = parser.add_subparsers(dest="command", help="Commands")
@@ -323,10 +313,6 @@ Examples:
     call_parser.add_argument("method", help="Method name")
     call_parser.add_argument("extra", nargs=argparse.REMAINDER, help="Method arguments (--arg value)")
     call_parser.set_defaults(func=cmd_call)
-
-    # MCP command
-    mcp_parser = subparsers.add_parser("mcp", help="Start MCP server")
-    mcp_parser.set_defaults(func=cmd_mcp)
 
     # Parse and execute
     args = parser.parse_args(argv)

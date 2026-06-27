@@ -1,6 +1,6 @@
 """Provider capability functions for Google Cloud and Workspace operations.
 
-This module exposes framework-agnostic Python functions plus tool metadata.
+This module exposes framework-agnostic Python functions plus capability metadata.
 Agent framework wrappers belong in agentic-fabric.
 
 Tools provided:
@@ -71,7 +71,7 @@ class ListWorkspaceGroupsSchema(BaseModel):
 
 
 # =============================================================================
-# Tool Implementation Functions
+# Capability Implementation Functions
 # =============================================================================
 
 

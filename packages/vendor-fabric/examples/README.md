@@ -22,8 +22,6 @@ pip install "vendor-fabric[all]"
 # Or install specific connectors
 pip install "vendor-fabric[aws,google,meshy]"
 
-# For the Meshy MCP server
-pip install "vendor-fabric[meshy,mcp]"
 ```
 
 ## Examples
@@ -36,7 +34,8 @@ pip install "vendor-fabric[meshy,mcp]"
 
 ### Provider Capability Integration
 
-- [`mcp_server.py`](mcp_server.py) - Running the Meshy MCP server as a provider capability transport
+Provider capability metadata lives in the provider modules. Agent-facing
+runtime transports over those capabilities belong in `agentic-fabric`.
 
 ## Environment Variables
 

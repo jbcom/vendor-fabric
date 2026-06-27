@@ -23,11 +23,6 @@ Usage:
 
     # Provider capability metadata
     from vendor_fabric.meshy.tools import TOOL_DEFINITIONS
-
-    # MCP server
-    from vendor_fabric.meshy.mcp import create_server, run_server
-    server = create_server()
-    run_server(server)
 """
 
 from __future__ import annotations

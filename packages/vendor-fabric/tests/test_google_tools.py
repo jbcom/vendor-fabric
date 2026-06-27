@@ -1,4 +1,4 @@
-"""Tests for Google AI tools."""
+"""Tests for Google provider capabilities."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ GOOGLE_CONNECTOR_PATCH = "vendor_fabric.google.GoogleConnector"
 
 
 def test_google_connector_requires_google_sdk_when_constructed_without_extra() -> None:
-    """Google tool metadata imports without Google SDKs, but the connector still requires the extra."""
+    """Google capability metadata imports without Google SDKs, but the connector still requires the extra."""
     if importlib.util.find_spec("googleapiclient") is not None:
         pytest.skip("google-api-python-client is installed")
 
@@ -27,7 +27,7 @@ def test_google_connector_requires_google_sdk_when_constructed_without_extra() -
 
 
 class TestGoogleToolDefinitions:
-    """Test tool definitions and metadata."""
+    """Test capability definitions and metadata."""
 
     def test_tool_definitions_exist(self):
         """Test that TOOL_DEFINITIONS is populated."""
@@ -36,7 +36,7 @@ class TestGoogleToolDefinitions:
         assert len(TOOL_DEFINITIONS) > 0
 
     def test_all_tools_have_required_fields(self):
-        """Test that all tools have name, description, and func."""
+        """Test that all capabilities have name, description, and func."""
         from vendor_fabric.google.tools import TOOL_DEFINITIONS
 
         for defn in TOOL_DEFINITIONS:

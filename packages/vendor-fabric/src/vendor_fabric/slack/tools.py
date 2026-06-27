@@ -1,9 +1,9 @@
 """Provider capability functions for Slack operations.
 
-This module exposes framework-agnostic Python functions plus tool metadata.
+This module exposes framework-agnostic Python functions plus capability metadata.
 Agent framework wrappers belong in agentic-fabric.
 
-Tools provided:
+Capabilities provided:
 - slack_list_channels: List Slack channels
 - slack_list_users: List Slack users
 - slack_send_message: Send a message to a channel
@@ -85,7 +85,7 @@ def _get_connector() -> SlackConnector:
 
 
 # =============================================================================
-# Tool Implementation Functions
+# Capability Implementation Functions
 # =============================================================================
 
 

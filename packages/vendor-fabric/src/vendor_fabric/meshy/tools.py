@@ -1,6 +1,6 @@
 """Provider capability functions for Meshy AI 3D generation.
 
-This module exposes framework-agnostic Python functions plus tool metadata.
+This module exposes framework-agnostic Python functions plus capability metadata.
 Agent framework wrappers belong in agentic-fabric.
 """
 
@@ -91,7 +91,7 @@ class GetAnimationSchema(BaseModel):
 
 
 # =============================================================================
-# Tool Implementation Functions
+# Capability Implementation Functions
 # =============================================================================
 
 
@@ -474,10 +474,10 @@ def get_animation(animation_id: int) -> ExtendedDict:
 
 
 # =============================================================================
-# Tool Metadata
+# Capability Metadata
 # =============================================================================
 
-# Tool definitions with framework-agnostic metadata.
+# Capability definitions with framework-agnostic metadata.
 TOOL_DEFINITIONS = [
     {
         "func": text3d_generate,

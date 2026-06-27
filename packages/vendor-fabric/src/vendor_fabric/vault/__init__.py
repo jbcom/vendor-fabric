@@ -29,7 +29,7 @@ else:
 
 
 def _load_hvac() -> Any:
-    """Load hvac lazily so tool metadata can import without the vault extra."""
+    """Load hvac lazily so capability metadata can import without the vault extra."""
     global VaultError, hvac
 
     if hvac is None:

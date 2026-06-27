@@ -28,7 +28,7 @@ provider APIs and require provider credentials:
    pytest --e2e
 
 The repository's ``providers`` tox environment installs optional SDK extras
-for AWS, Google, GitHub, Slack, Vault, and MCP unit tests:
+for AWS, Google, GitHub, Slack, Vault, and SecretSync unit tests:
 
 .. code:: bash
 

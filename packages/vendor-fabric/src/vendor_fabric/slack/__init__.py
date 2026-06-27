@@ -42,7 +42,7 @@ WebClient: Any = None
 
 
 def _load_slack_sdk() -> None:
-    """Load slack-sdk lazily so tool metadata can import without the slack extra."""
+    """Load slack-sdk lazily so capability metadata can import without the slack extra."""
     global SlackApiError, WebClient
 
     if WebClient is None:

@@ -39,7 +39,6 @@ PACKAGE_TO_EXTRA: dict[str, str] = {
     "numpy": "meshy",
     "validators": "meshy",
     "secrets_sync": "secrets-sync",
-    "mcp": "mcp",
     # Features
     "fastapi": "webhooks",
     "uvicorn": "webhooks",

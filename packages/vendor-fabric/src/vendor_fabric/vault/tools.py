@@ -32,7 +32,7 @@ class ReadSecretSchema(BaseModel):
 
 
 # =============================================================================
-# Tool Implementation Functions
+# Capability Implementation Functions
 # =============================================================================
 
 

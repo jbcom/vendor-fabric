@@ -6,7 +6,7 @@ using Python's entry points system. This allows:
 1. DRY interface via ConnectorBase ABC
 2. Automatic discovery of all connectors (even from other packages)
 3. Unified factory function for instantiation
-4. Same registry used by both MCP and CLI
+4. Shared registry for CLI and provider dispatch
 
 Usage:
     from vendor_fabric.registry import get_connector, list_available_connectors, list_connectors

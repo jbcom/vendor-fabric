@@ -43,7 +43,7 @@ class GetMeetingSchema(BaseModel):
 
 
 # =============================================================================
-# Tool Implementation Functions
+# Capability Implementation Functions
 # =============================================================================
 
 

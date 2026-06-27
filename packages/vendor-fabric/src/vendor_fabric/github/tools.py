@@ -70,7 +70,7 @@ class GetRepositoryFileSchema(BaseModel):
 
 
 # =============================================================================
-# Tool Implementation Functions
+# Capability Implementation Functions
 # =============================================================================
 
 

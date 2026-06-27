@@ -28,7 +28,7 @@ else:
 
 
 def _load_google_sdk() -> None:
-    """Load Google SDK dependencies lazily so tool metadata remains importable."""
+    """Load Google SDK dependencies lazily so capability metadata remains importable."""
     global build, service_account
 
     if service_account is None or build is None:

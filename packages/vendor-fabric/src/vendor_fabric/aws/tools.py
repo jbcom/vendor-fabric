@@ -1,6 +1,6 @@
 """Provider capability functions for AWS operations.
 
-This module exposes framework-agnostic Python functions plus tool metadata.
+This module exposes framework-agnostic Python functions plus capability metadata.
 Agent framework wrappers belong in agentic-fabric.
 
 Tools provided:
@@ -69,7 +69,7 @@ class GetSecretSchema(BaseModel):
 
 
 # =============================================================================
-# Tool Implementation Functions
+# Capability Implementation Functions
 # =============================================================================
 
 

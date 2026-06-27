@@ -1,4 +1,4 @@
-"""Contracts for connector AI-tool payload surfaces."""
+"""Contracts for connector provider capability payload surfaces."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ TOOL_MODULES = (
 
 @pytest.mark.parametrize("module_name", TOOL_MODULES)
 def test_tool_definition_functions_advertise_extended_payloads(module_name: str) -> None:
-    """Data-returning AI tools expose Tier 2 payload contracts."""
+    """Data-returning provider capabilities expose Tier 2 payload contracts."""
     module = import_module(module_name)
 
     for definition in module.TOOL_DEFINITIONS:

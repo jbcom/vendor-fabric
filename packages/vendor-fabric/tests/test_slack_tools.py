@@ -1,4 +1,4 @@
-"""Tests for Slack AI tools.
+"""Tests for Slack provider capabilities.
 
 Tests mock the SlackConnector to avoid live API calls and
 handle the slack_sdk optional dependency gracefully.
@@ -38,7 +38,7 @@ def mock_slack_sdk():
 
 
 class TestSlackToolDefinitions:
-    """Test tool definitions and metadata."""
+    """Test capability definitions and metadata."""
 
     def test_tool_definitions_exist(self, mock_slack_sdk):
         """Test that TOOL_DEFINITIONS is populated."""

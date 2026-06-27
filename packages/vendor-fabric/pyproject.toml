@@ -61,7 +61,6 @@ meshy = [
     "rich>=13.7.0,<15.0.0",
     "validators>=0.35.0",
 ]
-mcp = ["mcp>=1.26.0,<1.27.dev0"]
 secrets-sync = [
     "boto3>=1.42.92",
     "hvac>=2.4.0",
@@ -108,7 +107,6 @@ all = [
     "google-cloud-billing>=1.19.0",
     "google-cloud-resource-manager>=1.17.0",
     "hvac>=2.4.0",
-    "mcp>=1.26.0,<1.27.dev0",
     "numpy>=2.2.6",
     "PyGithub>=2.9.1",
     "pyngrok>=8.0.0",
@@ -123,9 +121,7 @@ all = [
 
 [project.scripts]
 vendor-fabric = "vendor_fabric.cli:main"
-vendor-fabric-mcp = "vendor_fabric.mcp:main"
 vendor-fabric-secrets-sync = "vendor_fabric.secrets_sync.cli:main"
-meshy-mcp = "vendor_fabric.meshy.mcp:main"
 
 [project.entry-points."vendor_fabric.connectors"]
 jules = "vendor_fabric.google.jules:JulesConnector"

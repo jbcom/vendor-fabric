@@ -1,4 +1,4 @@
-"""Tests for Vault AI tools."""
+"""Tests for Vault provider capabilities."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ VAULT_CONNECTOR_PATCH = "vendor_fabric.vault.VaultConnector"
 
 
 def test_vault_connector_requires_hvac_when_constructed_without_extra() -> None:
-    """Vault tool metadata imports without hvac, but the connector still requires the extra."""
+    """Vault capability metadata imports without hvac, but the connector still requires the extra."""
     if importlib.util.find_spec("hvac") is not None:
         pytest.skip("hvac is installed")
 
@@ -27,7 +27,7 @@ def test_vault_connector_requires_hvac_when_constructed_without_extra() -> None:
 
 
 class TestVaultToolDefinitions:
-    """Test tool definitions and metadata."""
+    """Test capability definitions and metadata."""
 
     def test_tool_definitions_exist(self):
         """Test that TOOL_DEFINITIONS is populated."""
@@ -36,7 +36,7 @@ class TestVaultToolDefinitions:
         assert len(TOOL_DEFINITIONS) > 0
 
     def test_all_tools_have_required_fields(self):
-        """Test that all tools have name, description, and func."""
+        """Test that all capabilities have name, description, and func."""
         from vendor_fabric.vault.tools import TOOL_DEFINITIONS
 
         for defn in TOOL_DEFINITIONS:

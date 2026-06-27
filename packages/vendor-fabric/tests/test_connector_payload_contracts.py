@@ -360,12 +360,12 @@ def test_connector_data_surface_accepts_extended_data_root_annotation() -> None:
 
 @pytest.mark.parametrize("method", RAW_DATA_SURFACE_METHODS)
 def test_inherited_transport_and_input_helpers_are_not_data_surface_methods(method: object) -> None:
-    """Inherited raw helpers should stay out of CLI and MCP data surfaces."""
+    """Inherited raw helpers should stay out of CLI data surfaces."""
     assert not is_connector_data_method(method), getattr(method, "__qualname__", repr(method))
 
 
 def test_builtin_connector_data_surfaces_do_not_expose_raw_helpers() -> None:
-    """Built-in connector CLI/MCP surfaces should expose payload methods, not fabric plumbing."""
+    """Built-in connector CLI surfaces should expose payload methods, not fabric plumbing."""
     offenders: dict[str, list[str]] = {}
     empty_surfaces: list[str] = []
 

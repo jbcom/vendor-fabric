@@ -24,7 +24,7 @@ from vendor_fabric.slack import (
 
 
 def test_slack_connector_requires_slack_sdk_when_constructed_without_extra():
-    """Slack tool metadata imports without slack-sdk, but the connector still requires the extra."""
+    """Slack capability metadata imports without slack-sdk, but the connector still requires the extra."""
     if importlib.util.find_spec("slack_sdk") is not None:
         pytest.skip("slack-sdk is installed")
 

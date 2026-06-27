@@ -1,4 +1,4 @@
-"""Tests for GitHub AI tools."""
+"""Tests for GitHub provider capabilities."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ GITHUB_CONNECTOR_PATCH = "vendor_fabric.github.GitHubConnector"
 
 
 def test_github_connector_requires_pygithub_when_constructed_without_extra() -> None:
-    """GitHub tool metadata imports without github, but the connector still requires the extra."""
+    """GitHub capability metadata imports without github, but the connector still requires the extra."""
     if importlib.util.find_spec("github") is not None:
         pytest.skip("github is installed")
 
@@ -27,7 +27,7 @@ def test_github_connector_requires_pygithub_when_constructed_without_extra() -> 
 
 
 class TestGitHubToolDefinitions:
-    """Test tool definitions and metadata."""
+    """Test capability definitions and metadata."""
 
     def test_tool_definitions_exist(self):
         """Test that TOOL_DEFINITIONS is populated."""
@@ -36,7 +36,7 @@ class TestGitHubToolDefinitions:
         assert len(TOOL_DEFINITIONS) > 0
 
     def test_all_tools_have_required_fields(self):
-        """Test that all tools have name, description, and func."""
+        """Test that all capabilities have name, description, and func."""
         from vendor_fabric.github.tools import TOOL_DEFINITIONS
 
         for defn in TOOL_DEFINITIONS:

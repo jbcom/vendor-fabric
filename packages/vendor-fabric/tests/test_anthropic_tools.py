@@ -1,4 +1,4 @@
-"""Tests for Anthropic AI tools."""
+"""Tests for Anthropic provider capabilities."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString,
 
 
 def test_anthropic_list_models():
-    """Test list_models tool."""
+    """Test the list_models capability."""
     from vendor_fabric.anthropic.tools import anthropic_list_models
 
     with patch("vendor_fabric.anthropic.AnthropicConnector") as mock_connector_class:
@@ -27,7 +27,7 @@ def test_anthropic_list_models():
 
 
 def test_anthropic_create_message():
-    """Test create_message tool."""
+    """Test the create_message capability."""
     from vendor_fabric.anthropic.tools import anthropic_create_message
 
     with patch("vendor_fabric.anthropic.AnthropicConnector") as mock_connector_class:

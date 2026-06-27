@@ -51,7 +51,7 @@ else:
 
 
 def _load_aws_sdk() -> Any:
-    """Load boto3/botocore lazily so tool metadata can import without the aws extra."""
+    """Load boto3/botocore lazily so capability metadata can import without the aws extra."""
     global ClientError, Config, ServiceResource, boto3
 
     if boto3 is None:

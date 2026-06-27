@@ -1,4 +1,4 @@
-"""Tests for Zoom AI tools."""
+"""Tests for Zoom provider capabilities."""
 
 from unittest.mock import MagicMock, patch
 
@@ -9,7 +9,7 @@ CONNECTOR_PATCH = "vendor_fabric.zoom.ZoomConnector"
 
 
 class TestToolDefinitions:
-    """Test tool definitions."""
+    """Test capability definitions."""
 
     def test_tool_definitions_exist(self):
         """Test that TOOL_DEFINITIONS exists and has content."""
@@ -18,7 +18,7 @@ class TestToolDefinitions:
         assert len(TOOL_DEFINITIONS) > 0
 
     def test_all_tools_have_required_fields(self):
-        """Test that all tool definitions have required fields."""
+        """Test that all capability definitions have required fields."""
         from vendor_fabric.zoom.tools import TOOL_DEFINITIONS
 
         for defn in TOOL_DEFINITIONS:
@@ -28,14 +28,14 @@ class TestToolDefinitions:
             assert callable(defn["func"])
 
     def test_tool_names_prefixed(self):
-        """Test that all tool names are prefixed with 'zoom_'."""
+        """Test that all capability names are prefixed with 'zoom_'."""
         from vendor_fabric.zoom.tools import TOOL_DEFINITIONS
 
         for defn in TOOL_DEFINITIONS:
             assert defn["name"].startswith("zoom_")
 
     def test_expected_tools_present(self):
-        """Test that expected tools are present."""
+        """Test that expected capabilities are present."""
         from vendor_fabric.zoom.tools import TOOL_DEFINITIONS
 
         tool_names = [defn["name"] for defn in TOOL_DEFINITIONS]

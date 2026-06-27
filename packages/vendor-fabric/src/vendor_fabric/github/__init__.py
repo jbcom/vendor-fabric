@@ -46,7 +46,7 @@ def _require_loaded(module: Any | None, module_name: str) -> Any:
 
 
 def _load_github_sdk() -> None:
-    """Load GitHub SDK dependencies lazily so tool metadata remains importable."""
+    """Load GitHub SDK dependencies lazily so capability metadata remains importable."""
     global Auth, Github, GithubException, GraphqlClient, UnknownObjectException
 
     needs_github_module = Auth is None or Github is None

@@ -22,8 +22,6 @@ In This Package
 +-----------------------------------+-----------------------------------+
 | Vendor CLI                        | ``vendor_fabric.cli``             |
 +-----------------------------------+-----------------------------------+
-| MCP bridge                        | ``vendor_fabric.mcp``             |
-+-----------------------------------+-----------------------------------+
 | AWS, Google, GitHub, Slack,       | ``vendor_fabric.*``               |
 | Vault, Zoom, Anthropic, Cursor,   |                                   |
 | and Meshy clients                 |                                   |
@@ -65,3 +63,4 @@ capability over Vault, AWS, S3, and future providers. Agent framework
 packages, runtime adapters, and framework tool factories belong in
 ``agentic-fabric``; they compose vendor capabilities rather than being
 provider implementations.
+MCP bridges are agent-facing transports and belong in ``agentic-fabric``.

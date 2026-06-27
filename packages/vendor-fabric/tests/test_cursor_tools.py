@@ -1,4 +1,4 @@
-"""Tests for Cursor AI tools."""
+"""Tests for Cursor provider capabilities."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from vendor_fabric.cursor import AgentState
 
 
 def test_cursor_launch_agent():
-    """Test launch_agent tool."""
+    """Test the launch_agent capability."""
     from vendor_fabric.cursor.tools import cursor_launch_agent
 
     with patch("vendor_fabric.cursor.CursorConnector") as mock_connector_class:
@@ -34,7 +34,7 @@ def test_cursor_launch_agent():
 
 
 def test_cursor_get_agent_status():
-    """Test get_agent_status tool."""
+    """Test the get_agent_status capability."""
     from vendor_fabric.cursor.tools import cursor_get_agent_status
 
     with patch("vendor_fabric.cursor.CursorConnector") as mock_connector_class:

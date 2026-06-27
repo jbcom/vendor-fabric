@@ -2,20 +2,13 @@
 
 Meshy support is part of `vendor-fabric` and lives under
 `vendor_fabric.meshy`. It provides functional API helpers, a
-`MeshyConnector` fabric integration, job orchestration, webhook handling, AI tool
-capability metadata, and an MCP server.
+`MeshyConnector` fabric integration, job orchestration, webhook handling, and
+provider capability metadata.
 
 ## Install
 
 ```bash
 pip install "vendor-fabric[meshy]"
-```
-
-Install the MCP extra too when running `meshy-mcp` or wiring Meshy tools into an
-MCP client:
-
-```bash
-pip install "vendor-fabric[meshy,mcp]"
 ```
 
 Use the `vector` extra only when you need local vector search over generated
@@ -103,7 +96,7 @@ Base64, and `sha256=`-prefixed values are accepted. If you do not configure a
 secret, `verify_signature()` returns `False` instead of accepting unsigned
 payloads.
 
-## Capability Metadata And MCP
+## Capability Metadata
 
 ```python
 from vendor_fabric.meshy.tools import TOOL_DEFINITIONS, text3d_generate
@@ -112,8 +105,5 @@ tool_names = [definition["name"] for definition in TOOL_DEFINITIONS]
 result = text3d_generate("game-ready low-poly wooden crate with metal bands")
 ```
 
-Run the Meshy MCP server with:
-
-```bash
-meshy-mcp
-```
+Agent-facing tool transports, including MCP wrappers, live in
+`agentic-fabric` and should consume this capability metadata.

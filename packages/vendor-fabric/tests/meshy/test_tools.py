@@ -1,6 +1,6 @@
 """Tests for vendor_fabric.meshy.tools module.
 
-Tests tool implementations with mocked Meshy API calls.
+Tests capability implementations with mocked Meshy API calls.
 Framework-specific tool wrapping belongs in agentic-fabric.
 """
 
@@ -13,7 +13,7 @@ import pytest
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString, extend_data
 
 
-# Expected tools list - canonical reference for all Meshy tools
+# Expected capabilities list - canonical reference for all Meshy capabilities
 EXPECTED_MESHY_TOOLS = {
     "text3d_generate",
     "image3d_generate",
@@ -37,7 +37,7 @@ class TestToolDefinitions:
         assert tool_names == EXPECTED_MESHY_TOOLS
 
     def test_tool_definitions_have_required_fields(self):
-        """Test that each tool definition has func, name, description."""
+        """Test that each capability definition has func, name, description."""
         from vendor_fabric.meshy.tools import TOOL_DEFINITIONS
 
         for defn in TOOL_DEFINITIONS:

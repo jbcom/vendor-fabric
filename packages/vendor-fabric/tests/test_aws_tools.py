@@ -1,4 +1,4 @@
-"""Tests for AWS AI tools."""
+"""Tests for AWS provider capabilities."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ AWS_CONNECTOR_PATCH = "vendor_fabric.aws.AWSConnector"
 
 
 def test_aws_connector_requires_boto3_when_constructed_without_extra() -> None:
-    """AWS tool metadata imports without boto3, but the connector still requires the extra."""
+    """AWS capability metadata imports without boto3, but the connector still requires the extra."""
     if importlib.util.find_spec("boto3") is not None:
         pytest.skip("boto3 is installed")
 
@@ -27,7 +27,7 @@ def test_aws_connector_requires_boto3_when_constructed_without_extra() -> None:
 
 
 class TestAWSToolDefinitions:
-    """Test tool definitions and metadata."""
+    """Test capability definitions and metadata."""
 
     def test_tool_definitions_exist(self):
         """Test that TOOL_DEFINITIONS is populated."""
@@ -36,7 +36,7 @@ class TestAWSToolDefinitions:
         assert len(TOOL_DEFINITIONS) > 0
 
     def test_all_tools_have_required_fields(self):
-        """Test that all tools have name, description, and func."""
+        """Test that all capabilities have name, description, and func."""
         from vendor_fabric.aws.tools import TOOL_DEFINITIONS
 
         for defn in TOOL_DEFINITIONS:
