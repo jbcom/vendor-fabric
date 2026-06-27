@@ -1,0 +1,357 @@
+interactions:
+- request:
+    body: '{"max_tokens": 64000, "messages": [{"role": "user", "content": "List available
+      animations using list_animations. Show me fighting animations."}], "model":
+      "claude-haiku-4-5-20251001", "tools": [{"name": "text3d_generate", "input_schema":
+      {"properties": {"prompt": {"type": "string"}, "art_style": {"default": "realistic",
+      "type": "string"}, "negative_prompt": {"default": "", "type": "string"}, "target_polycount":
+      {"default": 30000, "type": "integer"}, "enable_pbr": {"default": true, "type":
+      "boolean"}}, "required": ["prompt"], "type": "object"}, "description": "Generate
+      a 3D GLB model from a text description using Meshy AI. Provide a detailed prompt
+      describing the model. Returns the task_id, status, model_url, and thumbnail_url
+      on success."}, {"name": "image3d_generate", "input_schema": {"properties": {"image_url":
+      {"type": "string"}, "topology": {"default": "", "type": "string"}, "target_polycount":
+      {"default": 15000, "type": "integer"}, "enable_pbr": {"default": true, "type":
+      "boolean"}}, "required": ["image_url"], "type": "object"}, "description": "Generate
+      a 3D GLB model from an image using Meshy AI. Provide a URL to the source image.
+      Returns the task_id, status, model_url, and thumbnail_url on success."}, {"name":
+      "rig_model", "input_schema": {"properties": {"model_id": {"type": "string"},
+      "wait": {"default": true, "type": "boolean"}}, "required": ["model_id"], "type":
+      "object"}, "description": "Add a skeleton/rig to a static 3D model. This is
+      required before you can apply animations. Takes the model''s task ID and returns
+      a new task ID for the rigging operation."}, {"name": "apply_animation", "input_schema":
+      {"properties": {"model_id": {"type": "string"}, "animation_id": {"type": "integer"},
+      "wait": {"default": true, "type": "boolean"}}, "required": ["model_id", "animation_id"],
+      "type": "object"}, "description": "Apply an animation to a rigged 3D model.
+      Use list_animations to see available animation IDs. The model must be rigged
+      first."}, {"name": "retexture_model", "input_schema": {"properties": {"model_id":
+      {"type": "string"}, "texture_prompt": {"type": "string"}, "enable_pbr": {"default":
+      true, "type": "boolean"}, "wait": {"default": true, "type": "boolean"}}, "required":
+      ["model_id", "texture_prompt"], "type": "object"}, "description": "Apply new
+      textures to an existing 3D model. Great for creating color variants or material
+      changes without regenerating the mesh."}, {"name": "list_animations", "input_schema":
+      {"properties": {"category": {"default": "", "type": "string"}, "limit": {"default":
+      50, "type": "integer"}}, "type": "object"}, "description": "List available animations
+      from the Meshy animation catalog. Optionally filter by category. Returns animation
+      IDs and names that can be used with apply_animation."}, {"name": "check_task_status",
+      "input_schema": {"properties": {"task_id": {"type": "string"}, "task_type":
+      {"default": "text-to-3d", "type": "string"}}, "required": ["task_id"], "type":
+      "object"}, "description": "Check the current status of a Meshy AI task. Returns
+      status (pending, processing, succeeded, failed), progress percentage, and model
+      URL if complete."}, {"name": "get_animation", "input_schema": {"properties":
+      {"animation_id": {"type": "integer"}}, "required": ["animation_id"], "type":
+      "object"}, "description": "Get details of a specific animation by ID, including
+      name, category, subcategory, and preview URL."}]}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '3211'
+      Content-Type:
+      - application/json
+      Host:
+      - api.anthropic.com
+      User-Agent:
+      - Anthropic/Python 0.75.0
+      X-Stainless-Arch:
+      - x64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - Linux
+      X-Stainless-Package-Version:
+      - 0.75.0
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.13.10
+      anthropic-version:
+      - '2023-06-01'
+      x-api-key:
+      - FILTERED
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-timeout:
+      - NOT_GIVEN
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: '{"model":"claude-haiku-4-5-20251001","id":"msg_01C4Gd1zq2qPJx9sAiCQmKSW","type":"message","role":"assistant","content":[{"type":"tool_use","id":"toolu_016TTCHvRPs5MiHX3W33Nw6o","name":"list_animations","input":{"category":"fighting"}}],"stop_reason":"tool_use","stop_sequence":null,"usage":{"input_tokens":1459,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":0},"output_tokens":54,"service_tier":"standard"}}'
+    headers:
+      CF-RAY:
+      - 9aa77cbf68676cc7-IAD
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Sun, 07 Dec 2025 22:33:54 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Robots-Tag:
+      - none
+      anthropic-organization-id:
+      - 29090371-d95f-4b39-befc-55cb58e791ca
+      anthropic-ratelimit-input-tokens-limit:
+      - '5000000'
+      anthropic-ratelimit-input-tokens-remaining:
+      - '4999000'
+      anthropic-ratelimit-input-tokens-reset:
+      - '2025-12-07T22:33:54Z'
+      anthropic-ratelimit-output-tokens-limit:
+      - '800000'
+      anthropic-ratelimit-output-tokens-remaining:
+      - '800000'
+      anthropic-ratelimit-output-tokens-reset:
+      - '2025-12-07T22:33:54Z'
+      anthropic-ratelimit-tokens-limit:
+      - '5800000'
+      anthropic-ratelimit-tokens-remaining:
+      - '5799000'
+      anthropic-ratelimit-tokens-reset:
+      - '2025-12-07T22:33:54Z'
+      cf-cache-status:
+      - DYNAMIC
+      content-length:
+      - '496'
+      request-id:
+      - req_011CVt85MLfFWT1szwm78VdV
+      retry-after:
+      - '6'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '620'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"max_tokens": 64000, "messages": [{"role": "user", "content": "List available
+      animations using list_animations. Show me fighting animations."}, {"role": "assistant",
+      "content": [{"type": "tool_use", "name": "list_animations", "input": {"category":
+      "fighting"}, "id": "toolu_016TTCHvRPs5MiHX3W33Nw6o"}]}, {"role": "user", "content":
+      [{"type": "tool_result", "content": "{\"count\": 50, \"total\": 154, \"animations\":
+      [{\"id\": 4, \"name\": \"Attack\", \"category\": \"Fighting\", \"subcategory\":
+      \"AttackingwithWeapon\"}, {\"id\": 7, \"name\": \"BeHit_FlyUp\", \"category\":
+      \"Fighting\", \"subcategory\": \"GettingHit\"}, {\"id\": 8, \"name\": \"Dead\",
+      \"category\": \"Fighting\", \"subcategory\": \"Dying\"}, {\"id\": 9, \"name\":
+      \"ForwardLeft_Run_Fight\", \"category\": \"Fighting\", \"subcategory\": \"Transitioning\"},
+      {\"id\": 10, \"name\": \"ForwardRight_Run_Fight\", \"category\": \"Fighting\",
+      \"subcategory\": \"Transitioning\"}, {\"id\": 85, \"name\": \"Axe_Stance\",
+      \"category\": \"Fighting\", \"subcategory\": \"Transitioning\"}, {\"id\": 86,
+      \"name\": \"Basic_Jump\", \"category\": \"Fighting\", \"subcategory\": \"AttackingwithWeapon\"},
+      {\"id\": 87, \"name\": \"Boxing_Practice\", \"category\": \"Fighting\", \"subcategory\":
+      \"Punching\"}, {\"id\": 88, \"name\": \"Chest_Pound_Taunt\", \"category\": \"Fighting\",
+      \"subcategory\": \"Transitioning\"}, {\"id\": 89, \"name\": \"Combat_Stance\",
+      \"category\": \"Fighting\", \"subcategory\": \"AttackingwithWeapon\"}, {\"id\":
+      90, \"name\": \"Counterstrike\", \"category\": \"Fighting\", \"subcategory\":
+      \"Punching\"}, {\"id\": 91, \"name\": \"Double_Blade_Spin\", \"category\": \"Fighting\",
+      \"subcategory\": \"AttackingwithWeapon\"}, {\"id\": 92, \"name\": \"Double_Combo_Attack\",
+      \"category\": \"Fighting\", \"subcategory\": \"AttackingwithWeapon\"}, {\"id\":
+      93, \"name\": \"Dodge_and_Counter\", \"category\": \"Fighting\", \"subcategory\":
+      \"Punching\"}, {\"id\": 94, \"name\": \"Flying_Fist_Kick\", \"category\": \"Fighting\",
+      \"subcategory\": \"Punching\"}, {\"id\": 95, \"name\": \"Gun_Hold_Left_Turn\",
+      \"category\": \"Fighting\", \"subcategory\": \"AttackingwithWeapon\"}, {\"id\":
+      96, \"name\": \"Kung_Fu_Punch\", \"category\": \"Fighting\", \"subcategory\":
+      \"Punching\"}, {\"id\": 97, \"name\": \"Left_Slash\", \"category\": \"Fighting\",
+      \"subcategory\": \"AttackingwithWeapon\"}, {\"id\": 98, \"name\": \"Run_and_Shoot\",
+      \"category\": \"Fighting\", \"subcategory\": \"AttackingwithWeapon\"}, {\"id\":
+      99, \"name\": \"Reaping_Swing\", \"category\": \"Fighting\", \"subcategory\":
+      \"Transitioning\"}, {\"id\": 100, \"name\": \"Rightward_Spin\", \"category\":
+      \"Fighting\", \"subcategory\": \"Transitioning\"}, {\"id\": 102, \"name\": \"Sword_Judgment\",
+      \"category\": \"Fighting\", \"subcategory\": \"AttackingwithWeapon\"}, {\"id\":
+      103, \"name\": \"Simple_Kick\", \"category\": \"Fighting\", \"subcategory\":
+      \"AttackingwithWeapon\"}, {\"id\": 104, \"name\": \"Side_Shot\", \"category\":
+      \"Fighting\", \"subcategory\": \"AttackingwithWeapon\"}, {\"id\": 105, \"name\":
+      \"Triple_Combo_Attack\", \"category\": \"Fighting\", \"subcategory\": \"AttackingwithWeapon\"},
+      {\"id\": 125, \"name\": \"Charged_Spell_Cast\", \"category\": \"Fighting\",
+      \"subcategory\": \"CastingSpell\"}, {\"id\": 126, \"name\": \"Charged_Spell_Cast_1\",
+      \"category\": \"Fighting\", \"subcategory\": \"CastingSpell\"}, {\"id\": 127,
+      \"name\": \"Charged_Ground_Slam\", \"category\": \"Fighting\", \"subcategory\":
+      \"CastingSpell\"}, {\"id\": 128, \"name\": \"Heavy_Hammer_Swing\", \"category\":
+      \"Fighting\", \"subcategory\": \"AttackingwithWeapon\"}, {\"id\": 129, \"name\":
+      \"mage_soell_cast\", \"category\": \"Fighting\", \"subcategory\": \"CastingSpell\"},
+      {\"id\": 130, \"name\": \"mage_soell_cast_1\", \"category\": \"Fighting\", \"subcategory\":
+      \"CastingSpell\"}, {\"id\": 131, \"name\": \"mage_soell_cast_2\", \"category\":
+      \"Fighting\", \"subcategory\": \"CastingSpell\"}, {\"id\": 132, \"name\": \"mage_soell_cast_3\",
+      \"category\": \"Fighting\", \"subcategory\": \"CastingSpell\"}, {\"id\": 133,
+      \"name\": \"mage_soell_cast_4\", \"category\": \"Fighting\", \"subcategory\":
+      \"CastingSpell\"}, {\"id\": 134, \"name\": \"mage_soell_cast_5\", \"category\":
+      \"Fighting\", \"subcategory\": \"CastingSpell\"}, {\"id\": 135, \"name\": \"mage_soell_cast_6\",
+      \"category\": \"Fighting\", \"subcategory\": \"CastingSpell\"}, {\"id\": 136,
+      \"name\": \"mage_soell_cast_7\", \"category\": \"Fighting\", \"subcategory\":
+      \"CastingSpell\"}, {\"id\": 137, \"name\": \"mage_soell_cast_8\", \"category\":
+      \"Fighting\", \"subcategory\": \"CastingSpell\"}, {\"id\": 138, \"name\": \"Block1\",
+      \"category\": \"Fighting\", \"subcategory\": \"Blocking\"}, {\"id\": 139, \"name\":
+      \"Block2\", \"category\": \"Fighting\", \"subcategory\": \"Blocking\"}, {\"id\":
+      140, \"name\": \"Block3\", \"category\": \"Fighting\", \"subcategory\": \"Blocking\"},
+      {\"id\": 141, \"name\": \"Block4\", \"category\": \"Fighting\", \"subcategory\":
+      \"Blocking\"}, {\"id\": 142, \"name\": \"Block5\", \"category\": \"Fighting\",
+      \"subcategory\": \"Blocking\"}, {\"id\": 143, \"name\": \"Block6\", \"category\":
+      \"Fighting\", \"subcategory\": \"Blocking\"}, {\"id\": 144, \"name\": \"Block8\",
+      \"category\": \"Fighting\", \"subcategory\": \"Blocking\"}, {\"id\": 145, \"name\":
+      \"Block9\", \"category\": \"Fighting\", \"subcategory\": \"Blocking\"}, {\"id\":
+      146, \"name\": \"Block10\", \"category\": \"Fighting\", \"subcategory\": \"Blocking\"},
+      {\"id\": 147, \"name\": \"Sword_Parry\", \"category\": \"Fighting\", \"subcategory\":
+      \"Blocking\"}, {\"id\": 148, \"name\": \"Sword_Parry_Backward\", \"category\":
+      \"Fighting\", \"subcategory\": \"Blocking\"}, {\"id\": 149, \"name\": \"Two_Handed_Parry\",
+      \"category\": \"Fighting\", \"subcategory\": \"Blocking\"}]}", "tool_use_id":
+      "toolu_016TTCHvRPs5MiHX3W33Nw6o", "is_error": false}]}], "model": "claude-haiku-4-5-20251001",
+      "tools": [{"name": "text3d_generate", "input_schema": {"properties": {"prompt":
+      {"type": "string"}, "art_style": {"default": "realistic", "type": "string"},
+      "negative_prompt": {"default": "", "type": "string"}, "target_polycount": {"default":
+      30000, "type": "integer"}, "enable_pbr": {"default": true, "type": "boolean"}},
+      "required": ["prompt"], "type": "object"}, "description": "Generate a 3D GLB
+      model from a text description using Meshy AI. Provide a detailed prompt describing
+      the model. Returns the task_id, status, model_url, and thumbnail_url on success."},
+      {"name": "image3d_generate", "input_schema": {"properties": {"image_url": {"type":
+      "string"}, "topology": {"default": "", "type": "string"}, "target_polycount":
+      {"default": 15000, "type": "integer"}, "enable_pbr": {"default": true, "type":
+      "boolean"}}, "required": ["image_url"], "type": "object"}, "description": "Generate
+      a 3D GLB model from an image using Meshy AI. Provide a URL to the source image.
+      Returns the task_id, status, model_url, and thumbnail_url on success."}, {"name":
+      "rig_model", "input_schema": {"properties": {"model_id": {"type": "string"},
+      "wait": {"default": true, "type": "boolean"}}, "required": ["model_id"], "type":
+      "object"}, "description": "Add a skeleton/rig to a static 3D model. This is
+      required before you can apply animations. Takes the model''s task ID and returns
+      a new task ID for the rigging operation."}, {"name": "apply_animation", "input_schema":
+      {"properties": {"model_id": {"type": "string"}, "animation_id": {"type": "integer"},
+      "wait": {"default": true, "type": "boolean"}}, "required": ["model_id", "animation_id"],
+      "type": "object"}, "description": "Apply an animation to a rigged 3D model.
+      Use list_animations to see available animation IDs. The model must be rigged
+      first."}, {"name": "retexture_model", "input_schema": {"properties": {"model_id":
+      {"type": "string"}, "texture_prompt": {"type": "string"}, "enable_pbr": {"default":
+      true, "type": "boolean"}, "wait": {"default": true, "type": "boolean"}}, "required":
+      ["model_id", "texture_prompt"], "type": "object"}, "description": "Apply new
+      textures to an existing 3D model. Great for creating color variants or material
+      changes without regenerating the mesh."}, {"name": "list_animations", "input_schema":
+      {"properties": {"category": {"default": "", "type": "string"}, "limit": {"default":
+      50, "type": "integer"}}, "type": "object"}, "description": "List available animations
+      from the Meshy animation catalog. Optionally filter by category. Returns animation
+      IDs and names that can be used with apply_animation."}, {"name": "check_task_status",
+      "input_schema": {"properties": {"task_id": {"type": "string"}, "task_type":
+      {"default": "text-to-3d", "type": "string"}}, "required": ["task_id"], "type":
+      "object"}, "description": "Check the current status of a Meshy AI task. Returns
+      status (pending, processing, succeeded, failed), progress percentage, and model
+      URL if complete."}, {"name": "get_animation", "input_schema": {"properties":
+      {"animation_id": {"type": "integer"}}, "required": ["animation_id"], "type":
+      "object"}, "description": "Get details of a specific animation by ID, including
+      name, category, subcategory, and preview URL."}]}'
+    headers:
+      Accept:
+      - application/json
+      Accept-Encoding:
+      - gzip, deflate, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '8905'
+      Content-Type:
+      - application/json
+      Host:
+      - api.anthropic.com
+      User-Agent:
+      - Anthropic/Python 0.75.0
+      X-Stainless-Arch:
+      - x64
+      X-Stainless-Async:
+      - 'false'
+      X-Stainless-Lang:
+      - python
+      X-Stainless-OS:
+      - Linux
+      X-Stainless-Package-Version:
+      - 0.75.0
+      X-Stainless-Runtime:
+      - CPython
+      X-Stainless-Runtime-Version:
+      - 3.13.10
+      anthropic-version:
+      - '2023-06-01'
+      x-api-key:
+      - FILTERED
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-timeout:
+      - NOT_GIVEN
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: '{"model":"claude-haiku-4-5-20251001","id":"msg_016M4EKkeChgb4esAVcd2vyK","type":"message","role":"assistant","content":[{"type":"text","text":"Great!
+        I found 50 fighting animations (out of 154 total). Here''s a breakdown organized
+        by subcategory:\n\n## **Attacking with Weapon** (8 animations)\n- ID 4: Attack\n-
+        ID 86: Basic_Jump\n- ID 89: Combat_Stance\n- ID 91: Double_Blade_Spin\n- ID
+        92: Double_Combo_Attack\n- ID 97: Left_Slash\n- ID 102: Sword_Judgment\n-
+        ID 103: Simple_Kick\n- ID 104: Side_Shot\n- ID 105: Triple_Combo_Attack\n-
+        ID 128: Heavy_Hammer_Swing\n\n## **Punching** (5 animations)\n- ID 87: Boxing_Practice\n-
+        ID 90: Counterstrike\n- ID 93: Dodge_and_Counter\n- ID 94: Flying_Fist_Kick\n-
+        ID 96: Kung_Fu_Punch\n\n## **Getting Hit** (1 animation)\n- ID 7: BeHit_FlyUp\n\n##
+        **Dying** (1 animation)\n- ID 8: Dead\n\n## **Transitioning** (5 animations)\n-
+        ID 9: ForwardLeft_Run_Fight\n- ID 10: ForwardRight_Run_Fight\n- ID 85: Axe_Stance\n-
+        ID 88: Chest_Pound_Taunt\n- ID 99: Reaping_Swing\n- ID 100: Rightward_Spin\n\n##
+        **Spell Casting** (10 animations)\n- ID 125-137: Various charged spell casts
+        and mage spell casts\n\n## **Blocking** (10 animations)\n- ID 138-149: Various
+        blocking and parry animations\n\nThere are more animations available. Would
+        you like me to see the rest, or would you like details about any specific
+        animation?"}],"stop_reason":"end_turn","stop_sequence":null,"usage":{"input_tokens":3302,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":0},"output_tokens":444,"service_tier":"standard"}}'
+    headers:
+      CF-RAY:
+      - 9aa77cc3d8de3938-IAD
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Sun, 07 Dec 2025 22:33:59 GMT
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      X-Robots-Tag:
+      - none
+      anthropic-organization-id:
+      - 29090371-d95f-4b39-befc-55cb58e791ca
+      anthropic-ratelimit-input-tokens-limit:
+      - '5000000'
+      anthropic-ratelimit-input-tokens-remaining:
+      - '4998000'
+      anthropic-ratelimit-input-tokens-reset:
+      - '2025-12-07T22:33:55Z'
+      anthropic-ratelimit-output-tokens-limit:
+      - '800000'
+      anthropic-ratelimit-output-tokens-remaining:
+      - '800000'
+      anthropic-ratelimit-output-tokens-reset:
+      - '2025-12-07T22:33:59Z'
+      anthropic-ratelimit-tokens-limit:
+      - '5800000'
+      anthropic-ratelimit-tokens-remaining:
+      - '5798000'
+      anthropic-ratelimit-tokens-reset:
+      - '2025-12-07T22:33:55Z'
+      cf-cache-status:
+      - DYNAMIC
+      content-length:
+      - '1617'
+      request-id:
+      - req_011CVt85Qa8QthoCBhhrbjgw
+      retry-after:
+      - '5'
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      x-envoy-upstream-service-time:
+      - '4847'
+    status:
+      code: 200
+      message: OK
+version: 1

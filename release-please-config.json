@@ -1,0 +1,10 @@
+{
+  "release-type": "python",
+  "packages": {
+    ".": {
+      "package-name": "cloud-connectors",
+      "component": "cloud-connectors",
+      "include-component-in-tag": true
+    }
+  }
+}

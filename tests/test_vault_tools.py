@@ -1,0 +1,281 @@
+"""Tests for Vault AI tools."""
+
+from __future__ import annotations
+
+import importlib.util
+
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString, extend_data
+
+
+# Patch target for VaultConnector - must patch where it's used (in tools.py), not where it's defined
+VAULT_CONNECTOR_PATCH = "cloud_connectors.vault.VaultConnector"
+
+
+def test_vault_connector_requires_hvac_when_constructed_without_extra() -> None:
+    """Vault tool metadata imports without hvac, but the connector still requires the extra."""
+    if importlib.util.find_spec("hvac") is not None:
+        pytest.skip("hvac is installed")
+
+    from cloud_connectors.vault import VaultConnector
+
+    with pytest.raises(ImportError, match=r"cloud-connectors\[vault\]"):
+        VaultConnector(from_environment=False)
+
+
+class TestVaultToolDefinitions:
+    """Test tool definitions and metadata."""
+
+    def test_tool_definitions_exist(self):
+        """Test that TOOL_DEFINITIONS is populated."""
+        from cloud_connectors.vault.tools import TOOL_DEFINITIONS
+
+        assert len(TOOL_DEFINITIONS) > 0
+
+    def test_all_tools_have_required_fields(self):
+        """Test that all tools have name, description, and func."""
+        from cloud_connectors.vault.tools import TOOL_DEFINITIONS
+
+        for defn in TOOL_DEFINITIONS:
+            assert "name" in defn, f"Tool missing 'name': {defn}"
+            assert "description" in defn, f"Tool missing 'description': {defn}"
+            assert "func" in defn, f"Tool missing 'func': {defn}"
+            assert callable(defn["func"]), f"Tool func not callable: {defn['name']}"
+
+    def test_tool_names_prefixed(self):
+        """Test that all tool names are prefixed with 'vault_'."""
+        from cloud_connectors.vault.tools import TOOL_DEFINITIONS
+
+        for defn in TOOL_DEFINITIONS:
+            assert defn["name"].startswith("vault_"), f"Tool name not prefixed: {defn['name']}"
+
+
+class TestListSecrets:
+    """Tests for list_secrets tool."""
+
+    @patch(VAULT_CONNECTOR_PATCH)
+    def test_list_secrets_basic(self, mock_connector_class):
+        """Test basic list_secrets functionality."""
+        from cloud_connectors.vault.tools import list_secrets
+
+        mock_connector = MagicMock()
+        mock_connector.list_secrets.return_value = extend_data(
+            {
+                "app/db-password": {"username": "admin", "password": "secret123"},
+                "app/api-key": {"key": "abc123xyz"},
+            }
+        )
+        mock_connector_class.return_value = mock_connector
+
+        result = list_secrets()
+
+        assert isinstance(result, ExtendedList)
+        assert isinstance(result[0], ExtendedDict)
+        assert isinstance(result[0]["path"], ExtendedString)
+        assert isinstance(result[0]["data"], ExtendedDict)
+        assert len(result) == 2
+        assert result[0]["path"] == "app/db-password"
+        assert result[0]["mount_point"] == "secret"
+        assert result[0]["data"]["username"] == "admin"
+        assert result[0]["key_count"] == 2
+        assert result[1]["path"] == "app/api-key"
+        assert result[1]["key_count"] == 1
+
+    @patch(VAULT_CONNECTOR_PATCH)
+    def test_list_secrets_with_custom_path(self, mock_connector_class):
+        """Test list_secrets with custom root path."""
+        from cloud_connectors.vault.tools import list_secrets
+
+        mock_connector = MagicMock()
+        mock_connector.list_secrets.return_value = {
+            "prod/db": {"host": "db.example.com"},
+        }
+        mock_connector_class.return_value = mock_connector
+
+        result = list_secrets(root_path="prod/", mount_point="kv")
+
+        mock_connector.list_secrets.assert_called_once_with(
+            root_path="prod/",
+            mount_point="kv",
+            max_depth=10,
+        )
+        assert len(result) == 1
+        assert result[0]["path"] == "prod/db"
+        assert result[0]["mount_point"] == "kv"
+
+    @patch(VAULT_CONNECTOR_PATCH)
+    def test_list_secrets_empty(self, mock_connector_class):
+        """Test list_secrets with no secrets found."""
+        from cloud_connectors.vault.tools import list_secrets
+
+        mock_connector = MagicMock()
+        mock_connector.list_secrets.return_value = {}
+        mock_connector_class.return_value = mock_connector
+
+        result = list_secrets()
+
+        assert len(result) == 0
+
+    @patch(VAULT_CONNECTOR_PATCH)
+    def test_list_secrets_with_max_depth(self, mock_connector_class):
+        """Test list_secrets with max_depth parameter."""
+        from cloud_connectors.vault.tools import list_secrets
+
+        mock_connector = MagicMock()
+        mock_connector.list_secrets.return_value = {}
+        mock_connector_class.return_value = mock_connector
+
+        list_secrets(max_depth=3)
+
+        mock_connector.list_secrets.assert_called_once_with(
+            root_path="/",
+            mount_point="secret",
+            max_depth=3,
+        )
+
+
+class TestReadSecret:
+    """Tests for read_secret tool."""
+
+    @patch(VAULT_CONNECTOR_PATCH)
+    def test_read_secret_found(self, mock_connector_class):
+        """Test read_secret when secret exists."""
+        from cloud_connectors.vault.tools import read_secret
+
+        mock_connector = MagicMock()
+        mock_connector.read_secret.return_value = {
+            "username": "admin",
+            "password": "secret123",
+        }
+        mock_connector_class.return_value = mock_connector
+
+        result = read_secret("app/db-password")
+
+        assert isinstance(result, ExtendedDict)
+        assert isinstance(result["path"], ExtendedString)
+        assert isinstance(result["data"], ExtendedDict)
+        assert result["path"] == "app/db-password"
+        assert result["mount_point"] == "secret"
+        assert result["data"]["username"] == "admin"
+        assert result["data"]["password"] == "secret123"
+        assert result["found"] is True
+
+    @patch(VAULT_CONNECTOR_PATCH)
+    def test_read_secret_not_found(self, mock_connector_class):
+        """Test read_secret when secret does not exist."""
+        from cloud_connectors.vault.tools import read_secret
+
+        mock_connector = MagicMock()
+        mock_connector.read_secret.return_value = None
+        mock_connector_class.return_value = mock_connector
+
+        result = read_secret("app/missing-secret")
+
+        assert isinstance(result, ExtendedDict)
+        assert isinstance(result["data"], ExtendedDict)
+        assert result["path"] == "app/missing-secret"
+        assert result["mount_point"] == "secret"
+        assert result["data"] == {}
+        assert result["found"] is False
+
+    @patch(VAULT_CONNECTOR_PATCH)
+    def test_read_secret_custom_mount(self, mock_connector_class):
+        """Test read_secret with custom mount point."""
+        from cloud_connectors.vault.tools import read_secret
+
+        mock_connector = MagicMock()
+        mock_connector.read_secret.return_value = {"key": "value"}
+        mock_connector_class.return_value = mock_connector
+
+        result = read_secret("my-secret", mount_point="kv")
+
+        mock_connector.read_secret.assert_called_once_with(
+            path="my-secret",
+            mount_point="kv",
+        )
+        assert result["mount_point"] == "kv"
+
+
+class TestGetTools:
+    """Test framework getters."""
+
+    def test_get_strands_tools(self):
+        """Test get_strands_tools returns plain functions."""
+        from cloud_connectors.vault.tools import get_strands_tools
+
+        tools = get_strands_tools()
+
+        assert len(tools) > 0
+        assert all(callable(t) for t in tools)
+
+    def test_get_tools_strands(self):
+        """Test get_tools with strands framework."""
+        from cloud_connectors.vault.tools import get_tools
+
+        tools = get_tools(framework="strands")
+
+        assert len(tools) > 0
+        assert all(callable(t) for t in tools)
+
+    def test_get_tools_rejects_functions_alias(self):
+        """Plain-function tools should use the canonical strands framework name."""
+        from cloud_connectors.vault.tools import get_tools
+
+        with pytest.raises(ValueError, match="Unknown framework"):
+            get_tools(framework="functions")
+
+    def test_get_tools_invalid_framework(self):
+        """Test get_tools with invalid framework raises ValueError."""
+        from cloud_connectors.vault.tools import get_tools
+
+        with pytest.raises(ValueError, match="Unknown framework"):
+            get_tools(framework="invalid")
+
+    @patch("cloud_connectors._optional.is_available")
+    def test_get_tools_auto_no_frameworks(self, mock_is_available):
+        """Test get_tools with auto detection when no frameworks installed."""
+        from cloud_connectors.vault.tools import get_tools
+
+        # Mock is_available to return False for all AI frameworks
+        mock_is_available.return_value = False
+
+        # Without special frameworks, should default to strands
+        tools = get_tools(framework="auto")
+
+        assert len(tools) > 0
+        assert all(callable(t) for t in tools)
+
+
+class TestLangChainIntegration:
+    """Test LangChain integration (when available)."""
+
+    def test_get_langchain_tools_without_langchain(self):
+        """Test that get_langchain_tools raises ImportError when langchain-core not installed."""
+        from cloud_connectors.vault.tools import get_langchain_tools
+
+        # This should raise ImportError if langchain-core is not installed
+        try:
+            tools = get_langchain_tools()
+            # If we get here, langchain-core is installed - verify tools work
+            assert len(tools) > 0
+        except ImportError as e:
+            assert "langchain-core is required" in str(e)
+
+
+class TestCrewAIIntegration:
+    """Test CrewAI integration (when available)."""
+
+    def test_get_crewai_tools_without_crewai(self):
+        """Test that get_crewai_tools raises ImportError when crewai not installed."""
+        from cloud_connectors.vault.tools import get_crewai_tools
+
+        # This should raise ImportError if crewai is not installed
+        try:
+            tools = get_crewai_tools()
+            # If we get here, crewai is installed - verify tools work
+            assert len(tools) > 0
+        except ImportError as e:
+            assert "crewai is required" in str(e)
