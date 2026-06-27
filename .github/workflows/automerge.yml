@@ -8,6 +8,8 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
 
+permissions: {}
+
 jobs:
   automerge:
     name: Enable auto-merge
