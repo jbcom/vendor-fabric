@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vendor-fabric"
-version = "2.1.0"
+version = "2.1.1"
 description = "Extended Data-native vendor connectors, sync capabilities, and agentic workflows"
 requires-python = ">=3.11"
 license = { text = "MIT" }

@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Any
 try:
     __version__ = version("vendor-fabric")
 except PackageNotFoundError:  # pragma: no cover - local editable fallback before install
-    __version__ = "2.1.0"
+    __version__ = "2.1.1"
 
 
 if TYPE_CHECKING:
