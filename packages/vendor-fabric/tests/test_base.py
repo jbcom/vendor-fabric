@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import builtins
+import threading
 
 from unittest.mock import MagicMock
 
@@ -15,6 +16,7 @@ from extended_data.logging import Logging
 from extended_data.workflows import DataWorkflow
 from pydantic import BaseModel, Field
 
+from vendor_fabric import base as base_module
 from vendor_fabric.base import ConnectorAPIError, ConnectorBase, RateLimitError
 
 
@@ -38,6 +40,84 @@ def test_connector_default_logging_does_not_create_cwd_log_file(tmp_path, monkey
 
     assert connector.logging.enable_file is False
     assert not (tmp_path / "ExampleConnector.log").exists()
+
+
+def test_api_key_property_requires_configured_secret() -> None:
+    """Connectors should fail clearly when a configured API key is absent."""
+
+    class KeyedConnector(ExampleConnector):
+        API_KEY_ENV = "EXAMPLE_API_KEY"
+
+    connector = KeyedConnector(from_environment=False)
+
+    with pytest.raises(ValueError, match="EXAMPLE_API_KEY not set"):
+        _ = connector.api_key
+
+
+def test_client_lifecycle_is_lazy_reused_and_closed(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Connector HTTP clients should be lazy, reused, and closed explicitly."""
+    client = MagicMock(spec=httpx.Client)
+    client_factory = MagicMock(return_value=client)
+    monkeypatch.setattr(base_module.httpx, "Client", client_factory)
+    connector = _connector()
+
+    assert connector.client is client
+    assert connector.client is client
+    client_factory.assert_called_once_with(timeout=300)
+
+    with connector as active:
+        assert active is connector
+
+    client.close.assert_called_once_with()
+    assert connector._client is None
+
+
+def test_close_without_client_is_noop() -> None:
+    """Closing an unused connector should be harmless."""
+    connector = _connector()
+
+    connector.close()
+
+    assert connector._client is None
+
+
+def test_rate_limit_uses_per_connector_type_sleep(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Base rate limiting should sleep only for the remaining per-type interval."""
+
+    class RateLimitedConnector(ExampleConnector):
+        MIN_REQUEST_INTERVAL = 1.0
+
+    connector = RateLimitedConnector(from_environment=False)
+    sleep = MagicMock()
+    monkeypatch.setattr(base_module.time, "sleep", sleep)
+    monkeypatch.setattr(base_module.time, "time", MagicMock(side_effect=[100.25, 100.5]))
+    ConnectorBase._rate_limit_locks[type(connector)] = threading.Lock()
+    ConnectorBase._last_request_times[type(connector)] = 100.0
+
+    connector._rate_limit()
+
+    sleep.assert_called_once_with(0.75)
+    assert ConnectorBase._last_request_times[type(connector)] == 100.5
+
+
+def test_rate_limit_initializes_per_connector_state(monkeypatch: pytest.MonkeyPatch) -> None:
+    """First rate-limit call should initialize per-type state without sleeping."""
+
+    class FirstRateLimitedConnector(ExampleConnector):
+        MIN_REQUEST_INTERVAL = 1.0
+
+    connector = FirstRateLimitedConnector(from_environment=False)
+    sleep = MagicMock()
+    monkeypatch.setattr(base_module.time, "sleep", sleep)
+    monkeypatch.setattr(base_module.time, "time", MagicMock(side_effect=[200.0, 200.0]))
+    ConnectorBase._rate_limit_locks.pop(type(connector), None)
+    ConnectorBase._last_request_times.pop(type(connector), None)
+
+    connector._rate_limit()
+
+    sleep.assert_not_called()
+    assert type(connector) in ConnectorBase._rate_limit_locks
+    assert ConnectorBase._last_request_times[type(connector)] == 200.0
 
 
 def test_decode_response_promotes_json_to_extended_containers() -> None:
@@ -103,6 +183,33 @@ def test_decode_response_preserves_unknown_binary_data() -> None:
     assert connector.decode_response(response) == b"\x00\x01\x02"
 
 
+@pytest.mark.parametrize(
+    ("content_type", "expected"),
+    [
+        (None, None),
+        ("application/json", "json"),
+        ("application/vnd.example+json", "json"),
+        ("application/x-yaml", "yaml"),
+        ("application/vnd.example+yaml", "yaml"),
+        ("text/toml", "toml"),
+        ("application/hcl", "hcl"),
+        ("text/plain; charset=utf-8", "raw"),
+        ("application/octet-stream", None),
+    ],
+)
+def test_suffix_from_content_type_maps_supported_media_types(content_type: str | None, expected: str | None) -> None:
+    """Content-Type inference should cover all supported extended-data formats."""
+    assert ExampleConnector._suffix_from_content_type(content_type) == expected
+
+
+def test_decode_response_returns_none_for_empty_body() -> None:
+    """Empty responses should decode to None."""
+    connector = _connector()
+    response = httpx.Response(204, content=b"")
+
+    assert connector.decode_response(response) is None
+
+
 def test_request_data_decodes_response_body() -> None:
     """request_data combines the raw request primitive with response decoding."""
     connector = _connector()
@@ -122,6 +229,48 @@ def test_request_data_decodes_response_body() -> None:
     mock_client.request.assert_called_once()
     assert mock_client.request.call_args.args[0] == "GET"
     assert mock_client.request.call_args.args[1] == "https://api.example.com/status"
+
+
+def test_request_once_merges_headers_and_accepts_absolute_urls() -> None:
+    """Single request attempts should merge caller headers onto auth headers."""
+    connector = ExampleConnector(api_key="test-key", from_environment=False)
+    mock_client = MagicMock()
+    mock_client.request.return_value = httpx.Response(200, content=b"ok")
+    connector._client = mock_client
+
+    response = connector._request_once(
+        "GET",
+        "https://uploads.example.com/blob",
+        headers={"X-Trace": "abc"},
+        params={"page": "1"},
+    )
+
+    assert response.status_code == 200
+    mock_client.request.assert_called_once_with(
+        "GET",
+        "https://uploads.example.com/blob",
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": "Bearer test-key",
+            "X-Trace": "abc",
+        },
+        params={"page": "1"},
+    )
+
+
+def test_request_once_handles_invalid_retry_after(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Invalid retry-after values should fall back to a bounded default sleep."""
+    connector = _connector()
+    mock_client = MagicMock()
+    mock_client.request.return_value = httpx.Response(429, headers={"retry-after": "not-a-number"})
+    connector._client = mock_client
+    sleep = MagicMock()
+    monkeypatch.setattr(base_module.time, "sleep", sleep)
+
+    with pytest.raises(RateLimitError, match="not-a-number"):
+        connector._request_once("GET", "/status")
+
+    sleep.assert_called_once_with(5)
 
 
 def test_decode_response_file_returns_artifact_with_metadata() -> None:
@@ -145,6 +294,21 @@ def test_decode_response_file_returns_artifact_with_metadata() -> None:
     assert artifact.metadata["status_code"] == 200
     assert artifact.metadata["content_type"] == "application/json"
     assert artifact.metadata["method"] == "GET"
+
+
+def test_decode_response_file_handles_empty_body_with_fallback_metadata() -> None:
+    """Empty response artifacts should retain stable fallback provenance."""
+    connector = _connector()
+    response = httpx.Response(204, content=b"", headers={"content-type": "application/json"})
+
+    artifact = connector.decode_response_file(response)
+
+    assert artifact.source == "response"
+    assert artifact.data is None
+    assert artifact.encoding == "json"
+    assert artifact.metadata["source"] == "response"
+    assert artifact.metadata["data_type"] == "NoneType"
+    assert artifact.metadata["status_code"] == 204
 
 
 def test_decode_response_file_preserves_unknown_binary_payload() -> None:
@@ -246,6 +410,56 @@ def test_http_verb_workflow_helpers_start_response_workflows(helper_name: str, e
     assert mock_client.request.call_args.args[1] == "https://api.example.com/status"
 
 
+@pytest.mark.parametrize(
+    ("helper_name", "expected_method"),
+    [
+        ("get", "GET"),
+        ("post", "POST"),
+        ("put", "PUT"),
+        ("patch", "PATCH"),
+        ("delete", "DELETE"),
+    ],
+)
+def test_http_verb_helpers_delegate_to_request(helper_name: str, expected_method: str) -> None:
+    """Verb-specific raw helpers should delegate to request with the right method."""
+    connector = _connector()
+    request = MagicMock(return_value=httpx.Response(200, content=b"ok"))
+    connector.request = request
+
+    response = getattr(connector, helper_name)("/status", params={"a": "b"})
+
+    assert response.status_code == 200
+    request.assert_called_once_with(expected_method, "/status", params={"a": "b"})
+
+
+@pytest.mark.parametrize(
+    ("helper_name", "expected_method"),
+    [
+        ("get_data", "GET"),
+        ("post_data", "POST"),
+        ("put_data", "PUT"),
+        ("patch_data", "PATCH"),
+        ("delete_data", "DELETE"),
+    ],
+)
+def test_http_verb_data_helpers_delegate_to_request_data(helper_name: str, expected_method: str) -> None:
+    """Verb-specific data helpers should delegate to request_data with the right method."""
+    connector = _connector()
+    request_data = MagicMock(return_value={"ok": True})
+    connector.request_data = request_data
+
+    result = getattr(connector, helper_name)("/status", suffix="json", as_extended=False, params={"a": "b"})
+
+    assert result == {"ok": True}
+    request_data.assert_called_once_with(
+        expected_method,
+        "/status",
+        suffix="json",
+        as_extended=False,
+        params={"a": "b"},
+    )
+
+
 def test_extend_result_promotes_connector_payloads() -> None:
     """Connector data payloads cross into the Tier 2 container layer explicitly."""
     connector = _connector()
@@ -304,6 +518,25 @@ def test_get_ai_tool_definitions_promotes_definition_payloads() -> None:
     assert definitions[0]["name"] == "status"
     assert isinstance(definitions[0]["inputSchema"], ExtendedDict)
     assert isinstance(definitions[0]["inputSchema"]["properties"]["verbose"]["description"], ExtendedString)
+
+
+def test_get_ai_tool_definitions_infers_schema_without_pydantic_model() -> None:
+    """AI tool definitions should infer basic schemas when no Pydantic model is registered."""
+
+    def scale(count: int, enabled: bool, note: str = "default") -> dict[str, object]:
+        return {"count": count, "enabled": enabled, "note": note}
+
+    connector = _connector()
+    connector.register_tool(scale, name="scale")
+
+    definitions = connector.get_ai_tool_definitions()
+
+    schema = definitions[0]["inputSchema"]
+    assert schema["required"] == ["count", "enabled"]
+    assert schema["properties"]["count"] == {"type": "number"}
+    assert schema["properties"]["enabled"] == {"type": "boolean"}
+    assert schema["properties"]["note"] == {"type": "string"}
+    assert definitions[0]["description"] == "Tool: scale"
 
 
 def test_request_uses_connector_max_retries(mocker) -> None:
@@ -380,6 +613,57 @@ def test_request_once_redacts_sensitive_server_error_body() -> None:
     assert "key_123" not in message
     assert "raw_token" not in message
     assert "[REDACTED]" in message
+
+
+def test_download_creates_parent_directory_and_returns_file_size(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Downloads should create parent directories and return the written byte count."""
+    connector = _connector()
+    response = MagicMock()
+    response.content = b"artifact-bytes"
+    response.raise_for_status = MagicMock()
+    get = MagicMock(return_value=response)
+    monkeypatch.setattr(base_module.httpx, "get", get)
+    output_path = tmp_path / "nested" / "artifact.bin"
+
+    size = connector.download("https://example.com/artifact.bin", str(output_path))
+
+    assert size == len(b"artifact-bytes")
+    assert output_path.read_bytes() == b"artifact-bytes"
+    get.assert_called_once_with("https://example.com/artifact.bin", timeout=600.0)
+    response.raise_for_status.assert_called_once_with()
+
+
+def test_download_without_parent_directory_writes_file(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Downloads should also support output paths in the current directory."""
+    connector = _connector()
+    response = MagicMock()
+    response.content = b"artifact-bytes"
+    response.raise_for_status = MagicMock()
+    monkeypatch.setattr(base_module.httpx, "get", MagicMock(return_value=response))
+    monkeypatch.chdir(tmp_path)
+
+    size = connector.download("https://example.com/artifact.bin", "artifact.bin")
+
+    assert size == len(b"artifact-bytes")
+    assert (tmp_path / "artifact.bin").read_bytes() == b"artifact-bytes"
+
+
+def test_get_tools_exports_registered_langchain_tools() -> None:
+    """Base LangChain tool export should build StructuredTool objects when installed."""
+    pytest.importorskip("langchain_core.tools")
+
+    def status() -> dict[str, str]:
+        """Read status."""
+        return {"status": "ok"}
+
+    connector = _connector()
+    connector.register_tool(status, name="status")
+
+    tools = connector.get_tools()
+
+    assert len(tools) == 1
+    assert tools[0].name == "status"
+    assert tools[0].description == "Read status."
 
 
 def test_get_tools_requires_langchain_extra(monkeypatch) -> None:

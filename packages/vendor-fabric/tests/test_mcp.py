@@ -13,6 +13,8 @@ from extended_data.containers import ExtendedDict, ExtendedList, ExtendedSet
 from vendor_fabric import mcp as mcp_module
 from vendor_fabric.mcp import (
     _catalog_tool_definitions,
+    _check_mcp_installed,
+    _get_method_schema,
     _get_public_methods,
     _jsonable_tool_result,
     _tool_error_text,
@@ -31,6 +33,29 @@ class ExampleMCPConnector:
         return ExtendedDict({"enabled": enabled, "count": count, "password": "hunter2"})
 
 
+class AsyncMCPConnector:
+    """Tiny async connector shell for MCP handler tests."""
+
+    async def fetch(self, token: str) -> ExtendedDict:
+        """Fetch async data."""
+        return ExtendedDict({"token": token, "status": "ok"})
+
+    async def fail(self, token: str) -> ExtendedDict:
+        """Fail with a sensitive value."""
+        raise RuntimeError(f"failed with {token}")
+
+
+def _block_imports(monkeypatch: pytest.MonkeyPatch, blocked_name: str) -> None:
+    real_import = mcp_module.builtins.__import__
+
+    def blocked_import(name: str, *args: object, **kwargs: object) -> object:
+        if name == blocked_name:
+            raise ImportError(blocked_name)
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(mcp_module.builtins, "__import__", blocked_import)
+
+
 def test_create_server() -> None:
     """Test that the MCP server can be created and has tools."""
     pytest.importorskip("mcp")
@@ -38,6 +63,21 @@ def test_create_server() -> None:
     assert server.name == "vendor-fabric"
     # Basic check that server was initialized
     assert server is not None
+
+
+def test_check_mcp_installed_reports_missing_sdk(monkeypatch: pytest.MonkeyPatch) -> None:
+    """MCP availability checks should degrade to False when the SDK import fails."""
+    _block_imports(monkeypatch, "mcp.server")
+
+    assert _check_mcp_installed() is False
+
+
+def test_create_server_reports_install_hint_when_mcp_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Server creation should fail with the documented extra when MCP is absent."""
+    _block_imports(monkeypatch, "mcp.server")
+
+    with pytest.raises(ImportError, match=r"pip install vendor-fabric\[mcp\]"):
+        create_server()
 
 
 def test_mcp_public_methods_only_include_extended_payload_boundaries() -> None:
@@ -52,6 +92,41 @@ def test_mcp_public_methods_only_include_extended_payload_boundaries() -> None:
     assert "freeze_inputs" not in method_names
     assert "merge_inputs" not in method_names
     assert "replace_inputs" not in method_names
+
+
+def test_method_schema_maps_supported_parameter_types_and_doc_descriptions() -> None:
+    """MCP schemas should infer simple JSON types and required fields."""
+
+    def sample(count: int, ratio: float, enabled: bool, tags: list[str], metadata: dict[str, str], note="n/a") -> None:
+        """Do sample work.
+
+        count: number of items
+        metadata: item metadata
+        """
+
+    schema = _get_method_schema(sample)
+
+    assert schema["required"] == ["count", "ratio", "enabled", "tags", "metadata"]
+    assert schema["properties"]["count"] == {"type": "integer", "description": "number of items"}
+    assert schema["properties"]["ratio"]["type"] == "number"
+    assert schema["properties"]["enabled"]["type"] == "boolean"
+    assert schema["properties"]["tags"]["type"] == "array"
+    assert schema["properties"]["metadata"] == {"type": "object", "description": "item metadata"}
+    assert schema["properties"]["note"] == {"type": "string", "default": "n/a"}
+
+
+def test_method_schema_falls_back_when_type_hints_are_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """MCP schema generation should still work when annotations cannot resolve."""
+
+    def sample(value: MissingAnnotation) -> None:  # noqa: F821
+        pass
+
+    monkeypatch.setattr(mcp_module, "get_type_hints", lambda method: (_ for _ in ()).throw(NameError("missing")))
+
+    schema = _get_method_schema(sample)
+
+    assert schema["properties"]["value"]["type"] == "string"
+    assert schema["required"] == ["value"]
 
 
 def test_catalog_tools_expose_connector_discovery_without_credentials() -> None:
@@ -273,6 +348,97 @@ async def test_create_server_registered_connector_call_handler_redacts_payloads(
     mock_get_connector.assert_called_once_with("example")
     payload = json.loads(result.root.content[0].text)
     assert payload == {"enabled": True, "count": 3, "password": "[REDACTED]"}
+
+
+@pytest.mark.asyncio
+async def test_create_server_registered_connector_call_handler_awaits_coroutines_and_redacts() -> None:
+    """The registered MCP call handler should await async connector results."""
+    mcp_types = pytest.importorskip("mcp.types")
+    connector = AsyncMCPConnector()
+
+    with (
+        patch("vendor_fabric.mcp._list_connector_classes", return_value={"async_example": AsyncMCPConnector}),
+        patch("vendor_fabric.mcp.get_connector", return_value=connector),
+    ):
+        server = create_server()
+        await server.request_handlers[mcp_types.ListToolsRequest](mcp_types.ListToolsRequest())
+        result = await server.request_handlers[mcp_types.CallToolRequest](
+            mcp_types.CallToolRequest(
+                params=mcp_types.CallToolRequestParams(
+                    name="async_example_fetch",
+                    arguments={"token": "secret-token"},
+                )
+            )
+        )
+
+    payload = json.loads(result.root.content[0].text)
+    assert payload == {"token": "[REDACTED]", "status": "ok"}
+
+
+@pytest.mark.asyncio
+async def test_create_server_registered_connector_call_handler_redacts_exceptions() -> None:
+    """The registered MCP call handler should redact async connector failures."""
+    mcp_types = pytest.importorskip("mcp.types")
+    connector = AsyncMCPConnector()
+
+    with (
+        patch("vendor_fabric.mcp._list_connector_classes", return_value={"async_example": AsyncMCPConnector}),
+        patch("vendor_fabric.mcp.get_connector", return_value=connector),
+    ):
+        server = create_server()
+        await server.request_handlers[mcp_types.ListToolsRequest](mcp_types.ListToolsRequest())
+        result = await server.request_handlers[mcp_types.CallToolRequest](
+            mcp_types.CallToolRequest(
+                params=mcp_types.CallToolRequestParams(
+                    name="async_example_fail",
+                    arguments={"token": "secret-token"},
+                )
+            )
+        )
+
+    text = result.root.content[0].text
+    assert "secret-token" not in text
+    assert "RuntimeError" in text
+    assert "[REDACTED]" in text
+
+
+@pytest.mark.asyncio
+async def test_create_server_registered_catalog_call_handler_redacts_exceptions() -> None:
+    """Catalog MCP handler failures should redact caller arguments."""
+    mcp_types = pytest.importorskip("mcp.types")
+
+    def fail_catalog(token: str) -> ExtendedDict:
+        raise RuntimeError(f"failed with {token}")
+
+    with patch(
+        "vendor_fabric.mcp._catalog_tool_definitions",
+        return_value={
+            "vendor_fabric_fail": {
+                "description": "Fail catalog",
+                "parameters": {
+                    "type": "object",
+                    "properties": {"token": {"type": "string"}},
+                    "required": ["token"],
+                },
+                "handler": fail_catalog,
+            }
+        },
+    ):
+        server = create_server()
+        await server.request_handlers[mcp_types.ListToolsRequest](mcp_types.ListToolsRequest())
+        result = await server.request_handlers[mcp_types.CallToolRequest](
+            mcp_types.CallToolRequest(
+                params=mcp_types.CallToolRequestParams(
+                    name="vendor_fabric_fail",
+                    arguments={"token": "secret-token"},
+                )
+            )
+        )
+
+    text = result.root.content[0].text
+    assert "secret-token" not in text
+    assert "RuntimeError" in text
+    assert "[REDACTED]" in text
 
 
 @pytest.mark.asyncio

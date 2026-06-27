@@ -692,6 +692,8 @@ class ConnectorBase(CapabilityProviderMixin, InputProvider, ABC):
         """
         import inspect
 
+        from typing import get_type_hints
+
         from extended_data.containers import to_builtin
 
         from vendor_fabric.ai_tools import get_pydantic_schema
@@ -704,6 +706,10 @@ class ConnectorBase(CapabilityProviderMixin, InputProvider, ABC):
             else:
                 # Fallback to inspect-based schema generation
                 sig = inspect.signature(func)
+                try:
+                    type_hints = get_type_hints(func)
+                except Exception:
+                    type_hints = {}
                 properties = {}
                 required = []
 
@@ -712,10 +718,11 @@ class ConnectorBase(CapabilityProviderMixin, InputProvider, ABC):
                         continue
 
                     param_type = "string"
-                    if param.annotation != inspect.Parameter.empty:
-                        if param.annotation in (int, float):
+                    annotation = type_hints.get(param_name, param.annotation)
+                    if annotation != inspect.Parameter.empty:
+                        if annotation in (int, float):
                             param_type = "number"
-                        elif param.annotation is bool:
+                        elif annotation is bool:
                             param_type = "boolean"
 
                     properties[param_name] = {"type": param_type}
