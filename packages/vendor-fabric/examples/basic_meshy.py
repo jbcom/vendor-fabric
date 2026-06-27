@@ -15,45 +15,52 @@ from __future__ import annotations
 
 import os
 import sys
-import time
 
 
 def main() -> int:
     """Demonstrate Meshy AI 3D generation."""
-    # Check for required environment variables
     if not os.getenv("MESHY_API_KEY"):
         print("Error: MESHY_API_KEY environment variable is required.")
         print("Get an API key at https://meshy.ai")
         return 1
 
-    # Import Meshy modules
     from vendor_fabric.meshy import text3d
 
-    # Generate a simple 3D model
     prompt = "a medieval sword with ornate handle"
     print(f"Generating 3D model for prompt: '{prompt}'")
 
     try:
-        # Start the generation (preview mode for faster results)
+        # `generate` submits a preview task and polls until it completes.
+        # Pass `wait=False` to get the task id back immediately and poll
+        # yourself with `text3d.poll(task_id)`.
         result = text3d.generate(
             prompt=prompt,
             art_style="realistic",
-            mode="preview",  # Use 'refine' for higher quality
+            negative_prompt="blurry, low detail",
+            target_polycount=15000,
+            enable_pbr=True,
         )
-        print(f"Generation started with ID: {result.id}")
 
-        # Poll for completion
-        while result.status in ("PENDING", "IN_PROGRESS"):
-            print(f"  Status: {result.status} - waiting...")
-            time.sleep(5)
-            result = text3d.get(result.id)
+        # text3d.generate returns an ExtendedDict when wait=True.
+        status = result["status"]
+        print(f"Final status: {status}")
 
-        if result.status == "SUCCEEDED":
-            print(f"Generation succeeded! Result: {result}")
-        elif hasattr(result, "task_error"):
-            print(f"Generation failed with error: {result.task_error}")
-        else:
-            print(f"Generation ended with status: {result.status}")
+        if status != "SUCCEEDED":
+            error = result.get("error")
+            print(f"Generation failed: {error}")
+            return 1
+
+        model_urls = result.get("model_urls") or {}
+        print(f"GLB url: {model_urls.get('glb')}")
+        print(f"OBJ url: {model_urls.get('obj')}")
+
+        # Refine the preview to full quality using the task id.
+        task_id = str(result["id"])
+        print(f"Refining task {task_id} to full quality...")
+        refined_id = text3d.refine(task_id)
+        refined = text3d.poll(str(refined_id))
+        refined_urls = refined.get("model_urls") or {}
+        print(f"Refined GLB url: {refined_urls.get('glb')}")
 
     except Exception as e:
         print(f"Error during generation: {e}")
