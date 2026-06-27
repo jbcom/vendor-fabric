@@ -1,0 +1,279 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vendor-fabric"
+version = "2.0.0"
+description = "Extended Data-native vendor connectors, sync capabilities, and agentic workflows"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+readme = "README.md"
+keywords = ["aws", "gcp", "github", "slack", "vault", "zoom", "meshy", "connectors", "agents", "secrets"]
+authors = [{ name = "Jon Bogaty", email = "jon@jonbogaty.com" }]
+maintainers = [{ name = "Jon Bogaty", email = "jon@jonbogaty.com" }]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Typing :: Typed",
+]
+dependencies = [
+    "extended-data>=8.1.0,<9.0.0",
+    "httpx>=0.28.1",
+    "more-itertools>=11.0.2",
+    "pydantic>=2.13.4,<3.0.0",
+    "pyyaml>=6.0.3",
+    "requests>=2.33.1",
+    "tenacity>=8.4.1,<9.0.0",
+]
+
+[project.urls]
+Documentation = "https://jonbogaty.com/vendor-fabric/"
+Issues = "https://github.com/jbcom/vendor-fabric/issues"
+Source = "https://github.com/jbcom/vendor-fabric"
+Changelog = "https://github.com/jbcom/vendor-fabric/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+aws = ["boto3>=1.42.92"]
+google = [
+    "google-api-python-client>=2.194.0",
+    "google-cloud-billing>=1.19.0",
+    "google-cloud-resource-manager>=1.17.0",
+]
+github = [
+    "PyGithub>=2.9.1",
+    "python-graphql-client>=0.4.3",
+]
+slack = ["slack-sdk>=3.41.0"]
+vault = ["hvac>=2.4.0"]
+zoom = []
+anthropic = ["anthropic>=0.96.0"]
+cursor = []
+meshy = [
+    "filelock>=3.29.0",
+    "numpy>=2.2.6",
+    "rich>=13.7.0,<15.0.0",
+    "validators>=0.35.0",
+]
+langchain = [
+    "langchain-core>=1.3.0",
+    "langsmith>=0.8.18",
+]
+crewai = ["crewai[tools,anthropic]>=1.5.0"]
+langgraph = [
+    "langchain-anthropic>=0.3.0",
+    "langgraph>=0.2.0",
+]
+strands = ["strands-agents>=1.36.0"]
+mcp = ["mcp>=1.26.0,<1.27.dev0"]
+scraping = ["beautifulsoup4>=4.12.0"]
+secrets-sync = [
+    "boto3>=1.42.92",
+    "hvac>=2.4.0",
+]
+ai = [
+    "crewai[tools,anthropic]>=1.5.0",
+    "langchain-anthropic>=0.3.0",
+    "langchain-core>=1.3.0",
+    "langgraph>=0.2.0",
+    "langsmith>=0.8.18",
+    "mcp>=1.26.0,<1.27.dev0",
+    "strands-agents>=1.36.0",
+]
+webhooks = [
+    "fastapi>=0.136.0",
+    "pyngrok>=8.0.0",
+    "starlette>=1.3.1",
+    "uvicorn>=0.45.0",
+]
+vector = ["sqlite-vec>=0.1.9"]
+tests = [
+    "coverage[toml]>=7.6.0",
+    "hypothesis>=6.100.2",
+    "pytest>=9.0.3",
+    "pytest-asyncio>=1.3.0",
+    "pytest-cov>=7.1.0",
+    "pytest-mock>=3.15.1",
+    "pytest-timeout>=2.4.0",
+    "pytest-xdist>=3.6.1",
+]
+typing = [
+    "mypy>=1.20.1",
+    "types-requests>=2.33.0.20260408",
+    "types-PyYAML>=6.0.12.20240724",
+]
+dev = [
+    "vendor-fabric[tests,typing]",
+    "ruff>=0.8.0",
+]
+docs = [
+    "furo>=2025.12.19",
+    "myst-parser>=4.0.1,<6.0.0",
+    "sphinx>=8.2.3,<9.0.0",
+    "sphinx-autodoc2>=0.5.0",
+    "sphinx-copybutton>=0.5.2",
+]
+all = [
+    "anthropic>=0.96.0",
+    "boto3>=1.42.92",
+    "beautifulsoup4>=4.12.0",
+    "crewai[tools,anthropic]>=1.5.0",
+    "fastapi>=0.136.0",
+    "filelock>=3.29.0",
+    "google-api-python-client>=2.194.0",
+    "google-cloud-billing>=1.19.0",
+    "google-cloud-resource-manager>=1.17.0",
+    "hvac>=2.4.0",
+    "langchain-anthropic>=0.3.0",
+    "langchain-core>=1.3.0",
+    "langgraph>=0.2.0",
+    "langsmith>=0.8.18",
+    "mcp>=1.26.0,<1.27.dev0",
+    "numpy>=2.2.6",
+    "PyGithub>=2.9.1",
+    "pyngrok>=8.0.0",
+    "python-graphql-client>=0.4.3",
+    "rich>=13.7.0,<15.0.0",
+    "slack-sdk>=3.41.0",
+    "sqlite-vec>=0.1.9",
+    "starlette>=1.3.1",
+    "strands-agents>=1.36.0",
+    "uvicorn>=0.45.0",
+    "validators>=0.35.0",
+]
+
+[project.scripts]
+vendor-fabric = "vendor_fabric.cli:main"
+vendor-fabric-mcp = "vendor_fabric.mcp:main"
+vendor-fabric-agent = "vendor_fabric.agentic.main:main"
+vendor-fabric-secrets-sync = "vendor_fabric.secrets_sync.cli:main"
+meshy-mcp = "vendor_fabric.meshy.mcp:main"
+
+[project.entry-points."vendor_fabric.connectors"]
+jules = "vendor_fabric.google.jules:JulesConnector"
+google = "vendor_fabric.google:GoogleConnector"
+cursor = "vendor_fabric.cursor:CursorConnector"
+github = "vendor_fabric.github:GitHubConnector"
+meshy = "vendor_fabric.meshy:MeshyConnector"
+anthropic = "vendor_fabric.anthropic:AnthropicConnector"
+aws = "vendor_fabric.aws:AWSConnector"
+slack = "vendor_fabric.slack:SlackConnector"
+zoom = "vendor_fabric.zoom:ZoomConnector"
+vault = "vendor_fabric.vault:VaultConnector"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vendor_fabric"]
+
+[tool.pytest.ini_options]
+addopts = ["-ra", "--strict-markers", "--strict-config"]
+testpaths = ["tests"]
+xfail_strict = true
+asyncio_mode = "auto"
+timeout = 30
+timeout_method = "thread"
+markers = [
+    "crewai: tests that require CrewAI runtime dependencies",
+    "e2e: end-to-end tests that require external runtime dependencies",
+    "langgraph: tests that require LangGraph runtime dependencies",
+    "strands: tests that require Strands runtime dependencies",
+]
+
+[tool.coverage.run]
+branch = true
+parallel = true
+source = ["vendor_fabric"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "ANN",
+    "ARG",
+    "BLE001",
+    "C901",
+    "COM",
+    "D105",
+    "D205",
+    "D415",
+    "D417",
+    "DTZ007",
+    "E402",
+    "E501",
+    "EM",
+    "ERA001",
+    "FBT",
+    "FIX",
+    "G",
+    "PERF",
+    "PLC0415",
+    "PLR0124",
+    "PLR0911",
+    "PLR0912",
+    "PLR0913",
+    "PLR0915",
+    "PLR2004",
+    "PLW0603",
+    "PTH",
+    "RET505",
+    "RUF012",
+    "S105",
+    "S110",
+    "S310",
+    "S603",
+    "SLF001",
+    "TCH",
+    "TD",
+    "TID252",
+    "TRY003",
+    "TRY300",
+    "TRY301",
+    "TRY401",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["B018", "BLE", "D", "DTZ", "INP001", "LOG001", "N802", "N803", "N806", "PLC0415", "PT", "S", "SIM117", "TRY"]
+"examples/**" = ["D", "EXE001", "INP001", "S110", "SIM105", "T201"]
+"src/vendor_fabric/**" = ["D101", "D102", "D107"]
+"src/vendor_fabric/agentic/main.py" = ["T201"]
+"src/vendor_fabric/agentic/run_flow.py" = ["T201"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+lines-between-types = 1
+lines-after-imports = 2
+
+[tool.mypy]
+strict = true
+pretty = true
+show_error_codes = true
+enable_error_code = ["ignore-without-code"]
+ignore_missing_imports = true
+warn_return_any = false
+exclude = ["tests/e2e/.*", "tests/.*/conftest.py"]
+
+[[tool.mypy.overrides]]
+module = [
+    "vendor_fabric.agentic",
+    "vendor_fabric.agentic.*",
+]
+check_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_decorators = false
+disallow_untyped_defs = false
+warn_return_any = false

@@ -1,0 +1,10 @@
+{
+  "release-type": "python",
+  "packages": {
+    ".": {
+      "package-name": "vendor-fabric",
+      "component": "vendor-fabric",
+      "include-component-in-tag": true
+    }
+  }
+}
