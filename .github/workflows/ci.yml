@@ -35,7 +35,7 @@ jobs:
         run: uvx --with tox-uv tox -e ${{ matrix.tox-env }} -- -q
 
   quality:
-    name: Quality, plugin, docs, build
+    name: Quality, plugin, providers, docs, build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -44,4 +44,4 @@ jobs:
           python-version: "3.13"
       - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
       - name: Run quality gates
-        run: uvx --with tox-uv tox -e lint,typecheck,plugin,docs,build
+        run: uvx --with tox-uv tox -e lint,typecheck,plugin,providers,docs,build

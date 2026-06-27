@@ -29,5 +29,15 @@ selections use ``--framework``:
    pytest --e2e --framework=langgraph
    pytest --e2e --framework=strands
 
+The repository's ``providers`` tox environment installs optional SDK extras
+for AWS, Google, GitHub, Slack, Vault, MCP, and LangChain-backed unit tests:
+
+.. code:: bash
+
+   tox -e providers
+
+This gate is part of CI and CD release verification. It does not enable live
+E2E tests; those still require ``--e2e`` and credentials.
+
 Agent runtime fixtures live in ``pytest-agentic-fabric``. This plugin
 stays focused on provider-facing test support.

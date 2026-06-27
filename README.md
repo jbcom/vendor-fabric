@@ -17,9 +17,14 @@ tox -e lint
 tox -e typecheck
 tox -e py311,py312,py313,py314
 tox -e plugin
+tox -e providers
 tox -e docs
 tox -e build
 ```
+
+``providers`` installs the optional provider SDK extras used by AWS, Google,
+GitHub, Slack, Vault, MCP, and LangChain unit tests. Live E2E tests remain
+opt-in.
 
 Live E2E tests are opt-in:
 
