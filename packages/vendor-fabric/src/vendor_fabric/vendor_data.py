@@ -12,6 +12,7 @@ from extended_data.containers import ExtendedData, ExtendedDict, ExtendedList, E
 from extended_data.logging import Logging
 
 from vendor_fabric.base import ConnectorBase
+from vendor_fabric.capabilities import capability_routes
 from vendor_fabric.connectors import ConnectorFabric
 
 
@@ -123,6 +124,21 @@ def _public_method_supports(provider: str, connector_cls: type[ConnectorBase]) -
     return routes
 
 
+def _decorated_supports(provider: str, connector_cls: type[ConnectorBase]) -> list[VendorCapability]:
+    """Read ``@capability`` declarations collected on a provider class."""
+    return [
+        VendorCapability(
+            provider=route.provider,
+            operation=route.operation,
+            method=route.method,
+            capability=route.kind,
+            description=route.description,
+            source=route.source,
+        )
+        for route in capability_routes(provider, connector_cls).values()
+    ]
+
+
 class VendorData(ExtendedData):
     """Extended Data facade with lazy vendor activation and capability dispatch.
 
@@ -132,6 +148,18 @@ class VendorData(ExtendedData):
     id as their first argument, then dispatch to the provider-specific connector
     method declared in the capability matrix.
     """
+
+    def __new__(
+        cls,
+        value: Any = None,
+        *,
+        fabric: ConnectorFabric | None = None,
+        logger: Logging | None = None,
+        capabilities: Iterable[VendorCapability] = (),
+        **fabric_kwargs: Any,
+    ) -> Self:
+        """Allocate a facade instance instead of using the ExtendedData factory."""
+        return object.__new__(cls)
 
     def __init__(
         self,
@@ -311,7 +339,7 @@ class VendorData(ExtendedData):
         provider_id: str | None,
         args: tuple[Any, ...],
     ) -> tuple[str, VendorCapability, tuple[Any, ...]]:
-        provider_routes = self._capability_index.get(operation)
+        provider_routes = self._operation_routes(operation)
         if not provider_routes:
             msg = f"Unknown VendorData operation '{operation}'"
             raise AttributeError(msg)
@@ -338,11 +366,21 @@ class VendorData(ExtendedData):
         route = provider_routes.get(provider)
         route = route or self._provider_supports(provider).get(operation)
         if route is None:
-            options = ", ".join(sorted(provider_routes | self._provider_supports(provider).keys()))
+            options = ", ".join(sorted({*provider_routes, *self._provider_supports(provider)}))
             msg = f"Provider '{provider}' does not support operation '{operation}'. Supported providers: {options}"
             raise ValueError(msg)
 
         return provider, route, remaining_args
+
+    def _operation_routes(self, operation: str) -> dict[str, VendorCapability]:
+        """Return all currently known provider routes for one operation."""
+        routes = dict(self._capability_index.get(operation, {}))
+        for provider_name in self.fabric.list_connectors():
+            provider = _normalize_provider(str(provider_name))
+            route = self._provider_supports(provider).get(operation)
+            if route is not None:
+                routes[provider] = route
+        return routes
 
     def _provider_supports(self, provider_id: str) -> dict[str, VendorCapability]:
         """Return operation routes declared or inferred for one provider."""
@@ -357,8 +395,9 @@ class VendorData(ExtendedData):
 
         adapter = self.fabric.get_connector_adapter(provider)
         connector_cls = adapter.load_class()
-        routes = _declared_supports(provider, connector_cls)
-        routes.extend(_public_method_supports(provider, connector_cls))
+        routes = _public_method_supports(provider, connector_cls)
+        routes.extend(_declared_supports(provider, connector_cls))
+        routes.extend(_decorated_supports(provider, connector_cls))
         route_index = {route.operation: route for route in routes}
         self._provider_capability_cache[provider] = route_index
         return route_index
