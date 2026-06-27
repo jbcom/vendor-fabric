@@ -198,6 +198,6 @@ No example filename is referenced from docs, so the breakage doesn't affect the 
 | 12 | Med | Expand `testing.rst` to cover all 7 plugin fixtures |
 | 13 | Med | Add ownership-map rows for `vendor_data`, `capabilities`, `surface`, `cloud_params`, `_optional` |
 | 14 | Low | Narrow `meshy/webhooks/handler.py:185` exception catch |
-| 15 | Low | Verify `vector` extra and `meshy/webhooks` ↔ `webhooks` extra dependency edges |
+| 15 | Low | Verify `vector` extra and `meshy/webhooks` ↔ `webhooks` extra dependency edges — **verified clean**: `vector` consumed by `vector_store.py` (guarded by `_HAS_VECTOR`); `webhooks` is a convenience bundle for users serving the handler via fastapi/uvicorn/pyngrok, intentionally not imported by package code |
 | 16 | Low | Add E2E tests for non-meshy connectors and secrets-sync binding facade |
-| 17 | Low | Confirm intent: 6/10 connectors bypass `@capability` facade dispatch |
+| 17 | Low | Confirm intent: 6/10 connectors bypass `@capability` facade dispatch — **confirmed intentional**: catalog capabilities are discovery metadata, `@capability` is facade routing; the generic `ConnectorFabric.get_connector(name, **kw)` path covers the 6 |
