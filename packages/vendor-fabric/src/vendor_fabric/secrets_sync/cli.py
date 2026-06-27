@@ -1,4 +1,4 @@
-"""CLI for native vendor-fabric SecretSync capabilities."""
+"""CLI for vendor-fabric SecretSync binding facade capabilities."""
 
 from __future__ import annotations
 

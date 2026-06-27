@@ -20,7 +20,7 @@ import importlib
 
 from typing import Any, cast
 
-from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString, extend_data
+from extended_data.containers import ExtendedList, ExtendedString, extend_data
 
 
 # Mapping of package names to their extras
@@ -38,12 +38,7 @@ PACKAGE_TO_EXTRA: dict[str, str] = {
     "rich": "meshy",
     "numpy": "meshy",
     "validators": "meshy",
-    # AI frameworks
-    "langchain_core": "langchain",
-    "langchain": "langchain",
-    "crewai": "crewai",
-    "crewai.tools": "crewai",
-    "strands": "strands",
+    "secrets_sync": "secrets-sync",
     "mcp": "mcp",
     # Features
     "fastapi": "webhooks",
@@ -55,20 +50,21 @@ PACKAGE_TO_EXTRA: dict[str, str] = {
 _import_cache: dict[str, bool] = {}
 
 PACKAGE_INSTALL_HINTS: dict[str, str] = {
+    "secrets_sync": (
+        "Install secrets-sync-python-binding, or build and install it from jbcom/secrets-sync. "
+        "vendor-fabric consumes the binding as the secrets_sync import."
+    ),
     "sentence_transformers": (
         "Install sentence-transformers separately after reviewing its dependency tree; vendor-fabric does not "
         "include it in the vector extra while current releases pull vulnerable torch versions."
     ),
 }
 
-CREWAI_TOOLS_IMPORT_ERROR = "crewai is required for CrewAI tools.\nInstall with: pip install vendor-fabric[crewai]"
-
-
 def is_available(package: str) -> bool:
     """Check if a package is available for import.
 
     Args:
-        package: Package name to check (e.g., "boto3", "langchain_core")
+        package: Package name to check (e.g., "boto3", "googleapiclient")
 
     Returns:
         True if package can be imported, False otherwise
@@ -127,20 +123,6 @@ def require_extra(package: str, extra: str | None = None) -> Any:
         ) from e
 
 
-def get_crewai_tool_decorator() -> Any:
-    """Import the CrewAI tool decorator with vendor-fabric install guidance."""
-    try:
-        module = importlib.import_module("crewai.tools")
-    except ImportError as e:
-        raise ImportError(CREWAI_TOOLS_IMPORT_ERROR) from e
-
-    try:
-        return module.tool
-    except AttributeError as e:
-        msg = "crewai.tools.tool is required for CrewAI tools, but the installed CrewAI package does not expose it."
-        raise ImportError(msg) from e
-
-
 def require_any(*packages: str, extra: str) -> Any:
     """Import the first available package from a list.
 
@@ -165,34 +147,6 @@ def require_any(*packages: str, extra: str) -> Any:
         f"None of the required packages are installed: {', '.join(packages)}\n"
         f"Install with: pip install vendor-fabric[{extra}]"
     )
-
-
-# === Framework Detection ===
-
-
-def detect_ai_frameworks() -> ExtendedDict:
-    """Detect which AI frameworks are available.
-
-    Returns:
-        Extended dict mapping framework name to availability.
-    """
-    return extend_data(
-        {
-            "langchain": is_available("langchain_core"),
-            "crewai": is_available("crewai"),
-            "strands": is_available("strands"),
-            "mcp": is_available("mcp"),
-        }
-    )
-
-
-def get_available_ai_frameworks() -> ExtendedList[ExtendedString]:
-    """Get list of available AI frameworks.
-
-    Returns:
-        Extended list of framework names that are installed.
-    """
-    return extend_data([name for name, available in detect_ai_frameworks().items() if available])
 
 
 # === Connector Availability ===

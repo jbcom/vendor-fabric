@@ -23,8 +23,7 @@ tox -e build
 ```
 
 ``providers`` installs the optional provider SDK extras used by AWS, Google,
-GitHub, Slack, Vault, MCP, and LangChain unit tests. Live E2E tests remain
-opt-in.
+GitHub, Slack, Vault, and MCP unit tests. Live E2E tests remain opt-in.
 
 Live provider E2E tests are opt-in and may call paid provider APIs:
 

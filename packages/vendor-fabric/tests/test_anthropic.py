@@ -372,52 +372,6 @@ class TestAnthropicConnector:
         assert "raw_token" not in message
         assert "[REDACTED]" in message
 
-    def test_execute_agent_task_redacts_error_result(self):
-        """Agent task failures should not expose secrets in public result errors."""
-        import httpx
-
-        with patch.object(httpx, "Client"):
-            connector = AnthropicConnector(api_key="test-key")
-
-        with patch.object(
-            connector,
-            "create_message",
-            side_effect=AnthropicError("failed password=hunter2 Authorization: Bearer raw_token"),
-        ):
-            result = connector.execute_agent_task("summarize")
-
-        assert result.success is False
-        assert result.error is not None
-        assert "hunter2" not in result.error
-        assert "raw_token" not in result.error
-        assert "[REDACTED]" in result.error
-
-    def test_execute_agent_task_does_not_log_task_prompt(self, base_connector_kwargs):
-        """Agent task diagnostics should not expose raw prompt text."""
-        import httpx
-
-        with patch.object(httpx, "Client"):
-            connector = AnthropicConnector(api_key="test-key", **base_connector_kwargs)
-
-        with patch.object(
-            connector,
-            "create_message",
-            return_value=extend_data(
-                {
-                    "content": [{"type": "text", "text": "done"}],
-                    "usage": {"input_tokens": 2, "output_tokens": 1},
-                }
-            ),
-        ):
-            result = connector.execute_agent_task("rotate password=hunter2 for customer-prod")
-
-        logs = _logged_text(connector.logger)
-        assert result.success is True
-        assert "hunter2" not in logs
-        assert "customer-prod" not in logs
-        assert "Executing agent task with" in logs
-
-
 class TestClaudeModels:
     """Tests for Claude model constants.
 

@@ -54,14 +54,14 @@ def test_pytest_collection_modifyitems_skips_disabled_e2e() -> None:
     config = MagicMock()
     config.getoption.side_effect = lambda option: {"--e2e": False}[option]
     live_item = FakeItem({"e2e"})
-    crew_item = FakeItem({"crewai"})
-    langgraph_item = FakeItem({"langgraph"})
+    aws_item = FakeItem({"aws"})
+    vault_item = FakeItem({"vault"})
 
-    plugin.pytest_collection_modifyitems(config, [live_item, crew_item, langgraph_item])
+    plugin.pytest_collection_modifyitems(config, [live_item, aws_item, vault_item])
 
     assert [marker.kwargs["reason"] for marker in live_item.markers] == ["E2E tests disabled; pass --e2e to run them"]
-    assert crew_item.markers == []
-    assert langgraph_item.markers == []
+    assert aws_item.markers == []
+    assert vault_item.markers == []
 
 
 def test_fixture_helpers_return_connector_defaults(monkeypatch: Any) -> None:

@@ -4,12 +4,11 @@ from __future__ import annotations
 
 from importlib import util
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 import tomlkit
 
-from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString
+from extended_data.containers import ExtendedList, ExtendedString
 
 from vendor_fabric import _optional, registry
 
@@ -156,24 +155,6 @@ def test_connector_requirement_packages_map_to_connector_extras() -> None:
             assert _optional.PACKAGE_TO_EXTRA[requirement] == extra
 
 
-def test_get_crewai_tool_decorator_explains_crewai_extra(monkeypatch) -> None:
-    """Missing CrewAI reports the vendor-fabric CrewAI extra."""
-
-    def fake_import_module(name: str) -> object:
-        if name == "crewai.tools":
-            raise ImportError("No module named 'crewai'")
-        pytest.fail(f"unexpected import: {name}")
-
-    monkeypatch.setattr(_optional.importlib, "import_module", fake_import_module)
-
-    with pytest.raises(ImportError) as exc_info:
-        _optional.get_crewai_tool_decorator()
-
-    message = str(exc_info.value)
-    assert "crewai is required for CrewAI tools" in message
-    assert "vendor-fabric[crewai]" in message
-
-
 def test_sentence_transformers_explains_user_managed_install(monkeypatch) -> None:
     """Missing sentence-transformers reports the deliberate no-extra install policy."""
 
@@ -194,36 +175,98 @@ def test_sentence_transformers_explains_user_managed_install(monkeypatch) -> Non
     assert _optional.get_extra_for_package("sentence_transformers") is None
 
 
-def test_get_crewai_tool_decorator_returns_tool_decorator(monkeypatch) -> None:
-    """Installed CrewAI tool support is returned directly."""
-    sentinel = object()
+def test_secrets_sync_binding_reports_contract_install_guidance(monkeypatch) -> None:
+    """Missing SecretSync bindings point to the canonical binding package and import."""
 
-    monkeypatch.setattr(_optional.importlib, "import_module", lambda name: SimpleNamespace(tool=sentinel))
+    def fake_import_module(name: str) -> object:
+        if name == "secrets_sync":
+            raise ImportError("No module named 'secrets_sync'")
+        pytest.fail(f"unexpected import: {name}")
 
-    assert _optional.get_crewai_tool_decorator() is sentinel
+    monkeypatch.setattr(_optional.importlib, "import_module", fake_import_module)
+
+    with pytest.raises(ImportError) as exc_info:
+        _optional.require_extra("secrets_sync")
+
+    message = str(exc_info.value)
+    assert "secrets-sync-python-binding" in message
+    assert "secrets_sync import" in message
+    assert _optional.get_extra_for_package("secrets_sync") == "secrets-sync"
 
 
-def test_get_crewai_tool_decorator_rejects_incompatible_crewai(monkeypatch) -> None:
-    """A CrewAI install without crewai.tools.tool is treated as unsupported."""
-    monkeypatch.setattr(_optional.importlib, "import_module", lambda name: SimpleNamespace())
+def test_missing_unmapped_dependency_reports_package_named_extra(monkeypatch) -> None:
+    """Unmapped optional imports should still give a usable package-specific install command."""
 
-    with pytest.raises(ImportError, match="does not expose it"):
-        _optional.get_crewai_tool_decorator()
+    def fake_import_module(name: str) -> object:
+        raise ImportError(name)
+
+    monkeypatch.setattr(_optional.importlib, "import_module", fake_import_module)
+
+    with pytest.raises(ImportError) as exc_info:
+        _optional.require_extra("unmapped_package")
+
+    message = str(exc_info.value)
+    assert "unmapped_package" in message
+    assert "vendor-fabric[unmapped_package]" in message
 
 
-def test_framework_detection_returns_extended_metadata(monkeypatch) -> None:
-    """AI framework availability helpers return first-class extended values."""
-    available = {"langchain_core": True, "crewai": False, "strands": True, "mcp": False}
-    monkeypatch.setattr(_optional, "is_available", lambda package: available[package])
+def test_require_any_returns_first_available_package(monkeypatch) -> None:
+    """Fallback imports should return the first import that succeeds."""
+    module = object()
 
-    detected = _optional.detect_ai_frameworks()
-    frameworks = _optional.get_available_ai_frameworks()
+    def fake_import_module(name: str) -> object:
+        if name == "missing":
+            raise ImportError("missing")
+        if name == "present":
+            return module
+        pytest.fail(f"unexpected import: {name}")
 
-    assert isinstance(detected, ExtendedDict)
-    assert detected == {"langchain": True, "crewai": False, "strands": True, "mcp": False}
-    assert isinstance(frameworks, ExtendedList)
-    assert frameworks == ["langchain", "strands"]
-    assert isinstance(frameworks[0], ExtendedString)
+    monkeypatch.setattr(_optional.importlib, "import_module", fake_import_module)
+
+    assert _optional.require_any("missing", "present", extra="custom") is module
+
+
+def test_require_any_reports_all_missing_packages(monkeypatch) -> None:
+    """Fallback import failures should name every accepted package."""
+
+    def fake_import_module(name: str) -> object:
+        raise ImportError(name)
+
+    monkeypatch.setattr(_optional.importlib, "import_module", fake_import_module)
+
+    with pytest.raises(ImportError) as exc_info:
+        _optional.require_any("first", "second", extra="custom")
+
+    message = str(exc_info.value)
+    assert "first, second" in message
+    assert "vendor-fabric[custom]" in message
+
+
+def test_unknown_connector_optional_helpers_return_empty_values() -> None:
+    """Unknown connector names should not manufacture install metadata."""
+    assert _optional.get_extra_for_connector(" unknown ") is None
+    assert _optional.get_connector_requirements("unknown") == []
+    assert _optional.get_connector_install_command("unknown") is None
+    assert _optional.is_connector_available("unknown") is True
+
+
+def test_require_connector_raises_with_missing_dependency(monkeypatch) -> None:
+    """Connector requirement failures should include the missing packages and extra."""
+    monkeypatch.setattr(_optional, "get_missing_connector_requirements", lambda name: ExtendedList(["boto3"]))
+
+    with pytest.raises(ImportError) as exc_info:
+        _optional.require_connector("aws")
+
+    message = str(exc_info.value)
+    assert "Missing packages: boto3" in message
+    assert "vendor-fabric[aws]" in message
+
+
+def test_require_connector_returns_none_when_available(monkeypatch) -> None:
+    """Available connector requirements should not raise."""
+    monkeypatch.setattr(_optional, "get_missing_connector_requirements", lambda name: ExtendedList())
+
+    assert _optional.require_connector("aws") is None
 
 
 def test_available_connectors_returns_extended_names(monkeypatch) -> None:

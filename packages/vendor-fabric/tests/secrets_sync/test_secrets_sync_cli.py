@@ -1,4 +1,4 @@
-"""Tests for the native SecretSync CLI."""
+"""Tests for the SecretSync binding facade CLI."""
 
 from __future__ import annotations
 

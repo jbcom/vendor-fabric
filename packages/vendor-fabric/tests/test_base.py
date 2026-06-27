@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import builtins
 import threading
 
 from unittest.mock import MagicMock
@@ -14,7 +13,6 @@ from extended_data.containers import ExtendedData, ExtendedDict, ExtendedList, E
 from extended_data.io import DataFile
 from extended_data.logging import Logging
 from extended_data.workflows import DataWorkflow
-from pydantic import BaseModel, Field
 
 from vendor_fabric import base as base_module
 from vendor_fabric.base import ConnectorAPIError, ConnectorBase, RateLimitError
@@ -473,72 +471,6 @@ def test_extend_result_promotes_connector_payloads() -> None:
     assert data["service"]["name"].upper_first() == "Api"
 
 
-def test_handle_ai_tool_call_promotes_result_payloads() -> None:
-    """AI tool dispatch should expose extended containers, not raw dict payloads."""
-    connector = _connector()
-    connector.register_tool(lambda: {"status": "ok", "items": ["one"]}, name="status")
-
-    result = connector.handle_ai_tool_call("status", {})
-
-    assert isinstance(result, ExtendedDict)
-    assert isinstance(result["items"], ExtendedList)
-    assert result["status"].upper_first() == "Ok"
-
-
-def test_handle_ai_tool_call_redacts_unknown_tool_names() -> None:
-    """Unknown AI tool diagnostics should not echo secret-bearing names."""
-    connector = _connector()
-
-    with pytest.raises(ValueError) as exc_info:
-        connector.handle_ai_tool_call("password=hunter2 Authorization: Bearer raw_token", {})
-
-    message = str(exc_info.value)
-    assert "hunter2" not in message
-    assert "raw_token" not in message
-    assert "[REDACTED]" in message
-
-
-def test_get_ai_tool_definitions_promotes_definition_payloads() -> None:
-    """AI tool definition export should expose extended containers."""
-
-    class StatusArgs(BaseModel):
-        verbose: bool = Field(..., description="Include detailed status.")
-
-    def status(verbose: bool) -> dict[str, str]:
-        """Read service status."""
-        return {"status": "ok" if verbose else "quiet"}
-
-    connector = _connector()
-    connector.register_tool(status, name="status", schema=StatusArgs)
-
-    definitions = connector.get_ai_tool_definitions()
-
-    assert isinstance(definitions, ExtendedList)
-    assert isinstance(definitions[0], ExtendedDict)
-    assert definitions[0]["name"] == "status"
-    assert isinstance(definitions[0]["inputSchema"], ExtendedDict)
-    assert isinstance(definitions[0]["inputSchema"]["properties"]["verbose"]["description"], ExtendedString)
-
-
-def test_get_ai_tool_definitions_infers_schema_without_pydantic_model() -> None:
-    """AI tool definitions should infer basic schemas when no Pydantic model is registered."""
-
-    def scale(count: int, enabled: bool, note: str = "default") -> dict[str, object]:
-        return {"count": count, "enabled": enabled, "note": note}
-
-    connector = _connector()
-    connector.register_tool(scale, name="scale")
-
-    definitions = connector.get_ai_tool_definitions()
-
-    schema = definitions[0]["inputSchema"]
-    assert schema["required"] == ["count", "enabled"]
-    assert schema["properties"]["count"] == {"type": "number"}
-    assert schema["properties"]["enabled"] == {"type": "boolean"}
-    assert schema["properties"]["note"] == {"type": "string"}
-    assert definitions[0]["description"] == "Tool: scale"
-
-
 def test_request_uses_connector_max_retries(mocker) -> None:
     """Connector subclasses control the retry attempt count."""
 
@@ -646,37 +578,3 @@ def test_download_without_parent_directory_writes_file(tmp_path, monkeypatch: py
 
     assert size == len(b"artifact-bytes")
     assert (tmp_path / "artifact.bin").read_bytes() == b"artifact-bytes"
-
-
-def test_get_tools_exports_registered_langchain_tools() -> None:
-    """Base LangChain tool export should build StructuredTool objects when installed."""
-    pytest.importorskip("langchain_core.tools")
-
-    def status() -> dict[str, str]:
-        """Read status."""
-        return {"status": "ok"}
-
-    connector = _connector()
-    connector.register_tool(status, name="status")
-
-    tools = connector.get_tools()
-
-    assert len(tools) == 1
-    assert tools[0].name == "status"
-    assert tools[0].description == "Read status."
-
-
-def test_get_tools_requires_langchain_extra(monkeypatch) -> None:
-    """Base LangChain tool export should fail visibly when langchain-core is missing."""
-    connector = _connector()
-    original_import = builtins.__import__
-
-    def fake_import(name, *args, **kwargs):
-        if name == "langchain_core.tools":
-            raise ImportError("blocked langchain-core")
-        return original_import(name, *args, **kwargs)
-
-    monkeypatch.setattr(builtins, "__import__", fake_import)
-
-    with pytest.raises(ImportError, match=r"vendor-fabric\[langchain\]"):
-        connector.get_tools()

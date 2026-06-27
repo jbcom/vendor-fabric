@@ -1,4 +1,4 @@
-"""Native Python secret and file sync capabilities for vendor-fabric."""
+"""SecretSync facade and file sync capabilities for vendor-fabric."""
 
 from __future__ import annotations
 
@@ -33,12 +33,7 @@ from vendor_fabric.secrets_sync.stores import (
     StoreRegistry,
     VaultSecretStore,
 )
-from vendor_fabric.secrets_sync.tools import (
-    get_crewai_tools,
-    get_langchain_tools,
-    get_strands_tools,
-    get_tools,
-)
+from vendor_fabric.secrets_sync.tools import TOOL_DEFINITIONS
 
 
 if version is None:  # pragma: no cover
@@ -51,6 +46,7 @@ else:
 
 
 __all__ = [
+    "TOOL_DEFINITIONS",
     "AWSSecretsManagerStore",
     "ConfigInfo",
     "FileSyncResult",
@@ -69,10 +65,6 @@ __all__ = [
     "__version__",
     "dry_run",
     "get_config_info",
-    "get_crewai_tools",
-    "get_langchain_tools",
-    "get_strands_tools",
-    "get_tools",
     "merge",
     "run_pipeline",
     "sync",

@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from extended_data.containers import ExtendedDict, ExtendedString
+from extended_data.containers import ExtendedData, ExtendedDict, ExtendedList, ExtendedString
 
 from vendor_fabric.base import ConnectorBase
 from vendor_fabric.capabilities import capability
@@ -125,6 +125,22 @@ def test_vendor_data_preserves_wrapped_extended_data_behavior() -> None:
     assert set(data) == {"service", "count"}
     assert data.as_builtin()["count"] == 1
     assert data.cast(["alpha"]).as_builtin() == ["alpha"]
+
+
+def test_vendor_data_bypasses_extended_data_factory_and_stores_internal_value() -> None:
+    """VendorData must remain a facade around an internal ExtendedData value."""
+    data = VendorData({"service": "api"}, fabric=FakeFabric())
+
+    assert type(data) is VendorData
+    assert isinstance(data, ExtendedData)
+    assert isinstance(data.value, ExtendedDict)
+    assert data.as_builtin() == {"service": "api"}
+
+    data.cast(["agent-runtime-behavior-belongs-downstream"])
+
+    assert type(data) is VendorData
+    assert isinstance(data.value, ExtendedList)
+    assert data.as_builtin() == ["agent-runtime-behavior-belongs-downstream"]
 
 
 def test_vendor_data_open_tracks_active_provider_and_reuses_connector() -> None:

@@ -1,7 +1,6 @@
-"""Anthropic connector for Claude APIs and local agent execution.
+"""Anthropic connector for Claude APIs.
 
-This connector provides Python access to Anthropic's Claude AI, including
-the Claude Agent SDK for sandbox/local agent execution.
+This connector provides Python access to Anthropic's Claude API.
 
 Usage:
     from vendor_fabric.anthropic import AnthropicConnector
@@ -14,12 +13,6 @@ Usage:
         messages=[{"role": "user", "content": "Hello"}]
     )
 
-    # Agent execution (sandbox mode)
-    result = connector.execute_agent_task(
-        task="Implement feature X",
-        working_dir="/path/to/repo"
-    )
-
 Reference: https://docs.anthropic.com/claude/reference
 """
 
@@ -28,7 +21,6 @@ from __future__ import annotations
 import os
 
 from collections.abc import Mapping
-from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
 from typing import TYPE_CHECKING, Any
@@ -47,7 +39,6 @@ if TYPE_CHECKING:
     pass
 
 __all__ = [
-    "AgentExecutionResult",
     "AnthropicConnector",
     "AnthropicError",
     "ContentBlock",
@@ -182,17 +173,6 @@ class Model(BaseModel):
     created_at: datetime | None = Field(default=None, description="Creation timestamp")
 
 
-@dataclass
-class AgentExecutionResult:
-    """Result of agent task execution."""
-
-    success: bool
-    output: str
-    error: str | None = None
-    duration_seconds: float | None = None
-    tokens_used: int | None = None
-
-
 # =============================================================================
 # Connector
 # =============================================================================
@@ -201,8 +181,8 @@ class AgentExecutionResult:
 class AnthropicConnector(ConnectorBase):
     """Anthropic Claude API connector.
 
-    Provides HTTP client access to Anthropic's Claude AI API for message
-    generation and agent execution.
+    Provides HTTP client access to Anthropic's Claude API for message
+    generation and model metadata.
 
     Args:
         api_key: Anthropic API key. Defaults to ANTHROPIC_API_KEY env var.
@@ -528,80 +508,6 @@ class AnthropicConnector(ConnectorBase):
             self._handle_error(response)
 
         return self.extend_result(self._parse_model_response(response, Model, "get_model"))
-
-    # =========================================================================
-    # Agent Execution (Sandbox Mode)
-    # =========================================================================
-
-    def execute_agent_task(
-        self,
-        task: str,
-        working_dir: str | None = None,
-        model: str = "claude-sonnet-4-5-20250929",  # Claude Sonnet 4.5 - verified
-        max_tokens: int = DEFAULT_MAX_TOKENS,
-        system_prompt: str | None = None,
-    ) -> AgentExecutionResult:
-        """Execute a task using Claude as an agent (sandbox mode).
-
-        This is a simplified agent execution pattern for local single-agent
-        workflows. For richer orchestration, consider LangChain, LangGraph,
-        or another workflow runner that can manage tools and multi-turn state.
-
-        Args:
-            task: The task description.
-            working_dir: Working directory for execution context.
-            model: Model to use (default: claude-sonnet-4-5-20250929).
-            max_tokens: Maximum tokens per response.
-            system_prompt: Optional custom system prompt.
-
-        Returns:
-            AgentExecutionResult with execution details.
-
-        Note:
-            This is a simplified synchronous implementation. For production
-            agent workflows with tools and multi-turn conversations, consider
-            using an external workflow runner such as LangChain or LangGraph
-            with the tool builders in vendor_fabric.ai_tools.
-        """
-        import time
-
-        self.logger.info(f"Executing agent task with {len(task)} characters")
-        start_time = time.time()
-
-        default_system = """You are a helpful AI assistant that executes coding tasks.
-When given a task, analyze it carefully and provide a detailed response.
-If the task requires code changes, describe exactly what changes should be made."""
-
-        if working_dir:
-            default_system += f"\n\nWorking directory: {working_dir}"
-
-        try:
-            response = self.create_message(
-                model=model,
-                max_tokens=max_tokens,
-                system=system_prompt or default_system,
-                messages=[{"role": "user", "content": task}],
-            )
-
-            duration = time.time() - start_time
-            usage = response.get("usage", {})
-            total_tokens = int(usage.get("input_tokens", 0)) + int(usage.get("output_tokens", 0))
-
-            return AgentExecutionResult(
-                success=True,
-                output=self._message_text(response),
-                duration_seconds=duration,
-                tokens_used=total_tokens,
-            )
-
-        except AnthropicError as e:
-            duration = time.time() - start_time
-            return AgentExecutionResult(
-                success=False,
-                output="",
-                error=redact_sensitive_text(e),
-                duration_seconds=duration,
-            )
 
     # =========================================================================
     # Utility Methods

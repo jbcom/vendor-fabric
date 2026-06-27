@@ -570,28 +570,15 @@ class SlackConnector(ConnectorBase):
         return grouped
 
 
-from vendor_fabric.slack.tools import (
-    get_crewai_tools,
-    get_langchain_tools,
-    get_strands_tools,
-    get_tools,
-)
-
-
 __all__ = [
     # Exceptions
     "SlackAPIError",
     # Core connector
     "SlackConnector",
-    "get_crewai_tools",
     # Helper functions
     "get_divider",
     "get_field_context_message_blocks",
     "get_header_block",
     "get_key_value_blocks",
-    "get_langchain_tools",
     "get_rich_text_blocks",
-    "get_strands_tools",
-    # Tools
-    "get_tools",
 ]

@@ -200,8 +200,6 @@ PAYLOAD_METHODS = (
 )
 
 RAW_CONNECTOR_BOUNDARIES = {
-    ("packages/vendor-fabric/src/vendor_fabric/ai_tools.py", "build_langchain_tools"),
-    ("packages/vendor-fabric/src/vendor_fabric/base.py", "ConnectorBase.get_tools"),
     ("packages/vendor-fabric/src/vendor_fabric/surface.py", "connector_data_methods"),
     ("packages/vendor-fabric/src/vendor_fabric/zoom/__init__.py", "ZoomConnector.get_headers"),
 }
@@ -216,12 +214,9 @@ RAW_DATA_SURFACE_METHOD_NAMES = {
     "extend_result",
     "freeze_inputs",
     "get",
-    "get_ai_tool_definitions",
     "get_data",
     "get_input",
-    "get_tools",
     "get_workflow",
-    "handle_ai_tool_call",
     "merge_inputs",
     "patch",
     "patch_data",
@@ -249,11 +244,8 @@ RAW_DATA_SURFACE_METHODS = (
     ConnectorBase.download,
     ConnectorBase.extend_result,
     ConnectorBase.get,
-    ConnectorBase.get_ai_tool_definitions,
     ConnectorBase.get_data,
-    ConnectorBase.get_tools,
     ConnectorBase.get_workflow,
-    ConnectorBase.handle_ai_tool_call,
     ConnectorBase.patch,
     ConnectorBase.patch_data,
     ConnectorBase.patch_workflow,

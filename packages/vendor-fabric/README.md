@@ -12,6 +12,7 @@ Documentation: [jonbogaty.com/vendor-fabric](https://jonbogaty.com/vendor-fabric
 pip install vendor-fabric
 pip install "vendor-fabric[github,slack]"
 pip install "vendor-fabric[aws,google,vault,secrets-sync]"
+pip install secrets-sync-python-binding
 pip install pytest-vendor-fabric
 ```
 
@@ -37,16 +38,20 @@ github = fabric.get_connector("github")
 Unavailable features report install guidance instead of requiring callers to
 wrap their own imports.
 
-Native SecretSync support is part of `vendor-fabric`:
+SecretSync access is exposed through a binding-backed facade:
 
 ```python
-from vendor_fabric.secrets_sync import SecretSyncPipeline, SyncOptions
+from vendor_fabric.secrets_sync import SyncOptions, run_pipeline
 
-pipeline = SecretSyncPipeline.from_file("pipeline.yaml")
-result = pipeline.run_extended(SyncOptions(dry_run=True))
+result = run_pipeline("pipeline.yaml", SyncOptions(dry_run=True))
 
 print(result["success"])
 ```
+
+`vendor-fabric` consumes the `secrets_sync` import from
+`secrets-sync-python-binding` and shapes those payloads into Extended Data
+values. The canonical SecretSync runtime, CLI, pipeline semantics, and gopy
+binding source live in `jbcom/secrets-sync`.
 
 Connector and sync payloads are `ExtendedData` values at the boundary. Dict,
 list, string, tuple, and set payloads are concrete extended subclasses, so code

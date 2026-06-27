@@ -1,4 +1,4 @@
-"""Native Python SecretSync pipeline orchestration."""
+"""SecretSync binding facade and transitional Python pipeline helpers."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from extended_data.logging import Logging
 from extended_data.primitives.redaction import redact_sensitive_text
 
 from vendor_fabric.aws import AWSConnector
+from vendor_fabric.secrets_sync import _binding
 from vendor_fabric.secrets_sync.bundles import target_bundle_path
 from vendor_fabric.secrets_sync.deepmerge import deep_merge
 from vendor_fabric.secrets_sync.graph import Graph
@@ -42,7 +43,12 @@ from vendor_fabric.vault import VaultConnector
 
 
 class SecretSyncPipeline:
-    """Native Python pipeline for merging and syncing vendor secrets."""
+    """Transitional Python pipeline for tests and compatibility.
+
+    The canonical SecretSync execution engine lives in ``jbcom/secrets-sync``.
+    New public execution paths should use the gopy binding adapter in this
+    module rather than expanding this Python implementation.
+    """
 
     def __init__(
         self,
@@ -312,42 +318,33 @@ class SecretSyncPipeline:
 
 
 def validate_config(config_path: str) -> ExtendedDict:
-    """Validate a config file and return an Extended Data payload."""
-    try:
-        config = SecretSyncConfig.from_file(config_path)
-        config.validate()
-    except Exception as exc:
-        return extend_data({"valid": False, "message": redacted_error(exc), "config_path": config_path})
-    return extend_data({"valid": True, "message": "Configuration is valid", "config_path": config_path})
+    """Validate a config file through the SecretSync binding."""
+    return _binding.validate_config(config_path)
 
 
 def get_config_info(config_path: str) -> ExtendedDict:
-    """Return public configuration info for a config file."""
-    try:
-        config = SecretSyncConfig.from_file(config_path)
-        return config.info().to_dict()
-    except Exception as exc:
-        return ConfigInfo(error_message=redacted_error(exc)).to_dict()
+    """Return public configuration info through the SecretSync binding."""
+    return _binding.get_config_info(config_path)
 
 
 def run_pipeline(config_path: str, options: SyncOptions | None = None) -> ExtendedDict:
-    """Run a SecretSync config file and return an Extended Data payload."""
-    return SecretSyncPipeline.from_file(config_path).run(options).to_dict()
+    """Run a SecretSync config file through the SecretSync binding."""
+    return _binding.run_pipeline(config_path, options)
 
 
 def dry_run(config_path: str) -> ExtendedDict:
-    """Run a dry-run pipeline."""
-    return run_pipeline(config_path, SyncOptions(dry_run=True, compute_diff=True))
+    """Run a dry-run pipeline through the SecretSync binding."""
+    return _binding.dry_run(config_path)
 
 
 def merge(config_path: str, *, dry_run: bool = False) -> ExtendedDict:
-    """Run only the merge phase."""
-    return run_pipeline(config_path, SyncOptions(operation=SyncOperation.MERGE, dry_run=dry_run, compute_diff=dry_run))
+    """Run only the merge phase through the SecretSync binding."""
+    return _binding.merge(config_path, dry_run=dry_run)
 
 
 def sync(config_path: str, *, dry_run: bool = False) -> ExtendedDict:
-    """Run only the sync phase."""
-    return run_pipeline(config_path, SyncOptions(operation=SyncOperation.SYNC, dry_run=dry_run, compute_diff=dry_run))
+    """Run only the sync phase through the SecretSync binding."""
+    return _binding.sync(config_path, dry_run=dry_run)
 
 
 def diff_trees(target: str, phase: str, before: Mapping[str, Any], after: Mapping[str, Any]) -> TargetDiff:

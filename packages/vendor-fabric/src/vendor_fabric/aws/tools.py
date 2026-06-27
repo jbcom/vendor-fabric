@@ -1,14 +1,7 @@
-"""AI framework tools for AWS operations.
+"""Provider capability functions for AWS operations.
 
-This module provides tools for AWS operations that work with multiple
-AI agent frameworks. The core functions are framework-agnostic Python functions,
-with native wrappers for each supported framework.
-
-Supported Frameworks:
-- LangChain (via langchain-core) - get_langchain_tools()
-- CrewAI - get_crewai_tools()
-- AWS Strands - get_strands_tools() (plain functions)
-- Auto-detection - get_tools() picks the best available
+This module exposes framework-agnostic Python functions plus tool metadata.
+Agent framework wrappers belong in agentic-fabric.
 
 Tools provided:
 - aws_get_caller_account_id: Get current AWS account ID
@@ -20,9 +13,6 @@ Tools provided:
 - aws_list_secrets: List secrets from Secrets Manager
 - aws_get_secret: Get a secret value
 
-Usage:
-    from vendor_fabric.aws.tools import get_tools
-    tools = get_tools()  # Returns best format for installed framework
 """
 
 from __future__ import annotations
@@ -32,8 +22,6 @@ from typing import Any
 
 from extended_data.containers import ExtendedDict, ExtendedList, extend_data
 from pydantic import BaseModel, Field
-
-from vendor_fabric.ai_tools import raise_unknown_tool_framework
 
 
 # =============================================================================
@@ -335,62 +323,6 @@ TOOL_DEFINITIONS = [
 
 
 # =============================================================================
-# Framework-Specific Getters
-# =============================================================================
-
-
-def get_langchain_tools() -> list[Any]:
-    """Get all AWS tools as LangChain StructuredTools."""
-    from vendor_fabric.ai_tools import build_langchain_tools
-
-    return build_langchain_tools(TOOL_DEFINITIONS)
-
-
-def get_crewai_tools() -> list[Any]:
-    """Get all AWS tools as CrewAI tools."""
-    from vendor_fabric._optional import get_crewai_tool_decorator
-
-    crewai_tool = get_crewai_tool_decorator()
-
-    tools = []
-    for defn in TOOL_DEFINITIONS:
-        wrapped = crewai_tool(defn["name"])(defn["func"])
-        wrapped.description = defn["description"]
-        schema = defn.get("schema") or defn.get("args_schema")
-        if schema:
-            wrapped.args_schema = schema
-        tools.append(wrapped)
-
-    return tools
-
-
-def get_strands_tools() -> list[Any]:
-    """Get all AWS tools as plain Python functions for AWS Strands."""
-    return [defn["func"] for defn in TOOL_DEFINITIONS]
-
-
-def get_tools(framework: str = "auto") -> list[Any]:
-    """Get AWS tools for the specified or auto-detected framework."""
-    from vendor_fabric._optional import is_available
-
-    if framework == "auto":
-        if is_available("crewai"):
-            return get_crewai_tools()
-        if is_available("langchain_core"):
-            return get_langchain_tools()
-        return get_strands_tools()
-
-    if framework == "langchain":
-        return get_langchain_tools()
-    if framework == "crewai":
-        return get_crewai_tools()
-    if framework == "strands":
-        return get_strands_tools()
-
-    return raise_unknown_tool_framework(framework)
-
-
-# =============================================================================
 # Exports
 # =============================================================================
 
@@ -399,12 +331,8 @@ __all__ = [
     "TOOL_DEFINITIONS",
     # Raw functions
     "get_caller_account_id",
-    "get_crewai_tools",
-    "get_langchain_tools",
     "get_secret",
-    "get_strands_tools",
     # Framework-specific getters
-    "get_tools",
     "list_accounts",
     "list_s3_buckets",
     "list_s3_objects",

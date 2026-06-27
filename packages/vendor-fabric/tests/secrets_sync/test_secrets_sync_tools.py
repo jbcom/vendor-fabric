@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import importlib
-
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -16,20 +14,11 @@ from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString,
 
 from vendor_fabric.secrets_sync import ConfigInfo, SyncOptions, SyncResult
 from vendor_fabric.secrets_sync.tools import (
-    TOOL_DEFINITIONS,
     RunPipelineSchema,
-    build_langchain_tools,
     dry_run,
     get_config_info,
-    get_crewai_tool_decorator,
-    get_crewai_tools,
-    get_langchain_tools,
     get_sources,
-    get_strands_tools,
     get_targets,
-    get_tools,
-    is_available,
-    raise_unknown_tool_framework,
     run_pipeline,
     validate_config,
 )
@@ -216,125 +205,3 @@ def test_tools_redact_errors_when_listing_targets_or_sources() -> None:
     assert "raw" not in sources["error_message"]
     assert "[REDACTED]" in targets["error_message"]
     assert "[REDACTED]" in sources["error_message"]
-
-
-def test_is_available_reports_importability(monkeypatch: pytest.MonkeyPatch) -> None:
-    """is_available should translate import errors into false."""
-    real_import_module = importlib.import_module
-
-    def fake_import_module(name: str):
-        if name == "missing_package":
-            raise ImportError(name)
-        return real_import_module("json")
-
-    monkeypatch.setattr("vendor_fabric.secrets_sync.tools.importlib.import_module", fake_import_module)
-
-    assert is_available("json") is True
-    assert is_available("missing_package") is False
-
-
-def test_build_langchain_tools_requires_langchain(monkeypatch: pytest.MonkeyPatch) -> None:
-    """LangChain tool building should provide install guidance when unavailable."""
-
-    def missing_langchain(name: str):
-        if name == "langchain_core.tools":
-            raise ImportError(name)
-        return importlib.import_module(name)
-
-    monkeypatch.setattr("vendor_fabric.secrets_sync.tools.importlib.import_module", missing_langchain)
-
-    with pytest.raises(ImportError, match=r"vendor-fabric\[langchain,secrets-sync\]"):
-        build_langchain_tools(TOOL_DEFINITIONS)
-
-
-def test_get_crewai_tool_decorator_requires_crewai(monkeypatch: pytest.MonkeyPatch) -> None:
-    """CrewAI imports should fail with actionable install guidance."""
-
-    def missing_crewai(name: str):
-        if name == "crewai.tools":
-            raise ImportError(name)
-        return importlib.import_module(name)
-
-    monkeypatch.setattr("vendor_fabric.secrets_sync.tools.importlib.import_module", missing_crewai)
-
-    with pytest.raises(ImportError, match=r"vendor-fabric\[crewai,secrets-sync\]"):
-        get_crewai_tool_decorator()
-
-
-def test_get_crewai_tool_decorator_requires_tool_attribute(monkeypatch: pytest.MonkeyPatch) -> None:
-    """CrewAI modules without a tool decorator should fail clearly."""
-    monkeypatch.setattr(
-        "vendor_fabric.secrets_sync.tools.importlib.import_module",
-        lambda name: MagicMock(spec=[]),
-    )
-
-    with pytest.raises(ImportError, match="does not expose it"):
-        get_crewai_tool_decorator()
-
-
-def test_crewai_tools_attach_description_and_schema(monkeypatch: pytest.MonkeyPatch) -> None:
-    """CrewAI wrappers should retain description and args schema metadata."""
-
-    class WrappedTool:
-        pass
-
-    def fake_tool(name: str):
-        def decorate(func):
-            wrapped = WrappedTool()
-            wrapped.name = name
-            wrapped.func = func
-            return wrapped
-
-        return decorate
-
-    monkeypatch.setattr("vendor_fabric.secrets_sync.tools.get_crewai_tool_decorator", lambda: fake_tool)
-
-    tools = get_crewai_tools()
-
-    assert len(tools) == len(TOOL_DEFINITIONS)
-    assert tools[0].name == TOOL_DEFINITIONS[0]["name"]
-    assert tools[0].description == TOOL_DEFINITIONS[0]["description"]
-    assert tools[0].args_schema is TOOL_DEFINITIONS[0]["schema"]
-
-
-def test_framework_tool_getters_dispatch(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Tool factories should dispatch explicit and auto-selected frameworks."""
-    langchain_tools = [object()]
-    crewai_tools = [object()]
-    strands_tools = get_strands_tools()
-
-    monkeypatch.setattr("vendor_fabric.secrets_sync.tools.get_langchain_tools", lambda: langchain_tools)
-    monkeypatch.setattr("vendor_fabric.secrets_sync.tools.get_crewai_tools", lambda: crewai_tools)
-    monkeypatch.setattr("vendor_fabric.secrets_sync.tools.is_available", lambda package: package == "crewai")
-
-    assert get_tools("strands") == strands_tools
-    assert get_tools("langchain") is langchain_tools
-    assert get_tools("crewai") is crewai_tools
-    assert get_tools("auto") is crewai_tools
-
-    monkeypatch.setattr("vendor_fabric.secrets_sync.tools.is_available", lambda package: package == "langchain_core")
-    assert get_tools("auto") is langchain_tools
-
-    monkeypatch.setattr("vendor_fabric.secrets_sync.tools.is_available", lambda package: False)
-    assert get_tools("auto") == strands_tools
-
-
-def test_unknown_framework_errors_are_redacted() -> None:
-    """Unknown framework diagnostics should not echo secret-looking values."""
-    with pytest.raises(ValueError) as exc_info:
-        raise_unknown_tool_framework("password=hunter2 Authorization: Bearer raw")
-
-    message = str(exc_info.value)
-    assert "hunter2" not in message
-    assert "raw" not in message
-    assert "[REDACTED]" in message
-
-
-def test_get_langchain_tools_delegates_to_builder(monkeypatch: pytest.MonkeyPatch) -> None:
-    """get_langchain_tools should pass public definitions to the builder."""
-    expected = [object()]
-    build = MagicMock(return_value=expected)
-    monkeypatch.setattr("vendor_fabric.secrets_sync.tools.build_langchain_tools", build)
-
-    assert get_langchain_tools() is expected
-    build.assert_called_once_with(TOOL_DEFINITIONS)

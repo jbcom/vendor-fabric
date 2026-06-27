@@ -2,8 +2,6 @@
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString
 
 
@@ -289,60 +287,3 @@ class TestGetMeeting:
         assert result["topic"] == "Team Meeting"
         assert result["host_email"] == "host@example.com"
         mock_connector.get_meeting.assert_called_once_with("111")
-
-
-class TestGetTools:
-    """Test framework getters."""
-
-    def test_get_strands_tools(self):
-        """Test getting Strands tools (plain functions)."""
-        from vendor_fabric.zoom.tools import get_strands_tools
-
-        tools = get_strands_tools()
-        assert len(tools) == 4
-        assert all(callable(t) for t in tools)
-
-    def test_get_tools_strands(self):
-        """Test get_tools with strands framework."""
-        from vendor_fabric.zoom.tools import get_tools
-
-        tools = get_tools(framework="strands")
-        assert len(tools) == 4
-        assert all(callable(t) for t in tools)
-
-    def test_get_tools_rejects_functions_alias(self):
-        """Plain-function tools should use the canonical strands framework name."""
-        from vendor_fabric.zoom.tools import get_tools
-
-        with pytest.raises(ValueError, match="Unknown framework"):
-            get_tools(framework="functions")
-
-    def test_get_tools_invalid_framework(self):
-        """Test get_tools with invalid framework raises error."""
-        from vendor_fabric.zoom.tools import get_tools
-
-        with pytest.raises(ValueError, match="Unknown framework"):
-            get_tools(framework="invalid")
-
-    def test_get_tools_auto_default(self):
-        """Test get_tools with auto detection returns something."""
-        from vendor_fabric.zoom.tools import get_tools
-
-        tools = get_tools(framework="auto")
-        assert len(tools) == 4
-
-    def test_get_langchain_tools_import_error(self):
-        """Test that get_langchain_tools raises helpful error when langchain not installed."""
-        from vendor_fabric.zoom.tools import get_langchain_tools
-
-        with patch.dict("sys.modules", {"langchain_core": None, "langchain_core.tools": None}):
-            with pytest.raises(ImportError, match="langchain-core is required"):
-                get_langchain_tools()
-
-    def test_get_crewai_tools_import_error(self):
-        """Test that get_crewai_tools raises helpful error when crewai not installed."""
-        from vendor_fabric.zoom.tools import get_crewai_tools
-
-        with patch.dict("sys.modules", {"crewai": None, "crewai.tools": None}):
-            with pytest.raises(ImportError, match="crewai is required"):
-                get_crewai_tools()

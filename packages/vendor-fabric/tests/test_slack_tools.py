@@ -253,32 +253,3 @@ class TestGetChannelHistory:
 
         assert isinstance(result, ExtendedList)
         assert len(result) == 0
-
-
-class TestGetTools:
-    """Tests for get_tools function."""
-
-    def test_get_strands_tools(self, mock_slack_sdk):
-        """Test getting tools as plain functions."""
-        from vendor_fabric.slack.tools import get_strands_tools
-
-        tools = get_strands_tools()
-        assert len(tools) > 0
-        assert all(callable(t) for t in tools)
-
-    def test_get_tools_auto_fallback(self, mock_slack_sdk):
-        """Test auto-detection falls back to strands/functions."""
-        from vendor_fabric.slack.tools import get_tools
-
-        with patch("vendor_fabric._optional.is_available", return_value=False):
-            tools = get_tools(framework="auto")
-
-        assert len(tools) > 0
-        assert all(callable(t) for t in tools)
-
-    def test_get_tools_invalid_framework(self, mock_slack_sdk):
-        """Test invalid framework raises error."""
-        from vendor_fabric.slack.tools import get_tools
-
-        with pytest.raises(ValueError, match="Unknown framework"):
-            get_tools(framework="invalid")

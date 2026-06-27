@@ -1,8 +1,7 @@
-"""AI framework tools for Meshy AI 3D generation.
+"""Provider capability functions for Meshy AI 3D generation.
 
-This module provides tools for Meshy AI operations that work with multiple
-AI agent frameworks. The core functions are framework-agnostic Python functions,
-with native wrappers for each supported framework.
+This module exposes framework-agnostic Python functions plus tool metadata.
+Agent framework wrappers belong in agentic-fabric.
 """
 
 from __future__ import annotations
@@ -12,8 +11,6 @@ from typing import Any
 
 from extended_data.containers import ExtendedDict, extend_data
 from pydantic import BaseModel, Field
-
-from vendor_fabric.ai_tools import raise_unknown_tool_framework
 
 
 # =============================================================================
@@ -477,10 +474,10 @@ def get_animation(animation_id: int) -> ExtendedDict:
 
 
 # =============================================================================
-# Tool Metadata (shared across frameworks)
+# Tool Metadata
 # =============================================================================
 
-# Tool definitions with metadata for all frameworks
+# Tool definitions with framework-agnostic metadata.
 TOOL_DEFINITIONS = [
     {
         "func": text3d_generate,
@@ -562,113 +559,6 @@ TOOL_DEFINITIONS = [
 
 
 # =============================================================================
-# Framework-Specific Tool Getters
-# =============================================================================
-
-
-def get_langchain_tools() -> list[Any]:
-    """Get all Meshy tools as LangChain StructuredTools.
-
-    Returns:
-        List of LangChain StructuredTool objects for Meshy operations.
-
-    Raises:
-        ImportError: If langchain-core is not installed.
-    """
-    from vendor_fabric.ai_tools import build_langchain_tools
-
-    return build_langchain_tools(TOOL_DEFINITIONS)
-
-
-def get_crewai_tools() -> list[Any]:
-    """Get all Meshy tools as CrewAI tools.
-
-    Returns:
-        List of CrewAI BaseTool objects for Meshy operations.
-
-    Raises:
-        ImportError: If crewai is not installed.
-    """
-    from vendor_fabric._optional import get_crewai_tool_decorator
-
-    crewai_tool = get_crewai_tool_decorator()
-
-    tools = []
-    for defn in TOOL_DEFINITIONS:
-        # Apply @tool decorator with the function name
-        wrapped = crewai_tool(defn["name"])(defn["func"])
-        wrapped.description = defn["description"]
-        schema = defn.get("schema") or defn.get("args_schema")
-        if schema:
-            wrapped.args_schema = schema
-        tools.append(wrapped)
-
-    return tools
-
-
-def get_strands_tools() -> list[Any]:
-    """Get all Meshy tools as plain Python functions for AWS Strands.
-
-    Strands agents work with plain Python functions that have type hints.
-    The functions are returned as-is since they already have proper signatures.
-
-    Returns:
-        List of callable functions for Strands agents.
-    """
-    return [defn["func"] for defn in TOOL_DEFINITIONS]
-
-
-def get_tools(framework: str = "auto") -> list[Any]:
-    """Get Meshy tools for the specified or auto-detected framework.
-
-    This is the recommended entry point - it auto-detects which AI framework
-    is installed and returns tools in the appropriate format.
-
-    Args:
-        framework: Framework to use. Options:
-            - "auto" (default): Auto-detect based on installed packages
-            - "langchain": Force LangChain StructuredTools
-            - "crewai": Force CrewAI tools
-            - "strands": Force plain functions for Strands
-
-    Returns:
-        List of tools in the appropriate format for the framework.
-
-    Raises:
-        ImportError: If the requested framework is not installed.
-        ValueError: If an unknown framework is specified.
-
-    Example:
-        # Auto-detect (recommended)
-        tools = get_tools()
-
-        # Force specific framework
-        tools = get_tools("langchain")
-        tools = get_tools("crewai")
-    """
-    from vendor_fabric._optional import is_available
-
-    if framework == "auto":
-        # Priority: CrewAI > LangChain > Strands
-        # (CrewAI first since it's more opinionated about tool format)
-        if is_available("crewai"):
-            return get_crewai_tools()
-        if is_available("langchain_core"):
-            return get_langchain_tools()
-        # Fall back to plain functions (always works)
-        return get_strands_tools()
-
-    if framework == "langchain":
-        return get_langchain_tools()
-    if framework == "crewai":
-        return get_crewai_tools()
-    if framework == "strands":
-        return get_strands_tools()
-
-    return raise_unknown_tool_framework(framework)
-
-
-# =============================================================================
 # Exports
 # =============================================================================
 
@@ -678,11 +568,7 @@ __all__ = [
     "apply_animation",
     "check_task_status",
     "get_animation",
-    "get_crewai_tools",
-    "get_langchain_tools",
-    "get_strands_tools",
     # Framework-specific getters
-    "get_tools",
     "image3d_generate",
     "list_animations",
     "retexture_model",

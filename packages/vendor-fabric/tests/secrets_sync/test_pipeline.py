@@ -1,4 +1,4 @@
-"""Tests for native vendor-fabric SecretSync pipelines."""
+"""Tests for transitional SecretSync Python helpers and binding delegation."""
 
 from __future__ import annotations
 
@@ -121,27 +121,25 @@ def test_sync_mapping_to_file_uses_extended_data_sync_primitive(tmp_path: Path) 
     assert (tmp_path / "payload.json").exists()
 
 
-def test_pipeline_from_file_and_module_wrappers_delegate(tmp_path: Path) -> None:
-    """Module-level wrappers should create a pipeline and pass expected options."""
+def test_module_wrappers_delegate_to_binding_adapter(tmp_path: Path) -> None:
+    """Module-level wrappers should delegate execution to the SecretSync binding adapter."""
     config_path = tmp_path / "config.yaml"
     config_path.write_text("targets:\n  prod:\n    imports: []\n", encoding="utf-8")
-    pipeline = MagicMock()
-    pipeline.run.return_value.to_dict.return_value = {"success": True}
 
-    with patch.object(SecretSyncPipeline, "from_file", return_value=pipeline) as from_file:
+    with (
+        patch("vendor_fabric.secrets_sync.pipeline._binding.run_pipeline", return_value={"success": True}) as binding_run,
+        patch("vendor_fabric.secrets_sync.pipeline._binding.merge", return_value={"success": True}) as binding_merge,
+        patch("vendor_fabric.secrets_sync.pipeline._binding.sync", return_value={"success": True}) as binding_sync,
+    ):
         assert run_pipeline(str(config_path)) == {"success": True}
         dry_merge = merge(str(config_path), dry_run=True)
         dry_sync = sync(str(config_path), dry_run=True)
 
     assert dry_merge == {"success": True}
     assert dry_sync == {"success": True}
-    assert from_file.call_count == 3
-    merge_options = pipeline.run.call_args_list[1].args[0]
-    sync_options = pipeline.run.call_args_list[2].args[0]
-    assert merge_options.operation is SyncOperation.MERGE
-    assert merge_options.dry_run is True
-    assert merge_options.compute_diff is True
-    assert sync_options.operation is SyncOperation.SYNC
+    binding_run.assert_called_once_with(str(config_path), None)
+    binding_merge.assert_called_once_with(str(config_path), dry_run=True)
+    binding_sync.assert_called_once_with(str(config_path), dry_run=True)
 
 
 def test_validate_and_info_wrappers_report_failures(tmp_path: Path) -> None:
@@ -149,8 +147,18 @@ def test_validate_and_info_wrappers_report_failures(tmp_path: Path) -> None:
     config_path = tmp_path / "config.yaml"
     config_path.write_text("- not\n- mapping\n", encoding="utf-8")
 
-    validation = validate_config(str(config_path))
-    info = get_config_info(str(config_path))
+    with (
+        patch(
+            "vendor_fabric.secrets_sync.pipeline._binding.validate_config",
+            return_value={"valid": False, "message": "SecretSync config must be a mapping"},
+        ),
+        patch(
+            "vendor_fabric.secrets_sync.pipeline._binding.get_config_info",
+            return_value={"valid": False, "error_message": "SecretSync config must be a mapping"},
+        ),
+    ):
+        validation = validate_config(str(config_path))
+        info = get_config_info(str(config_path))
 
     assert validation["valid"] is False
     assert "must be a mapping" in validation["message"]

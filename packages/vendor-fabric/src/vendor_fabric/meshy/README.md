@@ -3,7 +3,7 @@
 Meshy support is part of `vendor-fabric` and lives under
 `vendor_fabric.meshy`. It provides functional API helpers, a
 `MeshyConnector` fabric integration, job orchestration, webhook handling, AI tool
-adapters, and an MCP server.
+capability metadata, and an MCP server.
 
 ## Install
 
@@ -103,14 +103,13 @@ Base64, and `sha256=`-prefixed values are accepted. If you do not configure a
 secret, `verify_signature()` returns `False` instead of accepting unsigned
 payloads.
 
-## Tools And MCP
+## Capability Metadata And MCP
 
 ```python
-from vendor_fabric.meshy.tools import get_langchain_tools, get_strands_tools, get_tools
+from vendor_fabric.meshy.tools import TOOL_DEFINITIONS, text3d_generate
 
-tool_definitions = get_tools()
-langchain_tools = get_langchain_tools()
-strands_tools = get_strands_tools()
+tool_names = [definition["name"] for definition in TOOL_DEFINITIONS]
+result = text3d_generate("game-ready low-poly wooden crate with metal bands")
 ```
 
 Run the Meshy MCP server with:

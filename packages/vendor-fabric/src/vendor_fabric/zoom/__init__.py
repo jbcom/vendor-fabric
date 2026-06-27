@@ -281,20 +281,7 @@ class ZoomConnector(ConnectorBase):
             raise RuntimeError(_zoom_error("Failed to get Zoom meeting", exc, meeting_id)) from None
 
 
-from vendor_fabric.zoom.tools import (
-    get_crewai_tools,
-    get_langchain_tools,
-    get_strands_tools,
-    get_tools,
-)
-
-
 __all__ = [
     # Core connector
     "ZoomConnector",
-    "get_crewai_tools",
-    "get_langchain_tools",
-    "get_strands_tools",
-    # Tools
-    "get_tools",
 ]

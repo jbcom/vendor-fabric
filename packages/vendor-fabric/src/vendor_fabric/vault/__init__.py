@@ -573,20 +573,7 @@ class VaultConnector(ConnectorBase):
         return self.extend_result(credentials)
 
 
-from vendor_fabric.vault.tools import (
-    get_crewai_tools,
-    get_langchain_tools,
-    get_strands_tools,
-    get_tools,
-)
-
-
 __all__ = [
     # Core connector
     "VaultConnector",
-    "get_crewai_tools",
-    "get_langchain_tools",
-    "get_strands_tools",
-    # Tools
-    "get_tools",
 ]

@@ -8,8 +8,8 @@ payloads are promoted through the `ExtendedData` root at connector boundaries.
 Callers can use `ExtendedDict`, `ExtendedList`, and `ExtendedString` methods on
 decoded API, file, and SDK-shaped results, then call `to_builtin()` only when a
 plain Python payload is needed for serialization or SDK handoff.
-The direct AI-tool functions follow that same payload contract; only the
-framework factory helpers return plain framework tool objects.
+Provider capability functions follow that same payload contract. Agent runtime
+wrappers and framework-specific tool objects belong in `agentic-fabric`.
 
 ## Quick Start
 
@@ -21,9 +21,6 @@ pip install "vendor-fabric[all]"
 
 # Or install specific connectors
 pip install "vendor-fabric[aws,google,meshy]"
-
-# For AI framework integration
-pip install "vendor-fabric[langchain]"
 
 # For the Meshy MCP server
 pip install "vendor-fabric[meshy,mcp]"
@@ -37,10 +34,9 @@ pip install "vendor-fabric[meshy,mcp]"
 - [`basic_google.py`](basic_google.py) - Google Vendor fabric with Workspace and Billing
 - [`basic_meshy.py`](basic_meshy.py) - Meshy AI 3D generation
 
-### AI Agent Integration
+### Provider Capability Integration
 
-- [`langchain_tools.py`](langchain_tools.py) - Using Meshy tools with LangChain agents
-- [`mcp_server.py`](mcp_server.py) - Running the MCP server for Claude integration
+- [`mcp_server.py`](mcp_server.py) - Running the Meshy MCP server as a provider capability transport
 
 ## Environment Variables
 
@@ -57,8 +53,6 @@ export GOOGLE_SERVICE_ACCOUNT='{"type": "service_account", ...}'
 # Meshy AI
 export MESHY_API_KEY="msy_your_key"
 
-# For LangChain examples
-export ANTHROPIC_API_KEY="sk-ant-..."
 ```
 
 ## Running Examples

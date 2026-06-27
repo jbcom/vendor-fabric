@@ -3,9 +3,9 @@ Ownership Map
 
 ``vendor-fabric`` owns external API connector integrations and
 vendor-backed sync capabilities for the Extended Data stack. Runtime
-agent orchestration belongs in ``agentic-fabric``; this repository only
-owns provider-backed tools that ``agentic-fabric`` can call through
-``VendorData``.
+agent orchestration belongs in ``agentic-fabric``; this repository owns
+provider-backed capability functions and metadata that ``agentic-fabric``
+can call through ``VendorData``.
 
 In This Package
 ---------------
@@ -28,13 +28,12 @@ In This Package
 | Vault, Zoom, Anthropic, Cursor,   |                                   |
 | and Meshy clients                 |                                   |
 +-----------------------------------+-----------------------------------+
-| Vendor tool adapters              | ``vendor_fabric.*.tools``         |
+| Provider capability functions     | ``vendor_fabric.*.tools``         |
 +-----------------------------------+-----------------------------------+
-| Native vendor secret and file     | ``vendor_fabric.secrets_sync``    |
-| sync                              |                                   |
+| SecretSync Python binding facade  | ``vendor_fabric.secrets_sync``    |
 +-----------------------------------+-----------------------------------+
-| Provider-backed tool capabilities | ``vendor_fabric.*.tools``         |
-| for agents                        |                                   |
+| Provider-backed capability        | ``vendor_fabric.*.tools``         |
+| metadata for downstream runtimes  |                                   |
 +-----------------------------------+-----------------------------------+
 
 Outside This Package
@@ -59,7 +58,10 @@ Outside This Package
 | retained              |                          |                                                                      |
 +-----------------------+--------------------------+----------------------------------------------------------------------+
 
-SecretSync for Python belongs here because its useful Python shape is a
-vendor-backed sync capability over Vault, AWS, S3, and future providers.
-Agent framework packages belong in ``agentic-fabric``; they compose
-vendor capabilities rather than being provider implementations.
+SecretSync pipeline semantics, the Go runtime, CLI, GitHub Action, and
+gopy binding source belong in ``jbcom/secrets-sync``. The Python facade
+belongs here because its useful Python shape is a vendor-backed sync
+capability over Vault, AWS, S3, and future providers. Agent framework
+packages, runtime adapters, and framework tool factories belong in
+``agentic-fabric``; they compose vendor capabilities rather than being
+provider implementations.

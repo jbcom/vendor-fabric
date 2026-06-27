@@ -6,7 +6,6 @@ in the package connector fabric. It extends InputProvider and provides:
 1. Credential loading from env vars, stdin, or direct inputs
 2. HTTP client with retries and rate limiting
 3. MCP server scaffolding
-4. LangChain tool registration helpers
 
 ALL connectors should extend this class instead of InputProvider directly.
 
@@ -53,14 +52,10 @@ from vendor_fabric.capabilities import CapabilityProviderMixin
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
     from types import TracebackType
 
-    from extended_data.containers import ExtendedDict, ExtendedList
     from extended_data.io import DataFile
     from extended_data.workflows import DataWorkflow
-    from langchain_core.tools import StructuredTool
-    from pydantic import BaseModel
 
 
 class RateLimitError(Exception):
@@ -84,7 +79,6 @@ class ConnectorBase(CapabilityProviderMixin, InputProvider, ABC):
     - Automatic retries with exponential backoff
     - Rate limiting
     - MCP tool registration scaffolding
-    - LangChain tool helpers
 
     Class Attributes:
         BASE_URL: API base URL (required for HTTP connectors)
@@ -98,7 +92,6 @@ class ConnectorBase(CapabilityProviderMixin, InputProvider, ABC):
     Instance Attributes:
         logger: Logger instance
         _client: HTTP client (lazy-initialized)
-        _tools: Registered LangChain tools
     """
 
     # Class-level configuration - override in subclasses
@@ -153,11 +146,6 @@ class ConnectorBase(CapabilityProviderMixin, InputProvider, ABC):
 
         # Lazy-initialized HTTP client
         self._client: httpx.Client | None = None
-
-        # Tool registry for LangChain/MCP
-        self._tools: list[StructuredTool] = []
-        self._tool_functions: dict[str, Callable[..., Any]] = {}
-        self._tool_schemas: dict[str, builtins.type[BaseModel]] = {}
 
     @property
     def api_key(self) -> str:
@@ -630,135 +618,3 @@ class ConnectorBase(CapabilityProviderMixin, InputProvider, ABC):
             f.write(response.content)
 
         return len(response.content)
-
-    # -------------------------------------------------------------------------
-    # LangChain Tool Registration
-    # -------------------------------------------------------------------------
-
-    def register_tool(
-        self,
-        func: Callable[..., Any],
-        name: str | None = None,
-        description: str | None = None,
-        schema: builtins.type[BaseModel] | None = None,
-    ) -> None:
-        """Register a function as a LangChain tool.
-
-        Args:
-            func: The function to register
-            name: Tool name (defaults to function name)
-            description: Tool description (defaults to docstring)
-            schema: Pydantic model for input schema.
-        """
-        tool_name = name or func.__name__
-        self._tool_functions[tool_name] = func
-        if schema:
-            self._tool_schemas[tool_name] = schema
-
-    def get_tools(self) -> list[StructuredTool]:
-        """Get all registered tools as LangChain StructuredTools.
-
-        Returns:
-            List of StructuredTool instances
-        """
-        try:
-            from langchain_core.tools import StructuredTool
-        except ImportError as e:
-            msg = (
-                "langchain-core is required for LangChain tools. Install with: pip install vendor-fabric[langchain]"
-            )
-            raise ImportError(msg) from e
-
-        tools = []
-        for name, func in self._tool_functions.items():
-            tool = StructuredTool.from_function(
-                func=func,
-                name=name,
-                description=func.__doc__ or f"Tool: {name}",
-            )
-            tools.append(tool)
-
-        return tools
-
-    # -------------------------------------------------------------------------
-    # AI Tool Definition Helpers
-    # -------------------------------------------------------------------------
-
-    def get_ai_tool_definitions(self) -> ExtendedList[ExtendedDict]:
-        """Get tool definitions in Vercel AI SDK-compatible format.
-
-        Returns:
-            Extended list of AI tool definition payloads.
-        """
-        import inspect
-
-        from typing import get_type_hints
-
-        from extended_data.containers import to_builtin
-
-        from vendor_fabric.ai_tools import get_pydantic_schema
-
-        definitions = []
-        for name, func in self._tool_functions.items():
-            # Use Pydantic schema if available
-            if name in self._tool_schemas:
-                input_schema = to_builtin(get_pydantic_schema(self._tool_schemas[name]))
-            else:
-                # Fallback to inspect-based schema generation
-                sig = inspect.signature(func)
-                try:
-                    type_hints = get_type_hints(func)
-                except Exception:
-                    type_hints = {}
-                properties = {}
-                required = []
-
-                for param_name, param in sig.parameters.items():
-                    if param_name == "self":
-                        continue
-
-                    param_type = "string"
-                    annotation = type_hints.get(param_name, param.annotation)
-                    if annotation != inspect.Parameter.empty:
-                        if annotation in (int, float):
-                            param_type = "number"
-                        elif annotation is bool:
-                            param_type = "boolean"
-
-                    properties[param_name] = {"type": param_type}
-
-                    if param.default == inspect.Parameter.empty:
-                        required.append(param_name)
-
-                input_schema = {
-                    "type": "object",
-                    "properties": properties,
-                    "required": required,
-                }
-
-            definitions.append(
-                {
-                    "name": name,
-                    "description": func.__doc__ or f"Tool: {name}",
-                    "inputSchema": input_schema,
-                }
-            )
-
-        return self.extend_result(definitions)
-
-    def handle_ai_tool_call(self, name: str, arguments: dict[str, Any]) -> Any:
-        """Handle an AI tool call.
-
-        Args:
-            name: Tool name
-            arguments: Tool arguments
-
-        Returns:
-            Tool result
-        """
-        if name not in self._tool_functions:
-            msg = f"Unknown tool: {redact_sensitive_text(name)}"
-            raise ValueError(msg)
-
-        func = self._tool_functions[name]
-        return self.extend_result(func(**arguments))

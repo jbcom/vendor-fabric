@@ -17,10 +17,11 @@ The base install exposes the connector catalog without requiring every
 vendor SDK. Optional connectors report availability and install guidance
 through the registry.
 
-Native SecretSync capabilities live in ``vendor_fabric.secrets_sync``.
-They use Extended Data merge, redaction, export, and sync primitives
-while delegating provider IO to Vault, AWS, S3, and future vendor
-stores.
+SecretSync capabilities live in ``vendor_fabric.secrets_sync`` as a
+binding-backed facade over the ``secrets_sync`` import from
+``secrets-sync-python-binding``. The canonical SecretSync runtime,
+pipeline semantics, CLI, and gopy binding source live in
+``jbcom/secrets-sync``.
 
 .. toctree::
    :maxdepth: 2

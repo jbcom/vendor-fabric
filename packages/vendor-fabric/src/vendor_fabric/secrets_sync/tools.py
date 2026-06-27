@@ -1,11 +1,9 @@
-"""Agent framework tools for native vendor-fabric secret synchronization."""
+"""Provider capability functions for native vendor-fabric secret synchronization."""
 
 from __future__ import annotations
 
-import importlib
-
-from collections.abc import Callable, Iterable, Mapping
-from typing import Any, NoReturn, cast
+from collections.abc import Mapping
+from typing import Any, cast
 
 from extended_data.containers import ExtendedDict, extend_data
 from extended_data.primitives.redaction import redact_sensitive_data, redact_sensitive_text
@@ -28,62 +26,6 @@ from vendor_fabric.secrets_sync import (
 from vendor_fabric.secrets_sync import (
     validate_config as native_validate_config,
 )
-
-
-def is_available(package: str) -> bool:
-    """Return whether an optional package can be imported."""
-    try:
-        importlib.import_module(package)
-    except ImportError:
-        return False
-    return True
-
-
-def raise_unknown_tool_framework(framework: str) -> NoReturn:
-    """Raise a redacted unknown-framework diagnostic for AI tool factories."""
-    safe_framework = redact_sensitive_text(framework)
-    msg = f"Unknown framework: {safe_framework}. Options: auto, langchain, crewai, strands"
-    raise ValueError(msg)
-
-
-def build_langchain_tools(tool_definitions: Iterable[Mapping[str, Any]]) -> list[Any]:
-    """Build LangChain StructuredTools from tool definition mappings."""
-    try:
-        structured_tool = importlib.import_module("langchain_core.tools").StructuredTool
-    except ImportError as e:
-        msg = (
-            "langchain-core is required for LangChain tools. "
-            "Install with: pip install 'vendor-fabric[langchain,secrets-sync]'"
-        )
-        raise ImportError(msg) from e
-
-    tools: list[Any] = []
-    for definition in tool_definitions:
-        args_schema = definition.get("schema") or definition.get("args_schema")
-        tools.append(
-            structured_tool.from_function(
-                func=cast("Callable[..., Any]", definition["func"]),
-                name=cast("str", definition["name"]),
-                description=cast("str", definition["description"]),
-                args_schema=cast("Any", args_schema),
-            )
-        )
-    return tools
-
-
-def get_crewai_tool_decorator() -> Any:
-    """Import the CrewAI tool decorator with install guidance."""
-    try:
-        module = importlib.import_module("crewai.tools")
-    except ImportError as e:
-        msg = "crewai is required for CrewAI tools. Install with: pip install 'vendor-fabric[crewai,secrets-sync]'"
-        raise ImportError(msg) from e
-
-    try:
-        return module.tool
-    except AttributeError as e:
-        msg = "crewai.tools.tool is required for CrewAI tools, but the installed CrewAI package does not expose it."
-        raise ImportError(msg) from e
 
 
 # =============================================================================
@@ -339,64 +281,6 @@ TOOL_DEFINITIONS = [
 
 
 # =============================================================================
-# Framework-Specific Getters
-# =============================================================================
-
-
-def get_langchain_tools() -> list[Any]:
-    """Get all secrets sync tools as LangChain StructuredTools."""
-    return build_langchain_tools(TOOL_DEFINITIONS)
-
-
-def get_crewai_tools() -> list[Any]:
-    """Get all secrets sync tools as CrewAI tools."""
-    crewai_tool = get_crewai_tool_decorator()
-
-    tools = []
-    for defn in TOOL_DEFINITIONS:
-        wrapped = crewai_tool(defn["name"])(defn["func"])
-        wrapped.description = defn["description"]
-        schema = defn.get("schema")
-        if schema:
-            wrapped.args_schema = schema
-        tools.append(wrapped)
-
-    return tools
-
-
-def get_strands_tools() -> list[Any]:
-    """Get all secrets sync tools as plain Python functions for AWS Strands."""
-    return [defn["func"] for defn in TOOL_DEFINITIONS]
-
-
-def get_tools(framework: str = "auto") -> list[Any]:
-    """Get secrets sync tools for the specified or auto-detected framework.
-
-    Args:
-        framework: One of 'auto', 'langchain', 'crewai', 'strands'
-
-    Returns:
-        List of tools in the appropriate format
-    """
-    selected_framework = framework
-    if selected_framework == "auto":
-        selected_framework = "strands"
-        if is_available("crewai"):
-            selected_framework = "crewai"
-        elif is_available("langchain_core"):
-            selected_framework = "langchain"
-
-    factories = {
-        "langchain": get_langchain_tools,
-        "crewai": get_crewai_tools,
-        "strands": get_strands_tools,
-    }
-    if selected_framework not in factories:
-        return raise_unknown_tool_framework(selected_framework)
-    return factories[selected_framework]()
-
-
-# =============================================================================
 # Exports
 # =============================================================================
 
@@ -404,12 +288,8 @@ __all__ = [
     "TOOL_DEFINITIONS",
     "dry_run",
     "get_config_info",
-    "get_crewai_tools",
-    "get_langchain_tools",
     "get_sources",
-    "get_strands_tools",
     "get_targets",
-    "get_tools",
     "run_pipeline",
     "validate_config",
 ]

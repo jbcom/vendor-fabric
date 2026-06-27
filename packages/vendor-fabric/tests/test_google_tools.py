@@ -422,51 +422,13 @@ class TestListWorkspaceGroups:
 
 
 class TestGetTools:
-    """Tests for framework getters."""
-
-    def test_get_strands_tools(self):
-        """Test getting tools as plain functions."""
-        from vendor_fabric.google.tools import get_strands_tools
-
-        tools = get_strands_tools()
-        assert len(tools) == 6
-        assert all(callable(t) for t in tools)
-
-    @patch("vendor_fabric._optional.is_available")
-    def test_get_tools_auto_fallback(self, mock_is_available):
-        """Test auto-detection falls back to strands/functions."""
-        from vendor_fabric.google.tools import get_tools
-
-        mock_is_available.return_value = False
-
-        tools = get_tools(framework="auto")
-
-        assert len(tools) == 6
-        assert all(callable(t) for t in tools)
-
-    def test_get_tools_invalid_framework(self):
-        """Test invalid framework raises error."""
-        from vendor_fabric.google.tools import get_tools
-
-        with pytest.raises(ValueError, match="Unknown framework"):
-            get_tools(framework="invalid")
-
-    def test_get_tools_rejects_functions_alias(self):
-        """Plain-function tools should use the canonical strands framework name."""
-        from vendor_fabric.google.tools import get_tools
-
-        with pytest.raises(ValueError, match="Unknown framework"):
-            get_tools(framework="functions")
+    """Tests for Google capability exports."""
 
     def test_all_exports_exist(self):
         """Test that all expected exports are available."""
         from vendor_fabric.google import tools
 
         expected_exports = [
-            "get_tools",
-            "get_langchain_tools",
-            "get_crewai_tools",
-            "get_strands_tools",
             "list_projects",
             "list_enabled_services",
             "list_billing_accounts",

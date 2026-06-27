@@ -30,15 +30,17 @@ Sync Is A First-Class Capability
 --------------------------------
 
 File sync and secret sync are provider capabilities. They should compose
-``extended-data`` primitives for merge, redaction, encoding, decoding,
-and file handling while delegating provider IO to the right connector.
+``extended-data`` primitives for redaction, encoding, decoding, and file
+handling while delegating canonical SecretSync pipeline semantics to the
+``jbcom/secrets-sync`` binding facade.
 
 Agent Runtime Is Out Of Scope
 -----------------------------
 
 Agent orchestration, crew discovery, framework selection, and agent
 runner fixtures belong in ``agentic-fabric``. This package can expose
-provider-backed tools, but it should not own agent runtimes.
+provider-backed capability functions, schemas, and metadata, but it
+should not own agent runtimes or framework tool factories.
 
 Tests Define Provider Contracts
 -------------------------------

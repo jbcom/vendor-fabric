@@ -628,12 +628,6 @@ class AWSConnector(AWSOrganizationsMixin, AWSSSOmixin, AWSS3Mixin, ConnectorBase
 
 
 from vendor_fabric.aws.codedeploy import create_codedeploy_deployment, get_aws_codedeploy_deployments
-from vendor_fabric.aws.tools import (
-    get_crewai_tools,
-    get_langchain_tools,
-    get_strands_tools,
-    get_tools,
-)
 
 
 __all__ = [
@@ -644,9 +638,4 @@ __all__ = [
     "AWSSSOmixin",
     "create_codedeploy_deployment",
     "get_aws_codedeploy_deployments",
-    "get_crewai_tools",
-    "get_langchain_tools",
-    "get_strands_tools",
-    # Tools
-    "get_tools",
 ]

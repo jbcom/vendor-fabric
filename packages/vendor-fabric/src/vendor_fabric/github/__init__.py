@@ -1058,20 +1058,7 @@ def build_github_actions_workflow(
     return wrap_raw_data_for_export(workflow, allow_encoding="yaml").strip()
 
 
-from vendor_fabric.github.tools import (
-    get_crewai_tools,
-    get_langchain_tools,
-    get_strands_tools,
-    get_tools,
-)
-
-
 __all__ = [
     # Core connector
     "GitHubConnector",
-    "get_crewai_tools",
-    "get_langchain_tools",
-    "get_strands_tools",
-    # Tools
-    "get_tools",
 ]

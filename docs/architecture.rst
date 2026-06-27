@@ -15,7 +15,7 @@ Boundary
 - capability dispatch for files, secrets, identity, billing, messaging,
   and other vendor surfaces
 - provider-backed sync operations
-- Python SecretSync capabilities
+- Python SecretSync binding facade capabilities
 - pytest support for vendor/provider tests
 
 ``extended-data`` owns base data primitives, containers, input handling,
@@ -23,9 +23,9 @@ logging, files, and generic workflows. ``agentic-fabric`` owns agent
 runtime orchestration.
 
 Runtime orchestration, crew discovery, framework runner selection, and
-agent fixtures are not part of this package. Provider-backed tool
-adapters may live here when they expose vendor capabilities without
-owning the agent loop.
+agent fixtures are not part of this package. Provider modules may expose
+plain capability functions, schemas, and metadata; framework-specific
+tool factories live in ``agentic-fabric``.
 
 VendorData
 ----------
@@ -126,10 +126,12 @@ juggling.
 Secret Sync
 -----------
 
-Python SecretSync behavior belongs here as provider-backed sync
-capabilities, not as a separate bridge package. The vendor layer should
-use ``extended-data`` merge, redaction, export, file, and workflow
-primitives rather than duplicating them.
+SecretSync execution semantics belong to ``jbcom/secrets-sync``. This
+repository owns the Python facade over the gopy binding, credential
+handoff, redaction, Extended Data-shaped payloads, and provider
+capability metadata. Native Python helpers in this package are
+transitional compatibility scaffolding and should not grow into a second
+pipeline implementation.
 
 Testing Package
 ---------------

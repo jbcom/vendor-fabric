@@ -1,13 +1,10 @@
 """Tests for vendor_fabric.meshy.tools module.
 
 Tests tool implementations with mocked Meshy API calls.
-Framework-specific tools (LangChain, CrewAI) are tested separately
-since those frameworks are optional dependencies.
+Framework-specific tool wrapping belongs in agentic-fabric.
 """
 
 from __future__ import annotations
-
-import importlib.util
 
 from unittest.mock import MagicMock, patch
 
@@ -48,19 +45,6 @@ class TestToolDefinitions:
             assert "name" in defn, "Missing 'name' in tool definition"
             assert "description" in defn, f"Missing 'description' in {defn.get('name')}"
             assert callable(defn["func"]), f"'func' not callable in {defn['name']}"
-
-
-class TestStrandsTools:
-    """Tests for Strands/plain function tools (always available)."""
-
-    def test_get_strands_tools_returns_functions(self):
-        """Test that get_strands_tools returns plain functions."""
-        from vendor_fabric.meshy.tools import get_strands_tools
-
-        tools = get_strands_tools()
-        assert isinstance(tools, list)
-        assert len(tools) == len(EXPECTED_MESHY_TOOLS)
-        assert all(callable(t) for t in tools)
 
 
 class TestText3DGenerate:
@@ -434,68 +418,3 @@ class TestGetAnimation:
         with patch("vendor_fabric.meshy.animations.ANIMATIONS", {}):
             with pytest.raises(ValueError, match="not found"):
                 get_animation(animation_id=999)
-
-
-class TestLangChainTools:
-    """Tests for LangChain tools (optional dependency)."""
-
-    @pytest.mark.skipif(
-        importlib.util.find_spec("langchain_core") is None,
-        reason="langchain-core not installed",
-    )
-    def test_get_langchain_tools_returns_structured_tools(self):
-        """Test that get_langchain_tools returns LangChain StructuredTools."""
-        from vendor_fabric.meshy.tools import get_langchain_tools
-
-        tools = get_langchain_tools()
-        assert isinstance(tools, list)
-        assert len(tools) == len(EXPECTED_MESHY_TOOLS)
-
-        # Verify they're StructuredTools
-        from langchain_core.tools import StructuredTool
-
-        for tool in tools:
-            assert isinstance(tool, StructuredTool)
-
-        # Verify names
-        tool_names = {t.name for t in tools}
-        assert tool_names == EXPECTED_MESHY_TOOLS
-
-
-class TestCrewAITools:
-    """Tests for CrewAI tools integration (optional dependency)."""
-
-    def test_get_crewai_tools_requires_crewai(self):
-        """Test that get_crewai_tools raises ImportError without crewai."""
-        with patch.dict("sys.modules", {"crewai": None, "crewai.tools": None}):
-            from vendor_fabric.meshy import tools as meshy_tools
-
-            with pytest.raises(ImportError, match="crewai is required"):
-                meshy_tools.get_crewai_tools()
-
-
-class TestAutoDetection:
-    """Tests for framework auto-detection."""
-
-    def test_get_tools_with_explicit_framework(self):
-        """Test get_tools with explicit framework selection."""
-        from vendor_fabric.meshy.tools import get_tools
-
-        # Strands always works because it returns plain functions.
-        tools = get_tools("strands")
-        assert isinstance(tools, list)
-        assert all(callable(t) for t in tools)
-
-    def test_get_tools_rejects_functions_alias(self):
-        """Plain-function tools should use the canonical strands framework name."""
-        from vendor_fabric.meshy.tools import get_tools
-
-        with pytest.raises(ValueError, match="Unknown framework"):
-            get_tools("functions")
-
-    def test_get_tools_invalid_framework(self):
-        """Test get_tools raises ValueError for invalid framework."""
-        from vendor_fabric.meshy.tools import get_tools
-
-        with pytest.raises(ValueError, match="Unknown framework"):
-            get_tools("invalid_framework")

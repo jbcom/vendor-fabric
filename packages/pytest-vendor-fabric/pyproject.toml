@@ -11,7 +11,7 @@ license = { text = "MIT" }
 readme = "README.md"
 authors = [{ name = "Jon Bogaty", email = "jon@jonbogaty.com" }]
 maintainers = [{ name = "Jon Bogaty", email = "jon@jonbogaty.com" }]
-keywords = ["pytest", "vendor-fabric", "fixtures", "testing", "connectors", "agents"]
+keywords = ["pytest", "vendor-fabric", "fixtures", "testing", "connectors"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Framework :: Pytest",
