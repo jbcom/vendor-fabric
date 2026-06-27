@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import sys
 
+from types import ModuleType, SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -12,10 +14,14 @@ from extended_data.containers import ExtendedDict, ExtendedSet
 
 from vendor_fabric.meshy import mcp as meshy_mcp_module
 from vendor_fabric.meshy.mcp import (
+    MCP_INSTALL_MESSAGE,
+    _create_mcp_tools,
     _jsonable_tool_result,
     _tool_error_payload,
     _tool_result_text,
     create_server,
+    main,
+    run_server,
 )
 
 
@@ -34,6 +40,19 @@ def test_meshy_mcp_result_lowers_and_redacts_extended_payloads() -> None:
     assert result["service"] == {"name": "meshy"}
     assert result["password"] == "[REDACTED]"
     assert sorted(result["tags"]) == ["asset", "model"]
+
+
+def test_meshy_mcp_result_lowers_pydantic_like_iterables_and_sets() -> None:
+    """Meshy MCP result serialization should handle common tool return shapes."""
+
+    class _ModelDump:
+        def model_dump(self) -> dict[str, str]:
+            return {"api_key": "key_123", "name": "asset"}
+
+    result = _jsonable_tool_result([_ModelDump(), {"values": {"b", "a"}}])
+
+    assert result[0] == {"api_key": "[REDACTED]", "name": "asset"}
+    assert sorted(result[1]["values"]) == ["a", "b"]
 
 
 def test_meshy_mcp_result_text_uses_shared_export_boundary() -> None:
@@ -194,3 +213,81 @@ async def test_create_server_registered_call_handler_accepts_missing_arguments()
         )
 
     assert json.loads(result.root.content[0].text) == {"status": "ok"}
+
+
+def test_create_mcp_tools_raises_actionable_install_message(monkeypatch) -> None:
+    """Missing MCP SDK should point users to the Meshy MCP extra combination."""
+    monkeypatch.setitem(sys.modules, "mcp.types", None)
+
+    with pytest.raises(ImportError) as exc_info:
+        _create_mcp_tools()
+
+    assert MCP_INSTALL_MESSAGE in str(exc_info.value)
+
+
+def test_create_server_raises_actionable_install_message(monkeypatch) -> None:
+    """Server creation should fail with install guidance when MCP is absent."""
+    monkeypatch.setitem(sys.modules, "mcp.server", None)
+
+    with pytest.raises(ImportError) as exc_info:
+        create_server()
+
+    assert MCP_INSTALL_MESSAGE in str(exc_info.value)
+
+
+def test_run_server_raises_actionable_install_message(monkeypatch) -> None:
+    """Server runtime should fail with install guidance when stdio transport is absent."""
+    monkeypatch.setitem(sys.modules, "mcp.server.stdio", None)
+
+    with pytest.raises(ImportError) as exc_info:
+        run_server(server=object())
+
+    assert MCP_INSTALL_MESSAGE in str(exc_info.value)
+
+
+def test_run_server_creates_server_and_runs_stdio(monkeypatch) -> None:
+    """run_server should create a server and pass stdio streams to server.run."""
+    events: list[tuple[str, object]] = []
+
+    class _AsyncStdio:
+        async def __aenter__(self) -> tuple[str, str]:
+            return "read-stream", "write-stream"
+
+        async def __aexit__(self, *exc_info: object) -> None:
+            return None
+
+    class _Server:
+        def create_initialization_options(self) -> dict[str, bool]:
+            return {"ready": True}
+
+        async def run(self, read_stream: str, write_stream: str, options: dict[str, bool]) -> None:
+            events.append(("run", (read_stream, write_stream, options)))
+
+    def create_stdio_server() -> _AsyncStdio:
+        return _AsyncStdio()
+
+    def create_fake_server() -> _Server:
+        return _Server()
+
+    stdio_module = ModuleType("mcp.server.stdio")
+    stdio_module.stdio_server = create_stdio_server  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "mcp.server.stdio", stdio_module)
+    monkeypatch.setattr(meshy_mcp_module, "create_server", create_fake_server)
+
+    run_server()
+
+    assert events == [("run", ("read-stream", "write-stream", {"ready": True}))]
+
+
+def test_main_delegates_to_run_server(monkeypatch) -> None:
+    """The module entrypoint should delegate to run_server."""
+    called = SimpleNamespace(count=0)
+
+    def fake_run_server() -> None:
+        called.count += 1
+
+    monkeypatch.setattr(meshy_mcp_module, "run_server", fake_run_server)
+
+    main()
+
+    assert called.count == 1

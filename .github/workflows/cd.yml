@@ -4,16 +4,66 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Release tag to publish
+        description: Release tag to publish and deploy
+        required: true
+        type: string
+      package:
+        description: Workspace package to publish
         required: true
         type: string
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
-  publish:
-    name: Publish package and docs
+  test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ inputs.tag }}
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          version: "0.11.19"
+          enable-cache: true
+      - run: uv sync --all-packages --all-extras --dev
+      - run: uv tool install tox --with tox-uv --with tox-gh
+      - run: tox -e "py$(echo '${{ matrix.python-version }}' | tr -d '.')"
+
+  quality:
+    name: Quality, plugin, providers, docs, build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ inputs.tag }}
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          version: "0.11.19"
+          enable-cache: true
+      - run: uv sync --all-packages --all-extras --dev
+      - run: uv tool install tox --with tox-uv --with tox-gh
+      - run: tox -e lint,typecheck,plugin,providers,docs,build
+
+  publish-package:
+    name: Publish package to PyPI
+    needs: [test, quality]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -30,16 +80,19 @@ jobs:
         with:
           version: "0.11.19"
           enable-cache: true
-      - name: Verify
+      - name: Validate package input
         run: |
-          uv tool install tox --with tox-uv --with tox-gh
-          tox -e lint,typecheck,py311,py312,py313,py314,plugin,providers,docs,build -- -q
-      - name: Publish to PyPI
-        run: uv publish --all-packages --trusted-publishing always
+          case "${{ inputs.package }}" in
+            vendor-fabric|pytest-vendor-fabric) ;;
+            *) echo "unsupported package: ${{ inputs.package }}" >&2; exit 1 ;;
+          esac
+      - run: uv build --package "${{ inputs.package }}" --out-dir dist --clear
+      - run: uv publish --trusted-publishing always dist/*
 
-  pages:
+  publish-docs:
     name: Publish docs to GitHub Pages
-    needs: publish
+    if: inputs.package == 'vendor-fabric'
+    needs: publish-package
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -63,6 +116,7 @@ jobs:
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
         with:
           enablement: true
+      - run: uv sync --all-packages --all-extras --dev
       - name: Build docs
         run: |
           uv tool install tox --with tox-uv --with tox-gh

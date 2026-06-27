@@ -96,6 +96,97 @@ class TestGetAwsCodeDeployDeployments:
         assert exc_info.value.__cause__ is None
         assert all("exc_info" not in logged_call.kwargs for logged_call in logging_adapter.logger.method_calls)
 
+    def test_normalizes_datetime_filters_limit_and_max_pages(self):
+        """List requests should normalize filters and preserve continuation tokens."""
+        codedeploy_client = MagicMock()
+        codedeploy_client.list_deployments.side_effect = [
+            {"deployments": ["dep-1", "dep-2", "dep-3"], "nextToken": "token-2"},
+            {"deployments": ["dep-4"], "nextToken": "token-3"},
+        ]
+
+        result = get_aws_codedeploy_deployments(
+            application_name="app",
+            deployment_group_name="group",
+            deployment_config_name="CodeDeployDefault.AllAtOnce",
+            statuses=["in-progress", "in_progress", "queued"],
+            created_after="2026-06-27T00:00:00Z",
+            created_before=1782518400.0,
+            tag_filters=[ExtendedDict({"Key": "env", "Value": "prod"})],
+            include_details=False,
+            limit=2,
+            max_pages=1,
+            next_token="token-1",
+            codedeploy_client=codedeploy_client,
+        )
+
+        assert result["deployment_ids"] == ["dep-1", "dep-2"]
+        assert result["deployments"] is None
+        assert result["next_token"] == "token-2"
+        assert result["pages"] == 1
+        call_kwargs = codedeploy_client.list_deployments.call_args.kwargs
+        assert call_kwargs["includeOnlyStatuses"] == ["InProgress", "Queued"]
+        assert call_kwargs["deploymentConfigName"] == "CodeDeployDefault.AllAtOnce"
+        assert call_kwargs["nextToken"] == "token-1"
+        assert call_kwargs["tagFilters"] == [{"Key": "env", "Value": "prod"}]
+        assert call_kwargs["createTimeRange"]["start"].isoformat() == "2026-06-27T00:00:00+00:00"
+
+    def test_invalid_status_and_datetime_type_fail_fast(self):
+        """Bad caller filter values should fail before provider calls."""
+        codedeploy_client = MagicMock()
+
+        with pytest.raises(ValueError, match="Unsupported CodeDeploy status"):
+            get_aws_codedeploy_deployments(statuses=["not-real"], codedeploy_client=codedeploy_client)
+
+        with pytest.raises(TypeError, match="Unsupported datetime value type"):
+            get_aws_codedeploy_deployments(created_after=object(), codedeploy_client=codedeploy_client)
+
+        codedeploy_client.list_deployments.assert_not_called()
+
+    def test_resolves_client_from_connector_and_region(self):
+        """The helper should construct a CodeDeploy client through AWSConnector when needed."""
+        codedeploy_client = MagicMock()
+        codedeploy_client.list_deployments.return_value = {"deployments": []}
+        aws_connector = MagicMock()
+        aws_connector.execution_role_arn = "arn:aws:iam::123456789012:role/deploy"
+        aws_connector.get_aws_client.return_value = codedeploy_client
+
+        result = get_aws_codedeploy_deployments(
+            aws_connector=aws_connector,
+            role_session_name="deploy-session",
+            region_name="us-east-1",
+            config="cfg",
+        )
+
+        assert result["deployment_ids"] == []
+        aws_connector.get_aws_client.assert_called_once_with(
+            client_name="codedeploy",
+            execution_role_arn="arn:aws:iam::123456789012:role/deploy",
+            role_session_name="deploy-session",
+            config="cfg",
+            region_name="us-east-1",
+        )
+
+    def test_detail_hydration_preserves_requested_order_and_ignores_missing_items(self):
+        """Batch detail hydration should not reorder list_deployments results."""
+        deployment_ids = [f"dep-{idx}" for idx in range(30)]
+        codedeploy_client = MagicMock()
+        codedeploy_client.list_deployments.return_value = {"deployments": deployment_ids}
+        codedeploy_client.batch_get_deployments.side_effect = [
+            {
+                "deploymentsInfo": [
+                    {"deploymentId": "dep-1"},
+                    {"deploymentId": "dep-0"},
+                ]
+            },
+            {"deploymentsInfo": [{"deploymentId": "dep-25"}]},
+        ]
+
+        result = get_aws_codedeploy_deployments(codedeploy_client=codedeploy_client)
+
+        assert result["deployment_ids"] == deployment_ids
+        assert [item["deploymentId"] for item in result["deployments"]] == ["dep-0", "dep-1", "dep-25"]
+        assert codedeploy_client.batch_get_deployments.call_count == 2
+
 
 class TestCreateCodeDeployDeployment:
     def test_waits_for_success_and_returns_details(self):
@@ -238,3 +329,102 @@ class TestCreateCodeDeployDeployment:
                 file_exists_behavior="skip",
                 codedeploy_client=codedeploy_client,
             )
+
+    def test_requires_revision_before_provider_call(self):
+        """A deployment revision is required by the public contract."""
+        codedeploy_client = MagicMock()
+
+        with pytest.raises(ValueError, match="revision payload is required"):
+            create_codedeploy_deployment(
+                application_name="app",
+                deployment_group_name="group",
+                revision={},
+                codedeploy_client=codedeploy_client,
+            )
+
+        codedeploy_client.create_deployment.assert_not_called()
+
+    def test_create_builds_optional_request_without_detail_fetch(self):
+        """Optional CodeDeploy request flags should be passed through exactly."""
+        codedeploy_client = MagicMock()
+        codedeploy_client.create_deployment.return_value = {"deploymentId": "dep-123"}
+
+        result = create_codedeploy_deployment(
+            application_name="app",
+            deployment_group_name="group",
+            revision=ExtendedDict(
+                {
+                    "revisionType": "S3",
+                    "s3Location": {"bucket": "bucket", "key": "bundle.zip", "bundleType": "zip"},
+                }
+            ),
+            description="ship it",
+            ignore_application_stop_failures=False,
+            file_exists_behavior="overwrite",
+            auto_rollback_configuration=ExtendedDict({"enabled": True, "events": ["DEPLOYMENT_FAILURE"]}),
+            update_outdated_instances_only=True,
+            include_details=False,
+            codedeploy_client=codedeploy_client,
+            alarmConfiguration={"enabled": False},
+        )
+
+        assert result["deployment_id"] == "dep-123"
+        assert result["status"] is None
+        assert result["deployment_info"] is None
+        codedeploy_client.get_deployment.assert_not_called()
+        call_kwargs = codedeploy_client.create_deployment.call_args.kwargs
+        assert call_kwargs["description"] == "ship it"
+        assert call_kwargs["ignoreApplicationStopFailures"] is False
+        assert call_kwargs["fileExistsBehavior"] == "OVERWRITE"
+        assert call_kwargs["autoRollbackConfiguration"] == {"enabled": True, "events": ["DEPLOYMENT_FAILURE"]}
+        assert call_kwargs["updateOutdatedInstancesOnly"] is True
+        assert call_kwargs["alarmConfiguration"] == {"enabled": False}
+
+    def test_missing_deployment_id_raises_clear_error(self):
+        """Provider responses without deploymentId should be rejected."""
+        codedeploy_client = MagicMock()
+        codedeploy_client.create_deployment.return_value = {}
+
+        with pytest.raises(RuntimeError, match="did not return a deploymentId"):
+            create_codedeploy_deployment(
+                application_name="app",
+                deployment_group_name="group",
+                revision={
+                    "revisionType": "S3",
+                    "s3Location": {"bucket": "bucket", "key": "bundle.zip", "bundleType": "zip"},
+                },
+                codedeploy_client=codedeploy_client,
+            )
+
+    def test_waiter_failure_without_deployment_info_uses_unknown_status(self):
+        """Waiter failures should still return redacted, cause-free diagnostics without details."""
+        codedeploy_client = MagicMock()
+        codedeploy_client.create_deployment.return_value = {"deploymentId": "dep-sensitive"}
+        codedeploy_client.get_deployment.side_effect = _client_error(
+            "GetDeployment",
+            "denied for dep-sensitive token=raw-token",
+        )
+        waiter = MagicMock()
+        waiter.wait.side_effect = WaiterError(name="deployment_successful", reason="failure", last_response={})
+        codedeploy_client.get_waiter.return_value = waiter
+        logging_adapter = _logging_adapter()
+
+        with pytest.raises(RuntimeError) as exc_info:
+            create_codedeploy_deployment(
+                application_name="app",
+                deployment_group_name="group",
+                revision={
+                    "revisionType": "S3",
+                    "s3Location": {"bucket": "bucket", "key": "bundle.zip", "bundleType": "zip"},
+                },
+                wait=True,
+                codedeploy_client=codedeploy_client,
+                logging_adapter=logging_adapter,
+            )
+
+        diagnostics = _logged_text(logging_adapter.logger) + str(exc_info.value)
+        assert "unknown" in str(exc_info.value)
+        assert "dep-sensitive" not in diagnostics
+        assert "raw-token" not in diagnostics
+        assert "[REDACTED]" in diagnostics
+        assert exc_info.value.__cause__ is None

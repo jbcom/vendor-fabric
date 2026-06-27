@@ -247,6 +247,58 @@ class TestSSOUsers:
         with pytest.raises(ClientError):
             aws_connector.get_sso_user("user-1", identity_store_id="d-1234567890")
 
+    def test_create_sso_user_builds_optional_payload_and_redacts_logs(self, aws_connector):
+        """Creating users should preserve provider args while redacting diagnostics."""
+        mock_identitystore = MagicMock()
+        mock_identitystore.create_user.return_value = {
+            "UserId": "user-sensitive-1",
+            "IdentityStoreId": "d-sensitive",
+        }
+        aws_connector.get_aws_client = MagicMock(return_value=mock_identitystore)
+
+        result = aws_connector.create_sso_user(
+            "person@example.com",
+            "Sensitive Person",
+            given_name="Sensitive",
+            family_name="Person",
+            emails=[{"Value": "person@example.com", "Type": "work", "Primary": True}],
+            identity_store_id="d-sensitive",
+        )
+
+        assert isinstance(result, ExtendedDict)
+        assert result["UserId"] == "user-sensitive-1"
+        call_kwargs = mock_identitystore.create_user.call_args.kwargs
+        assert call_kwargs["UserName"] == "person@example.com"
+        assert call_kwargs["Name"] == {"GivenName": "Sensitive", "FamilyName": "Person"}
+        assert call_kwargs["Emails"] == [{"Value": "person@example.com", "Type": "work", "Primary": True}]
+        logs = _logged_text(aws_connector.logger)
+        assert "[REDACTED]" in logs
+        assert "person@example.com" not in logs
+        assert "user-sensitive-1" not in logs
+
+    def test_delete_sso_user_autodetects_store_and_redacts_logs(self, aws_connector):
+        """Deleting users should route through the detected identity store."""
+        mock_identitystore = MagicMock()
+        mock_sso_admin = MagicMock()
+        mock_sso_admin.list_instances.return_value = {"Instances": [{"IdentityStoreId": "d-sensitive"}]}
+
+        def get_client(client_name, **kwargs):
+            if client_name == "identitystore":
+                return mock_identitystore
+            return mock_sso_admin
+
+        aws_connector.get_aws_client = MagicMock(side_effect=get_client)
+
+        aws_connector.delete_sso_user("user-sensitive-1")
+
+        mock_identitystore.delete_user.assert_called_once_with(
+            IdentityStoreId="d-sensitive",
+            UserId="user-sensitive-1",
+        )
+        logs = _logged_text(aws_connector.logger)
+        assert "[REDACTED]" in logs
+        assert "user-sensitive-1" not in logs
+
 
 class TestSSOGroups:
     """Tests for SSO group operations."""
@@ -357,6 +409,80 @@ class TestSSOGroups:
 
         mock_identitystore.delete_group.assert_called_once()
 
+    def test_list_sso_groups_expands_members_and_sorts(self, aws_connector):
+        """Expanded group listings should fetch users and preserve membership mapping."""
+        mock_identitystore = MagicMock()
+        mock_identitystore.list_users.return_value = {
+            "Users": [
+                {"UserId": "user-2", "UserName": "zara"},
+                {"UserId": "user-1", "UserName": "anna"},
+            ]
+        }
+        mock_identitystore.list_groups.return_value = {
+            "Groups": [
+                {"GroupId": "group-z", "DisplayName": "Zeta"},
+                {"GroupId": "group-a", "DisplayName": "Alpha"},
+            ]
+        }
+        mock_identitystore.list_group_memberships.side_effect = [
+            {
+                "GroupMemberships": [
+                    {"MemberId": {"UserId": "user-2"}},
+                    {"MemberId": {}},
+                ]
+            },
+            {"GroupMemberships": [{"MemberId": {"UserId": "user-1"}}]},
+        ]
+        aws_connector.get_aws_client = MagicMock(return_value=mock_identitystore)
+
+        result = aws_connector.list_sso_groups(
+            identity_store_id="d-1234567890",
+            expand_members=True,
+            sort_by_name=True,
+            unhump_groups=False,
+        )
+
+        assert list(result.keys()) == ["group-a", "group-z"]
+        assert result["group-a"]["Members"]["user-1"]["UserName"] == "anna"
+        assert result["group-z"]["Members"]["user-2"]["UserName"] == "zara"
+        assert "user-1" not in result["group-z"]["Members"]
+
+    def test_add_and_remove_user_group_membership(self, aws_connector):
+        """Group membership mutation helpers should call Identity Store APIs."""
+        mock_identitystore = MagicMock()
+        mock_identitystore.create_group_membership.return_value = {
+            "MembershipId": "membership-sensitive-1",
+        }
+        mock_sso_admin = MagicMock()
+        mock_sso_admin.list_instances.return_value = {"Instances": [{"IdentityStoreId": "d-sensitive"}]}
+
+        def get_client(client_name, **kwargs):
+            if client_name == "identitystore":
+                return mock_identitystore
+            return mock_sso_admin
+
+        aws_connector.get_aws_client = MagicMock(side_effect=get_client)
+
+        result = aws_connector.add_user_to_group("user-sensitive-1", "group-sensitive-1")
+        aws_connector.remove_user_from_group("membership-sensitive-1")
+
+        assert isinstance(result, ExtendedDict)
+        assert result["MembershipId"] == "membership-sensitive-1"
+        mock_identitystore.create_group_membership.assert_called_once_with(
+            IdentityStoreId="d-sensitive",
+            GroupId="group-sensitive-1",
+            MemberId={"UserId": "user-sensitive-1"},
+        )
+        mock_identitystore.delete_group_membership.assert_called_once_with(
+            IdentityStoreId="d-sensitive",
+            MembershipId="membership-sensitive-1",
+        )
+        logs = _logged_text(aws_connector.logger)
+        assert "[REDACTED]" in logs
+        assert "user-sensitive-1" not in logs
+        assert "group-sensitive-1" not in logs
+        assert "membership-sensitive-1" not in logs
+
 
 class TestSSOPermissionSets:
     """Tests for SSO permission set operations."""
@@ -401,6 +527,52 @@ class TestSSOPermissionSets:
         assert isinstance(result[ps1_arn]["Name"], ExtendedString)
         assert ps1_arn in result
         assert result[ps1_arn]["Name"] == "AdminAccess"
+
+    def test_list_permission_sets_includes_inline_and_managed_policies(self, aws_connector):
+        """Permission set listing should hydrate optional policy data."""
+        mock_sso_admin = MagicMock()
+        mock_sso_admin.list_permission_sets.side_effect = [
+            {"PermissionSets": ["arn:aws:sso:::permissionSet/ssoins-1/ps-z"], "NextToken": "token-1"},
+            {"PermissionSets": ["arn:aws:sso:::permissionSet/ssoins-1/ps-a"]},
+        ]
+        mock_sso_admin.describe_permission_set.side_effect = [
+            {
+                "PermissionSet": {
+                    "PermissionSetArn": "arn:aws:sso:::permissionSet/ssoins-1/ps-z",
+                    "Name": "ZetaAccess",
+                }
+            },
+            {
+                "PermissionSet": {
+                    "PermissionSetArn": "arn:aws:sso:::permissionSet/ssoins-1/ps-a",
+                    "Name": "AlphaAccess",
+                }
+            },
+        ]
+        mock_sso_admin.get_inline_policy_for_permission_set.side_effect = [
+            {"InlinePolicy": '{"Statement":[]}'},
+            {"InlinePolicy": None},
+        ]
+        mock_sso_admin.list_managed_policies_in_permission_set.side_effect = [
+            {"AttachedManagedPolicies": [{"Name": "PowerUserAccess"}], "NextToken": "token-2"},
+            {"AttachedManagedPolicies": [{"Name": "ReadOnlyAccess"}]},
+            {"AttachedManagedPolicies": []},
+        ]
+        aws_connector.get_aws_client = MagicMock(return_value=mock_sso_admin)
+
+        result = aws_connector.list_permission_sets(
+            instance_arn="arn:aws:sso:::instance/ssoins-1",
+            sort_by_name=True,
+            unhump_sets=False,
+        )
+
+        assert list(result.keys()) == [
+            "arn:aws:sso:::permissionSet/ssoins-1/ps-a",
+            "arn:aws:sso:::permissionSet/ssoins-1/ps-z",
+        ]
+        zeta = result["arn:aws:sso:::permissionSet/ssoins-1/ps-z"]
+        assert zeta["InlinePolicy"] == '{"Statement":[]}'
+        assert [policy["Name"] for policy in zeta["ManagedPolicies"]] == ["PowerUserAccess", "ReadOnlyAccess"]
 
 
 class TestSSOAccountAssignments:
@@ -494,3 +666,61 @@ class TestSSOAccountAssignments:
         assert "123456789012" not in logs
         assert "user-sensitive-1" not in logs
         assert "ssoins-sensitive" not in logs
+
+    def test_list_account_assignments_paginates_and_unhumps(self, aws_connector):
+        """Account assignment listing should paginate and normalize payload keys."""
+        mock_sso_admin = MagicMock()
+        mock_sso_admin.list_instances.return_value = {
+            "Instances": [{"InstanceArn": "arn:aws:sso:::instance/ssoins-1234567890"}]
+        }
+        mock_sso_admin.list_account_assignments.side_effect = [
+            {
+                "AccountAssignments": [{"AccountId": "123456789012", "PrincipalType": "USER"}],
+                "NextToken": "token-1",
+            },
+            {"AccountAssignments": [{"AccountId": "123456789012", "PrincipalType": "GROUP"}]},
+        ]
+        aws_connector.get_aws_client = MagicMock(return_value=mock_sso_admin)
+
+        result = aws_connector.list_account_assignments(
+            account_id="123456789012",
+            permission_set_arn="arn:aws:sso:::permissionSet/ssoins-1/ps-1",
+        )
+
+        assert isinstance(result, ExtendedList)
+        assert [assignment["principal_type"] for assignment in result] == ["USER", "GROUP"]
+        second_call = mock_sso_admin.list_account_assignments.call_args_list[1].kwargs
+        assert second_call["NextToken"] == "token-1"
+
+    def test_delete_account_assignment_autodetects_instance_and_redacts_logs(self, aws_connector):
+        """Deleting assignments should use the detected SSO instance."""
+        mock_sso_admin = MagicMock()
+        mock_sso_admin.list_instances.return_value = {
+            "Instances": [{"InstanceArn": "arn:aws:sso:::instance/ssoins-sensitive"}]
+        }
+        mock_sso_admin.delete_account_assignment.return_value = {
+            "AccountAssignmentDeletionStatus": {"Status": "SUCCEEDED"}
+        }
+        aws_connector.get_aws_client = MagicMock(return_value=mock_sso_admin)
+
+        result = aws_connector.delete_account_assignment(
+            account_id="123456789012",
+            permission_set_arn="arn:aws:sso:::permissionSet/ssoins-sensitive/ps-sensitive",
+            principal_id="group-sensitive-1",
+            principal_type="GROUP",
+        )
+
+        assert isinstance(result, ExtendedDict)
+        assert result["AccountAssignmentDeletionStatus"]["Status"] == "SUCCEEDED"
+        mock_sso_admin.delete_account_assignment.assert_called_once_with(
+            InstanceArn="arn:aws:sso:::instance/ssoins-sensitive",
+            TargetId="123456789012",
+            TargetType="AWS_ACCOUNT",
+            PermissionSetArn="arn:aws:sso:::permissionSet/ssoins-sensitive/ps-sensitive",
+            PrincipalType="GROUP",
+            PrincipalId="group-sensitive-1",
+        )
+        logs = _logged_text(aws_connector.logger)
+        assert "[REDACTED]" in logs
+        assert "123456789012" not in logs
+        assert "group-sensitive-1" not in logs

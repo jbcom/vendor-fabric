@@ -2,7 +2,7 @@ Vendor Fabric
 =============
 
 ``vendor-fabric`` is the optional vendor integration package for the
-Extended Data stack. It depends on ``extended-data>=8.3.0`` for the
+Extended Data stack. It depends on ``extended-data>=8.4.0`` for the
 polymorphic ``ExtendedData`` root, concrete containers, file sync,
 inputs, logging, and workflow helpers, then adds API clients and native
 vendor sync capabilities.

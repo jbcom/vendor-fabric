@@ -38,7 +38,7 @@ capabilities.
 Capability Boundary
 -------------------
 
-- ``extended-data>=8.3.0`` owns generic data containers,
+- ``extended-data>=8.4.0`` owns generic data containers,
   ``ExtendedData``, local sync primitives, redaction, file decoding, and
   workflow composition.
 - ``vendor-fabric`` owns provider-backed stores and sync orchestration
