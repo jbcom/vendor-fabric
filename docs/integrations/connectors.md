@@ -41,6 +41,7 @@ adapter = fabric.get_connector_adapter("github")
 print(adapter.available)
 ```
 
-Connector methods return promoted data payloads at the boundary. Decoded API,
-SDK, GraphQL, and webhook maps can use `ExtendedDict`, `ExtendedList`, and
-`ExtendedString` methods immediately.
+Connector methods return `ExtendedData` payloads at the boundary. Decoded API,
+SDK, GraphQL, and webhook maps become concrete `ExtendedDict`, `ExtendedList`,
+and `ExtendedString` objects, while still sharing the common `ExtendedData`
+root for generic tooling.

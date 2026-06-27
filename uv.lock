@@ -977,7 +977,7 @@ wheels = [
 
 [[package]]
 name = "extended-data"
-version = "8.1.0"
+version = "8.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "deepmerge" },
@@ -995,9 +995,9 @@ dependencies = [
     { name = "validators" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7c/af/dc7b8280fef87e9f404ed118142004f4b0708571a1b5607d42edf7038248/extended_data-8.1.0.tar.gz", hash = "sha256:dee28872fe8dc2ad1fef04ff9d55517d54949c51593af022be96e80d7e219edb", size = 242689, upload-time = "2026-06-27T01:21:07.352Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/44/8b/e100f8ac45e0b7d50eaac8c7a63c363c489dc6c0cf7faf078676496d3c72/extended_data-8.3.0.tar.gz", hash = "sha256:835f874f095cd2d4246caf488fa0da27ab41ccc34c3167c4ba63cce96e813c12", size = 245884, upload-time = "2026-06-27T02:57:06.277Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b8/ae/9dca02a975a9ec55290b597cdc79039fa7cc2f692946ff2a7d523ced304e/extended_data-8.1.0-py3-none-any.whl", hash = "sha256:ea28daf535a6f68d0a6fdec298d93120ad86313f629fc1ec7806c8bf32ffe780", size = 96626, upload-time = "2026-06-27T01:21:06.071Z" },
+    { url = "https://files.pythonhosted.org/packages/38/4d/373d1d0eac59af23827b96ca1718aa726e63640506a0e870a2224d104d7b/extended_data-8.3.0-py3-none-any.whl", hash = "sha256:99ce83cd783efb709ffc68e6aa7cb046aab63c90aaeb89f8e102451aabeb30ed", size = 98468, upload-time = "2026-06-27T02:57:04.929Z" },
 ]
 
 [[package]]
@@ -5397,7 +5397,7 @@ requires-dist = [
     { name = "crewai", extras = ["tools", "anthropic"], marker = "extra == 'ai'", specifier = ">=1.5.0" },
     { name = "crewai", extras = ["tools", "anthropic"], marker = "extra == 'all'", specifier = ">=1.5.0" },
     { name = "crewai", extras = ["tools", "anthropic"], marker = "extra == 'crewai'", specifier = ">=1.5.0" },
-    { name = "extended-data", specifier = ">=8.1.0,<9.0.0" },
+    { name = "extended-data", specifier = ">=8.3.0,<9.0.0" },
     { name = "fastapi", marker = "extra == 'all'", specifier = ">=0.136.0" },
     { name = "fastapi", marker = "extra == 'webhooks'", specifier = ">=0.136.0" },
     { name = "filelock", marker = "extra == 'all'", specifier = ">=3.29.0" },

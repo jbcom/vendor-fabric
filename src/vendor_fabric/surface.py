@@ -7,10 +7,17 @@ import builtins
 from collections.abc import Callable
 from typing import Any, cast, get_args, get_origin, get_type_hints
 
-from extended_data.containers import ExtendedDict, ExtendedList, ExtendedSet, ExtendedString, ExtendedTuple
+from extended_data.containers import (
+    ExtendedData,
+    ExtendedDict,
+    ExtendedList,
+    ExtendedSet,
+    ExtendedString,
+    ExtendedTuple,
+)
 
 
-EXTENDED_PAYLOAD_TYPES = (ExtendedDict, ExtendedList, ExtendedSet, ExtendedString, ExtendedTuple)
+EXTENDED_PAYLOAD_TYPES = (ExtendedData, ExtendedDict, ExtendedList, ExtendedSet, ExtendedString, ExtendedTuple)
 
 
 def connector_data_methods(connector_class: builtins.type[Any]) -> list[tuple[str, Callable[..., Any]]]:
@@ -46,7 +53,7 @@ def return_annotation(method: Callable[..., Any]) -> Any:
 
 
 def annotation_includes_extended_payload(annotation: Any) -> bool:
-    """Return True when an annotation includes a Tier 2 container type."""
+    """Return True when an annotation includes the ExtendedData payload contract."""
     if annotation is None:
         return False
 

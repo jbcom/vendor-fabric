@@ -3,8 +3,8 @@
 This directory contains working examples for `vendor_fabric` and the
 registered integrations that hang off `ConnectorFabric`.
 
-Connector examples assume the major-version `extended-data` contract: external
-data payloads are promoted into Tier 2 containers at connector boundaries.
+Connector examples assume the `extended-data>=8.3.0` contract: external data
+payloads are promoted through the `ExtendedData` root at connector boundaries.
 Callers can use `ExtendedDict`, `ExtendedList`, and `ExtendedString` methods on
 decoded API, file, and SDK-shaped results, then call `to_builtin()` only when a
 plain Python payload is needed for serialization or SDK handoff.
