@@ -23,7 +23,7 @@ Direct construction is available when it is clearer:
 .. code:: python
 
    github = GitHubConnector(github_owner="jbcom", github_token="...")
-   slack = SlackConnector(slack_bot_token="xoxb-...")
+   slack = SlackConnector(bot_token="xoxb-...")
 
 Catalog Metadata
 ----------------

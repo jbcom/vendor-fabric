@@ -8,6 +8,8 @@ import hmac
 
 from datetime import UTC, datetime
 
+import httpx
+
 from extended_data.containers import ExtendedDict, extend_data, to_builtin
 from extended_data.primitives.redaction import redact_sensitive_text
 
@@ -182,7 +184,7 @@ class WebhookHandler:
                 source_url=glb_url,
             )
 
-        except Exception:
+        except (httpx.HTTPError, OSError):
             return None
 
     def verify_signature(
