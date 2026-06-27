@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.2](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.1.1...vendor-fabric-v2.1.2) (2026-06-27)
+
+
+### Bug Fixes
+
+* align PyPI trusted publishing claim ([5c56532](https://github.com/jbcom/vendor-fabric/commit/5c56532169179e1899143389a7658e89e3772d6d))
+
 ## [2.1.1](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.1.0...vendor-fabric-v2.1.1) (2026-06-27)
 
 
