@@ -134,8 +134,13 @@ class AssetGenerator:
 
         return manifest.to_dict()
 
-    def batch_generate(self, specs: list[AssetSpec], max_concurrent: int = 3) -> ExtendedList[ExtendedDict]:
-        """Generate multiple assets and return extended manifest payloads."""
+    def batch_generate(self, specs: list[AssetSpec]) -> ExtendedList[ExtendedDict]:
+        """Generate multiple assets and return extended manifest payloads.
+
+        Generation runs sequentially; failures are logged at debug level
+        and the batch continues. Failed specs are omitted from the
+        returned list.
+        """
         manifests = []
 
         for spec in specs:

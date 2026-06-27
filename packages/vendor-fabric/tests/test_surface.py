@@ -31,13 +31,14 @@ class TestReturnAnnotation:
         assert return_annotation(f) is None
 
     def test_falls_back_to_raw_annotations_on_get_type_hints_failure(self):
-        class Unresolvable:
-            __annotations__ = {"return": "SomeForwardRef"}
+        def unresolvable():
+            pass
 
-        instance = Unresolvable()
+        unresolvable.__annotations__ = {"return": "SomeForwardRef"}
+
         # get_type_hints fails on unresolved forward refs; the helper
         # should fall back to the raw __annotations__ dict.
-        result = return_annotation(instance.__class__)
+        result = return_annotation(unresolvable)
         assert result == "SomeForwardRef"
 
 

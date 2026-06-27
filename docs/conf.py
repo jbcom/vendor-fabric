@@ -33,3 +33,11 @@ autodoc2_output_dir = "apidocs"
 autodoc2_render_plugin = "rst"
 autodoc2_docstring_parser_regexes = [(r".*", "myst")]
 autodoc2_hidden_objects = ["dunder", "private"]
+
+# Suppress ambiguous cross-reference warnings for common field names like
+# ``type`` that appear on multiple pydantic/dataclass models across
+# connectors. sphinx-autodoc2 generates a ``:type:`` cross-reference for
+# each annotated field, and when multiple classes declare a field named
+# ``type`` the reference is ambiguous. These are field-name collisions,
+# not real documentation gaps.
+suppress_warnings = ["ref.python"]

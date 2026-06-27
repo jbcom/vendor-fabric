@@ -229,6 +229,7 @@ class TestRegisteredConnectorAdapter:
     def test_create_instantiates(self):
         class Fake(ConnectorBase):
             def __init__(self, label):
+                super().__init__()
                 self.label = label
 
         adapter = RegisteredConnectorAdapter(name="fake", connector_class=Fake)
@@ -580,6 +581,7 @@ class TestAdapterCreate:
     def test_builtin_adapter_create_delegates_to_load_class(self):
         class Fake(ConnectorBase):
             def __init__(self, label):
+                super().__init__()
                 self.label = label
 
         adapter = BuiltinConnectorAdapter(name="fake", spec=BuiltinConnectorSpec("m", "C", "extra"))
