@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.1.2...vendor-fabric-v2.2.0) (2026-06-27)
+
+
+### Features
+
+* bind vendor fabric to extended data root ([#8](https://github.com/jbcom/vendor-fabric/issues/8)) ([7adc3a3](https://github.com/jbcom/vendor-fabric/commit/7adc3a3b1e80d4d75563cfd6b9e813e006afa624))
+
 ## [2.1.2](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.1.1...vendor-fabric-v2.1.2) (2026-06-27)
 
 
