@@ -27,6 +27,7 @@ class FakeBinding:
             Parallelism=4,
             ComputeDiff=False,
             OutputFormat="human",
+            ShowValues=False,
         )
 
     def ValidateConfig(self, config_path: str) -> tuple[bool, str]:
@@ -64,6 +65,14 @@ class FakeBinding:
             DiffOutput="changed token=tok_123",
         )
 
+    def GetTargets(self, config_path: str) -> tuple[list[str], str]:
+        assert config_path == "pipeline.yaml"
+        return ["prod", "dev"], ""
+
+    def GetSources(self, config_path: str) -> tuple[list[str], str]:
+        assert config_path == "pipeline.yaml"
+        return ["base"], ""
+
     def DryRun(self, config_path: str) -> SimpleNamespace:
         assert config_path == "pipeline.yaml"
         return SimpleNamespace(Success=True, TargetCount=1, DiffOutput="diff")
@@ -91,6 +100,7 @@ class SnakeCaseBinding(FakeBinding):
             parallelism=4,
             compute_diff=False,
             output_format="human",
+            show_values=False,
         )
 
     def RunPipeline(self, config_path: str, options: object) -> dict[str, object]:
@@ -113,6 +123,14 @@ class SnakeCaseBinding(FakeBinding):
             "targets": ["dev"],
         }
 
+    def GetTargets(self, config_path: str) -> dict[str, object]:
+        assert config_path == "pipeline.yaml"
+        return {"targets": ["dev"], "error_message": ""}
+
+    def GetSources(self, config_path: str) -> tuple[None, str]:
+        assert config_path == "pipeline.yaml"
+        return None, "failed password=hunter2"
+
 
 def test_binding_adapter_converts_options_and_redacts_results(monkeypatch: pytest.MonkeyPatch) -> None:
     fake = FakeBinding()
@@ -128,6 +146,7 @@ def test_binding_adapter_converts_options_and_redacts_results(monkeypatch: pytes
             parallelism=2,
             compute_diff=True,
             output_format=OutputFormat.HUMAN,
+            show_values=True,
         ),
     )
 
@@ -143,6 +162,7 @@ def test_binding_adapter_converts_options_and_redacts_results(monkeypatch: pytes
     assert fake.options.Parallelism == 2
     assert fake.options.ComputeDiff is True
     assert fake.options.OutputFormat == "human"
+    assert fake.options.ShowValues is True
 
 
 def test_binding_adapter_supports_snake_case_options_and_mapping_payloads(
@@ -170,6 +190,7 @@ def test_binding_adapter_supports_snake_case_options_and_mapping_payloads(
     assert fake.options.targets == "dev"
     assert fake.options.parallelism == 1
     assert fake.options.output_format == "json"
+    assert fake.options.show_values is False
     assert info["sources"] == []
     assert info["targets"] == ["dev"]
 
@@ -194,6 +215,47 @@ def test_binding_adapter_phase_helpers(monkeypatch: pytest.MonkeyPatch) -> None:
     assert _binding.dry_run("pipeline.yaml")["success"] is True
     assert _binding.merge("pipeline.yaml", dry_run=True)["success"] is True
     assert _binding.sync("pipeline.yaml", dry_run=False)["success"] is True
+
+
+def test_binding_adapter_exposes_target_and_source_lists(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_binding.importlib, "import_module", lambda name: FakeBinding() if name == "secrets_sync" else None)
+
+    targets = _binding.get_targets("pipeline.yaml")
+    sources = _binding.get_sources("pipeline.yaml")
+
+    assert targets["targets"] == ["dev", "prod"]
+    assert targets["count"] == 2
+    assert targets["valid"] is True
+    assert sources["sources"] == ["base"]
+
+
+def test_binding_adapter_redacts_target_source_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(_binding.importlib, "import_module", lambda name: SnakeCaseBinding() if name == "secrets_sync" else None)
+
+    targets = _binding.get_targets("pipeline.yaml")
+    sources = _binding.get_sources("pipeline.yaml")
+
+    assert targets["targets"] == ["dev"]
+    assert sources["sources"] == []
+    assert sources["valid"] is False
+    assert "hunter2" not in sources["error_message"]
+    assert "[REDACTED]" in sources["error_message"]
+
+
+def test_binding_adapter_treats_plain_name_lists_as_names() -> None:
+    payload = _binding._name_list_to_dict(["dev", "prod"], "targets", "pipeline.yaml")
+
+    assert payload["targets"] == ["dev", "prod"]
+    assert payload["valid"] is True
+    assert payload["error_message"] == ""
+
+
+def test_binding_adapter_coerces_scalar_name_results() -> None:
+    string_payload = _binding._name_list_to_dict("prod", "targets", "pipeline.yaml")
+    scalar_payload = _binding._name_list_to_dict(123, "sources", "pipeline.yaml")
+
+    assert string_payload["targets"] == ["prod"]
+    assert scalar_payload["sources"] == ["123"]
 
 
 def test_binding_availability_and_default_options(monkeypatch: pytest.MonkeyPatch) -> None:

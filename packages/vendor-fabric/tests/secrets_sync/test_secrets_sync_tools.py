@@ -166,9 +166,9 @@ def test_get_config_info_tool_returns_extended_payload(mock_get_config_info: Mag
     assert result["targets"] == ["aws/prod"]
 
 
-@patch("vendor_fabric.secrets_sync.tools.SecretSyncConfig.from_file")
-def test_get_targets_tool_returns_extended_payload(mock_from_file: MagicMock) -> None:
-    mock_from_file.return_value = MagicMock(targets={"prod": object(), "dev": object()})
+@patch("vendor_fabric.secrets_sync.tools.native_get_targets")
+def test_get_targets_tool_returns_extended_payload(mock_get_targets: MagicMock) -> None:
+    mock_get_targets.return_value = {"targets": ["dev", "prod"], "count": 2, "error_message": ""}
 
     result = get_targets("config.yaml")
 
@@ -178,9 +178,9 @@ def test_get_targets_tool_returns_extended_payload(mock_from_file: MagicMock) ->
     assert result["count"] == 2
 
 
-@patch("vendor_fabric.secrets_sync.tools.SecretSyncConfig.from_file")
-def test_get_sources_tool_returns_extended_payload(mock_from_file: MagicMock) -> None:
-    mock_from_file.return_value = MagicMock(sources={"vault/prod": object()})
+@patch("vendor_fabric.secrets_sync.tools.native_get_sources")
+def test_get_sources_tool_returns_extended_payload(mock_get_sources: MagicMock) -> None:
+    mock_get_sources.return_value = {"sources": ["vault/prod"], "count": 1, "error_message": ""}
 
     result = get_sources("config.yaml")
 
@@ -193,8 +193,11 @@ def test_get_sources_tool_returns_extended_payload(mock_from_file: MagicMock) ->
 def test_tools_redact_errors_when_listing_targets_or_sources() -> None:
     """Target/source helper errors should be redacted in payloads."""
     with patch(
-        "vendor_fabric.secrets_sync.tools.SecretSyncConfig.from_file",
-        side_effect=RuntimeError("password=hunter2 Authorization: Bearer raw"),
+        "vendor_fabric.secrets_sync.tools.native_get_targets",
+        return_value={"targets": [], "count": 0, "error_message": "password=hunter2 Authorization: Bearer raw"},
+    ), patch(
+        "vendor_fabric.secrets_sync.tools.native_get_sources",
+        return_value={"sources": [], "count": 0, "error_message": "password=hunter2 Authorization: Bearer raw"},
     ):
         targets = get_targets("config.yaml")
         sources = get_sources("config.yaml")

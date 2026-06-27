@@ -41,11 +41,13 @@ wrap their own imports.
 SecretSync access is exposed through a binding-backed facade:
 
 ```python
-from vendor_fabric.secrets_sync import SyncOptions, run_pipeline
+from vendor_fabric.secrets_sync import SyncOptions, get_targets, run_pipeline
 
 result = run_pipeline("pipeline.yaml", SyncOptions(dry_run=True))
+targets = get_targets("pipeline.yaml")
 
 print(result["success"])
+print(targets["targets"])
 ```
 
 `vendor-fabric` consumes the `secrets_sync` import from

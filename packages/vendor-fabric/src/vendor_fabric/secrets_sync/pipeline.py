@@ -337,6 +337,16 @@ def dry_run(config_path: str) -> ExtendedDict:
     return _binding.dry_run(config_path)
 
 
+def get_targets(config_path: str) -> ExtendedDict:
+    """Return target names through the SecretSync binding."""
+    return _binding.get_targets(config_path)
+
+
+def get_sources(config_path: str) -> ExtendedDict:
+    """Return source names through the SecretSync binding."""
+    return _binding.get_sources(config_path)
+
+
 def merge(config_path: str, *, dry_run: bool = False) -> ExtendedDict:
     """Run only the merge phase through the SecretSync binding."""
     return _binding.merge(config_path, dry_run=dry_run)

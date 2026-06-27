@@ -45,6 +45,7 @@ def cmd_pipeline(args: argparse.Namespace) -> int:
         parallelism=args.parallelism,
         compute_diff=args.diff or args.dry_run,
         output_format=OutputFormat(args.output),
+        show_values=args.show_values,
     )
     result = run_pipeline(args.config, options)
     _write_stdout(result)
@@ -71,6 +72,7 @@ def build_parser() -> argparse.ArgumentParser:
     pipeline.add_argument("--dry-run", action="store_true")
     pipeline.add_argument("--diff", action="store_true")
     pipeline.add_argument("--output", choices=[item.value for item in OutputFormat], default=OutputFormat.JSON.value)
+    pipeline.add_argument("--show-values", action="store_true")
     pipeline.add_argument("--parallelism", type=int, default=4)
     pipeline.add_argument("--continue-on-error", action=argparse.BooleanOptionalAction, default=True)
     pipeline.set_defaults(func=cmd_pipeline)

@@ -69,6 +69,18 @@ def dry_run(config_path: str) -> ExtendedDict:
     return _sync_result_to_dict(binding.DryRun(config_path))
 
 
+def get_targets(config_path: str) -> ExtendedDict:
+    """Return SecretSync target names through the binding."""
+    binding = load_binding()
+    return _name_list_to_dict(binding.GetTargets(config_path), "targets", config_path)
+
+
+def get_sources(config_path: str) -> ExtendedDict:
+    """Return SecretSync source names through the binding."""
+    binding = load_binding()
+    return _name_list_to_dict(binding.GetSources(config_path), "sources", config_path)
+
+
 def merge(config_path: str, *, dry_run: bool = False) -> ExtendedDict:
     """Run the SecretSync merge phase through the binding."""
     binding = load_binding()
@@ -94,6 +106,7 @@ def _to_binding_options(binding: Any, options: SyncOptions | None) -> Any:
     _set_binding_attr(binding_options, "Parallelism", options.parallelism)
     _set_binding_attr(binding_options, "ComputeDiff", options.compute_diff)
     _set_binding_attr(binding_options, "OutputFormat", str(options.output_format.value))
+    _set_binding_attr(binding_options, "ShowValues", options.show_values)
     return binding_options
 
 
@@ -150,6 +163,45 @@ def _sync_result_to_dict(result: Any) -> ExtendedDict:
     if parsed_results is not None:
         payload["results"] = extend_data(redact_sensitive_data(parsed_results))
     return payload
+
+
+def _name_list_to_dict(result: Any, key: str, config_path: str) -> ExtendedDict:
+    names, message = _name_list_result(result, key)
+    message = redact_sensitive_text(message)
+    return extend_data(
+        redact_sensitive_data(
+            {
+                "valid": not bool(message),
+                key: sorted(str(item) for item in names),
+                "count": len(names),
+                "error_message": message,
+                "config_path": config_path,
+            }
+        )
+    )
+
+
+def _name_list_result(result: Any, key: str) -> tuple[list[str], str]:
+    if isinstance(result, Mapping):
+        return (
+            _list_attr(result, key, key.capitalize()),
+            str(_attr(result, "ErrorMessage", "error_message", "Message", "message", default="") or ""),
+        )
+    if isinstance(result, tuple) and len(result) == 2:
+        names, message = result
+        return _coerce_name_list(names), str(message or "")
+    return _coerce_name_list(result), ""
+
+
+def _coerce_name_list(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value]
+    try:
+        return [str(item) for item in value]
+    except TypeError:
+        return [str(value)]
 
 
 def _parse_results_json(value: Any) -> list[Any] | None:

@@ -15,11 +15,13 @@ provider capability metadata for downstream consumers.
 
 .. code:: python
 
-   from vendor_fabric.secrets_sync import SyncOptions, run_pipeline
+   from vendor_fabric.secrets_sync import SyncOptions, get_targets, run_pipeline
 
    result = run_pipeline("pipeline.yaml", SyncOptions(dry_run=True, compute_diff=True))
+   targets = get_targets("pipeline.yaml")
 
    assert "success" in result
+   assert "targets" in targets
 
 The same binding-backed facade powers non-agentic Python calls and the
 ``vendor-fabric-secrets-sync`` CLI. Provider-backed capability functions
@@ -28,10 +30,10 @@ re-exported from ``vendor_fabric.secrets_sync``:
 
 .. code:: python
 
-   from vendor_fabric.secrets_sync import TOOL_DEFINITIONS, run_pipeline
+   from vendor_fabric.secrets_sync import TOOL_DEFINITIONS, SyncOptions, run_pipeline
 
    tool_names = [definition["name"] for definition in TOOL_DEFINITIONS]
-   result = run_pipeline("pipeline.yaml", dry_run=True)
+   result = run_pipeline("pipeline.yaml", SyncOptions(dry_run=True))
 
 Agent runtime loops, crew discovery, and framework runner selection live
 in ``agentic-fabric`` and should call this API through ``VendorData``

@@ -50,6 +50,7 @@ class SyncOptions:
     parallelism: int = 4
     compute_diff: bool = False
     output_format: OutputFormat = OutputFormat.JSON
+    show_values: bool = False
     delete_orphans: bool = False
 
 

@@ -6,11 +6,10 @@ from collections.abc import Mapping
 from typing import Any, cast
 
 from extended_data.containers import ExtendedDict, extend_data
-from extended_data.primitives.redaction import redact_sensitive_data, redact_sensitive_text
+from extended_data.primitives.redaction import redact_sensitive_data
 from pydantic import BaseModel, Field
 
 from vendor_fabric.secrets_sync import (
-    SecretSyncConfig,
     SyncOperation,
     SyncOptions,
 )
@@ -19,6 +18,12 @@ from vendor_fabric.secrets_sync import (
 )
 from vendor_fabric.secrets_sync import (
     get_config_info as native_get_config_info,
+)
+from vendor_fabric.secrets_sync import (
+    get_sources as native_get_sources,
+)
+from vendor_fabric.secrets_sync import (
+    get_targets as native_get_targets,
 )
 from vendor_fabric.secrets_sync import (
     run_pipeline as native_run_pipeline,
@@ -201,17 +206,7 @@ def get_targets(config_path: str) -> ExtendedDict:
     Returns:
         Dict with 'targets' list and any error message
     """
-    try:
-        config = SecretSyncConfig.from_file(config_path)
-        return _redacted_extended_payload(
-            {
-                "targets": sorted(config.targets),
-                "count": len(config.targets),
-                "error_message": "",
-            }
-        )
-    except Exception as exc:
-        return _redacted_extended_payload({"targets": [], "count": 0, "error_message": redact_sensitive_text(exc)})
+    return _redacted_extended_payload(native_get_targets(config_path))
 
 
 def get_sources(config_path: str) -> ExtendedDict:
@@ -223,17 +218,7 @@ def get_sources(config_path: str) -> ExtendedDict:
     Returns:
         Dict with 'sources' list and any error message
     """
-    try:
-        config = SecretSyncConfig.from_file(config_path)
-        return _redacted_extended_payload(
-            {
-                "sources": sorted(config.sources),
-                "count": len(config.sources),
-                "error_message": "",
-            }
-        )
-    except Exception as exc:
-        return _redacted_extended_payload({"sources": [], "count": 0, "error_message": redact_sensitive_text(exc)})
+    return _redacted_extended_payload(native_get_sources(config_path))
 
 
 # =============================================================================

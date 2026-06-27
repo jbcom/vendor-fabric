@@ -61,6 +61,7 @@ def test_pipeline_command_builds_sync_options(capsys) -> None:
                 "--dry-run",
                 "--output",
                 "human",
+                "--show-values",
                 "--parallelism",
                 "2",
                 "--no-continue-on-error",
@@ -76,6 +77,7 @@ def test_pipeline_command_builds_sync_options(capsys) -> None:
     assert options.dry_run is True
     assert options.compute_diff is True
     assert options.output_format is OutputFormat.HUMAN
+    assert options.show_values is True
     assert options.parallelism == 2
     assert options.continue_on_error is False
 
