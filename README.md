@@ -1,53 +1,37 @@
-# Vendor Fabric
+# Vendor Fabric Workspace
 
-`vendor-fabric` is the optional vendor integration layer for the
-Extended Data Python stack. It depends on `extended-data>=8.3.0` for the
-polymorphic `ExtendedData` root, concrete containers, local file sync, inputs,
-logging, and workflow utilities, then adds
-adapter-registered API clients, vendor-backed sync capabilities, and agentic
-workflow adapters.
+This repository is a `uv` workspace for the Vendor Fabric Python stack.
+
+Documentation: [jonbogaty.com/vendor-fabric](https://jonbogaty.com/vendor-fabric/)
+
+## Packages
+
+- `packages/vendor-fabric`: Extended Data-native vendor connectors and sync capabilities.
+- `packages/pytest-vendor-fabric`: pytest fixtures and optional-runtime mocks for testing code built on Vendor Fabric.
+
+## Common Commands
 
 ```bash
-pip install vendor-fabric
-pip install "vendor-fabric[github,slack]"
-pip install "vendor-fabric[aws,google,vault,secrets-sync]"
-pip install "vendor-fabric[crewai]"
+uv sync --all-packages
+tox -e lint
+tox -e typecheck
+tox -e py311,py312,py313,py314
+tox -e plugin
+tox -e providers
+tox -e docs
+tox -e build
 ```
 
-The base install keeps vendor SDKs out of the environment. Connector metadata
-is available even when an optional SDK is absent:
+``providers`` installs the optional provider SDK extras used by AWS, Google,
+GitHub, Slack, Vault, and SecretSync unit tests. Live E2E tests remain opt-in.
 
-```python
-from vendor_fabric import get_connector_info, list_connector_info
+Live provider E2E tests are opt-in and may call paid provider APIs:
 
-print(get_connector_info("github")["available"])
-print(list_connector_info(include_unavailable=True))
+```bash
+tox -e e2e -- --e2e
 ```
 
-Construct connectors through the registry or `ConnectorFabric`:
+The test matrix intentionally does not skip missing Python interpreters. Python
+3.11, 3.12, 3.13, and 3.14 are all part of the supported release contract.
 
-```python
-from vendor_fabric import ConnectorFabric
-
-fabric = ConnectorFabric(inputs={"GITHUB_TOKEN": "..."})
-github = fabric.get_connector("github")
-```
-
-Unavailable features report install guidance instead of requiring callers to
-wrap their own imports.
-
-Native SecretSync support is part of `vendor-fabric`:
-
-```python
-from vendor_fabric.secrets_sync import SecretSyncPipeline, SyncOptions
-
-pipeline = SecretSyncPipeline.from_file("pipeline.yaml")
-result = pipeline.run_extended(SyncOptions(dry_run=True))
-
-print(result["success"])
-```
-
-Connector and sync payloads are `ExtendedData` values at the boundary. Dict,
-list, string, tuple, and set payloads are concrete extended subclasses, so code
-can use normal container operations and extended-data methods without import
-juggling.
+`AGENTS.md` contains the active local migration plan for Codex sessions.

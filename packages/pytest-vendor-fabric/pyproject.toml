@@ -1,0 +1,61 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pytest-vendor-fabric"
+version = "0.1.0"
+description = "Pytest fixtures and optional-runtime mocks for vendor-fabric integrations"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+readme = "README.md"
+authors = [{ name = "Jon Bogaty", email = "jon@jonbogaty.com" }]
+maintainers = [{ name = "Jon Bogaty", email = "jon@jonbogaty.com" }]
+keywords = ["pytest", "vendor-fabric", "fixtures", "testing", "connectors"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: Pytest",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Typing :: Typed",
+]
+dependencies = [
+    "pytest>=9.0.3",
+    "vendor-fabric>=2.1.2,<3.0.0",
+]
+
+[project.urls]
+Documentation = "https://jonbogaty.com/vendor-fabric/"
+Issues = "https://github.com/jbcom/vendor-fabric/issues"
+Source = "https://github.com/jbcom/vendor-fabric"
+Changelog = "https://github.com/jbcom/vendor-fabric/blob/main/packages/pytest-vendor-fabric/CHANGELOG.md"
+
+[project.entry-points.pytest11]
+vendor_fabric = "pytest_vendor_fabric.plugin"
+
+[project.optional-dependencies]
+tests = [
+    "pytest>=9.0.3",
+    "pytest-asyncio>=1.3.0",
+    "pytest-cov>=7.1.0",
+    "pytest-timeout>=2.4.0",
+]
+typing = [
+    "mypy>=1.20.1",
+]
+dev = [
+    "pytest-vendor-fabric[tests,typing]",
+    "ruff>=0.8.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pytest_vendor_fabric"]
+
+[tool.uv.sources]
+vendor-fabric = { workspace = true }
+pytest-vendor-fabric = { workspace = true }

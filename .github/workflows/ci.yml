@@ -4,44 +4,51 @@ on:
   push:
     branches: [main]
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   test:
     name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - python-version: "3.11"
-            tox-env: py311
-          - python-version: "3.12"
-            tox-env: py312
-          - python-version: "3.13"
-            tox-env: py313
-          - python-version: "3.14"
-            tox-env: py314
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: ${{ matrix.python-version }}
       - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
-      - name: Run tests
-        run: uvx --with tox-uv tox -e ${{ matrix.tox-env }} -- -q
+        with:
+          version: "0.11.19"
+          enable-cache: true
+      - run: uv sync --all-packages --all-extras --dev
+      - run: uv tool install tox --with tox-uv --with tox-gh
+      - run: tox -e "py$(echo '${{ matrix.python-version }}' | tr -d '.')"
 
   quality:
-    name: Quality, docs, build
+    name: Quality, plugin, providers, docs, build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: "3.13"
       - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
-      - name: Run quality gates
-        run: uvx --with tox-uv tox -e lint,typecheck,docs,build
+        with:
+          version: "0.11.19"
+          enable-cache: true
+      - run: uv sync --all-packages --all-extras --dev
+      - run: uv tool install tox --with tox-uv --with tox-gh
+      - run: tox -e lint,typecheck,plugin,providers,docs,build
