@@ -240,9 +240,12 @@ def _validation_result(result: Any) -> tuple[bool, str]:
     if valid:
         message = _attr(result, "Message", "message", default="")
     else:
-        message = _attr(result, "ErrorMessage", "error_message", "Message", "message", default="")
-    if not message:
-        message = _attr(result, "Message", "message", default="")
+        message = _attr(result, "ErrorMessage", "error_message", default="") or _attr(
+            result,
+            "Message",
+            "message",
+            default="",
+        )
     return valid, str(message or "")
 
 
@@ -287,12 +290,12 @@ def _name_list_result(result: Any, key: str) -> tuple[list[str], str]:
     if isinstance(result, tuple) and len(result) == 2:
         names, message = result
         return _coerce_name_list(names), str(message or "")
+    message = str(_attr(result, "ErrorMessage", "error_message", "Message", "message", default="") or "")
     names = _attr(result, key, key.capitalize(), "Values", "values", default=None)
     if names is not None:
-        return (
-            _coerce_name_list(names),
-            str(_attr(result, "ErrorMessage", "error_message", "Message", "message", default="") or ""),
-        )
+        return (_coerce_name_list(names), message)
+    if message or _attr(result, "Success", "success", default=None) is not None:
+        return ([], message)
     return _coerce_name_list(result), ""
 
 
@@ -324,6 +327,7 @@ def _attr(value: Any, *names: str, default: Any = None) -> Any:
         for name in names:
             if name in value:
                 return value[name]
+        return default
     for name in names:
         if hasattr(value, name):
             return getattr(value, name)

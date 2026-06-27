@@ -345,6 +345,34 @@ def test_binding_adapter_redacts_target_source_errors(monkeypatch: pytest.Monkey
     assert "[REDACTED]" in sources["error_message"]
 
 
+def test_binding_adapter_preserves_failure_only_name_list_errors() -> None:
+    """Failure-only binding payloads should not be coerced into fake names."""
+    mapping_payload = _binding._name_list_to_dict(
+        {"success": False, "error_message": "failed password=hunter2"},
+        "targets",
+        "pipeline.yaml",
+    )
+    object_payload = _binding._name_list_to_dict(
+        SimpleNamespace(Success=False, ErrorMessage="failed token=tok_123"),
+        "sources",
+        "pipeline.yaml",
+    )
+
+    assert mapping_payload["targets"] == []
+    assert mapping_payload["valid"] is False
+    assert "hunter2" not in mapping_payload["error_message"]
+    assert object_payload["sources"] == []
+    assert object_payload["valid"] is False
+    assert "tok_123" not in object_payload["error_message"]
+
+
+def test_binding_adapter_preserves_success_validation_message() -> None:
+    valid, message = _binding._validation_result(SimpleNamespace(Valid=True, Message="configuration is valid"))
+
+    assert valid is True
+    assert message == "configuration is valid"
+
+
 def test_binding_adapter_treats_plain_name_lists_as_names() -> None:
     payload = _binding._name_list_to_dict(["dev", "prod"], "targets", "pipeline.yaml")
 
