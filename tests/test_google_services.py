@@ -462,6 +462,24 @@ class TestProjectResourceSummary:
         assert "sensitive-project" not in logs
         assert "raw-token" not in logs
 
+    def test_is_project_empty_denied_check_continues_to_other_services(self, google_connector):
+        """A denied API check should not make the whole project look empty."""
+        denied = RuntimeError("compute disabled")
+        denied.resp = MagicMock(status=403)  # type: ignore[attr-defined]
+        google_connector.list_compute_instances = MagicMock(side_effect=denied)
+        google_connector.list_gke_clusters = MagicMock(return_value=[])
+        google_connector.list_storage_buckets = MagicMock(return_value=[{"name": "active-bucket"}])
+
+        result = google_connector.is_project_empty(
+            "test-project",
+            check_sql=False,
+            check_pubsub=False,
+        )
+
+        assert result is False
+        google_connector.list_gke_clusters.assert_called_once_with("test-project")
+        google_connector.list_storage_buckets.assert_called_once_with("test-project")
+
     def test_get_project_iam_users(self, google_connector):
         """Test deriving IAM members from a project policy."""
         mock_service = MagicMock()

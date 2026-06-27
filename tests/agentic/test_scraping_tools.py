@@ -32,3 +32,26 @@ def test_crawl_website_tool(mock_get: MagicMock):
     assert "Page 2" in result
     assert "Content 2" in result
     assert mock_get.call_count == 2
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "file:///etc/passwd",
+        "http://localhost",
+        "http://127.0.0.1",
+        "http://10.0.0.1",
+        "http://169.254.169.254/latest/meta-data/",
+        "http://[::1]/",
+        "http://metadata.google.internal/computeMetadata/v1/",
+    ],
+)
+@patch("vendor_fabric.agentic.tools.scraping_tools.requests.get")
+def test_crawl_website_tool_blocks_unsafe_urls(mock_get: MagicMock, url: str):
+    """Crawler should reject protocols and hosts that could enable SSRF."""
+    tool = CrawlWebsiteTool()
+
+    result = tool._run(url)
+
+    assert result.startswith("Error:")
+    mock_get.assert_not_called()

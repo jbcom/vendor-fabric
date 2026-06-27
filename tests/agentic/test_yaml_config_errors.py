@@ -110,6 +110,24 @@ class TestGetCrewConfigErrors:
         config = get_crew_config(tmp_path, "test_crew")
         assert config["tasks"] == {}
 
+    def test_empty_agents_and_tasks_yaml_return_empty_dicts(self, tmp_path: Path) -> None:
+        """Empty agents/tasks YAML should not surface None to downstream loaders."""
+        manifest_file = tmp_path / "manifest.yaml"
+        manifest_file.write_text(
+            "crews:\n"
+            "  test_crew:\n"
+            "    description: Test\n"
+            "    agents: agents.yaml\n"
+            "    tasks: tasks.yaml\n"
+        )
+        (tmp_path / "agents.yaml").write_text("# no agents yet\n")
+        (tmp_path / "tasks.yaml").write_text("")
+
+        config = get_crew_config(tmp_path, "test_crew")
+
+        assert config["agents"] == {}
+        assert config["tasks"] == {}
+
     def test_empty_crews_section_raises_for_any_crew(self, tmp_path: Path) -> None:
         """Empty crews section should raise ValueError."""
         manifest_file = tmp_path / "manifest.yaml"

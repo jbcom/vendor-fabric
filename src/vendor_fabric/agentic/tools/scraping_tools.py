@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 
+from ipaddress import IPv6Address, ip_address
 from typing import TYPE_CHECKING
 from urllib.parse import urljoin, urlparse
 
@@ -28,6 +29,48 @@ else:
 
 log = logging.getLogger(__name__)
 REQUEST_TIMEOUT_SECONDS = 30
+BLOCKED_HOSTNAMES = {"localhost", "metadata.google.internal"}
+
+
+def _is_blocked_host(hostname: str | None) -> bool:
+    """Return whether a crawl hostname targets local, private, or metadata resources."""
+    if not hostname:
+        return True
+
+    normalized = hostname.strip().lower().rstrip(".")
+    if normalized in BLOCKED_HOSTNAMES:
+        return True
+    if normalized.startswith("metadata.") or normalized.endswith((".local", ".internal")):
+        return True
+
+    try:
+        parsed_ip = ip_address(normalized)
+    except ValueError:
+        return False
+
+    if isinstance(parsed_ip, IPv6Address) and parsed_ip.ipv4_mapped is not None:
+        parsed_ip = parsed_ip.ipv4_mapped
+
+    return any(
+        (
+            parsed_ip.is_loopback,
+            parsed_ip.is_link_local,
+            parsed_ip.is_private,
+            parsed_ip.is_reserved,
+            parsed_ip.is_unspecified,
+            parsed_ip.is_multicast,
+        )
+    )
+
+
+def _validate_crawl_url(url: str) -> str | None:
+    """Return an error message when a crawl URL is unsupported or unsafe."""
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"}:
+        return "Error: Only HTTP and HTTPS protocols are allowed."
+    if _is_blocked_host(parsed.hostname):
+        return "Error: Access to local, private, or metadata addresses is blocked."
+    return None
 
 
 class CrawlWebsiteTool(ScrapeWebsiteTool):
@@ -49,6 +92,9 @@ class CrawlWebsiteTool(ScrapeWebsiteTool):
         Returns:
             The scraped content of the website.
         """
+        if error := _validate_crawl_url(url):
+            return error
+
         scraped_content = ""
         visited_urls = set()
         urls_to_visit = [url]
@@ -68,8 +114,16 @@ class CrawlWebsiteTool(ScrapeWebsiteTool):
                 scraped_content += self._scrape_content(soup)
 
                 for link in soup.find_all("a", href=True):
-                    next_url = urljoin(current_url, link["href"])
-                    if urlparse(next_url).netloc == base_netloc and next_url not in visited_urls:
+                    href = link.get("href")
+                    if not isinstance(href, str):
+                        continue
+
+                    next_url = urljoin(current_url, href)
+                    if (
+                        urlparse(next_url).netloc == base_netloc
+                        and next_url not in visited_urls
+                        and _validate_crawl_url(next_url) is None
+                    ):
                         urls_to_visit.append(next_url)
 
             except requests.RequestException:

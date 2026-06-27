@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import datetime as dt
 
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Callable, Mapping, MutableMapping, Sized
 from typing import TYPE_CHECKING, Any
 
 from extended_data.containers import ExtendedDict, ExtendedList
@@ -712,43 +712,34 @@ class GoogleServicesMixin:
         safe_project = safe_google_ref(project_id)
         self.logger.info(f"Checking if project {safe_project} is empty")
 
-        try:
-            if check_compute:
-                instances = self.list_compute_instances(project_id)
-                if instances:
-                    self.logger.info(f"Project {safe_project} has {len(instances)} compute instances")
-                    return False
+        checks: list[tuple[str, Callable[[], Sized]]] = []
+        if check_compute:
+            checks.append(("compute instances", lambda: self.list_compute_instances(project_id)))
+        if check_gke:
+            checks.append(("GKE clusters", lambda: self.list_gke_clusters(project_id)))
+        if check_storage:
+            checks.append(("storage buckets", lambda: self.list_storage_buckets(project_id)))
+        if check_sql:
+            checks.append(("SQL instances", lambda: self.list_sql_instances(project_id)))
+        if check_pubsub:
+            checks.append(("Pub/Sub topics", lambda: self.list_pubsub_topics(project_id)))
 
-            if check_gke:
-                clusters = self.list_gke_clusters(project_id)
-                if clusters:
-                    self.logger.info(f"Project {safe_project} has {len(clusters)} GKE clusters")
-                    return False
-
-            if check_storage:
-                buckets = self.list_storage_buckets(project_id)
-                if buckets:
-                    self.logger.info(f"Project {safe_project} has {len(buckets)} storage buckets")
-                    return False
-
-            if check_sql:
-                sql_instances = self.list_sql_instances(project_id)
-                if sql_instances:
-                    self.logger.info(f"Project {safe_project} has {len(sql_instances)} SQL instances")
-                    return False
-
-            if check_pubsub:
-                topics = self.list_pubsub_topics(project_id)
-                if topics:
-                    self.logger.info(f"Project {safe_project} has {len(topics)} Pub/Sub topics")
-                    return False
-
-        except Exception as e:
-            # API might not be enabled, treat as empty for that service
-            if _has_http_status(e, 403):
-                self.logger.debug(f"API access denied, skipping check: {safe_google_text(e, project_id)}")
-            else:
+        for label, check_fn in checks:
+            try:
+                resources = check_fn()
+            except Exception as e:
+                # API might not be enabled, but that should not short-circuit the
+                # other resource checks.
+                if _has_http_status(e, 403):
+                    self.logger.debug(
+                        f"API access denied for {label}, skipping check: {safe_google_text(e, project_id)}"
+                    )
+                    continue
                 raise
+
+            if resources:
+                self.logger.info(f"Project {safe_project} has {len(resources)} {label}")
+                return False
 
         self.logger.info(f"Project {safe_project} appears to be empty")
         return True

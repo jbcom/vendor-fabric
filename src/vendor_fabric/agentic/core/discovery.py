@@ -218,8 +218,8 @@ def get_crew_config(config_dir: Path, crew_name: str) -> dict:
     agents_path = config_dir / crew_config["agents"]
     tasks_path = config_dir / crew_config["tasks"]
 
-    agents = yaml.safe_load(agents_path.read_text()) if agents_path.exists() else {}
-    tasks = yaml.safe_load(tasks_path.read_text()) if tasks_path.exists() else {}
+    agents = (yaml.safe_load(agents_path.read_text()) if agents_path.exists() else None) or {}
+    tasks = (yaml.safe_load(tasks_path.read_text()) if tasks_path.exists() else None) or {}
 
     # Resolve knowledge paths
     knowledge_paths = []
