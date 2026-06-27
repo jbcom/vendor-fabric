@@ -7,6 +7,7 @@ asset downloading and manifest generation.
 from __future__ import annotations
 
 import hashlib
+import logging
 
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -17,6 +18,9 @@ from extended_data.io import wrap_raw_data_for_export
 
 from vendor_fabric.meshy import base, text3d
 from vendor_fabric.meshy.models import ArtStyle, AssetIntent, AssetSpec, Text3DRequest
+
+
+logger = logging.getLogger("vendor_fabric.meshy.jobs")
 
 
 @dataclass
@@ -138,7 +142,8 @@ class AssetGenerator:
             try:
                 manifest = self.generate_model(spec, wait=True)
                 manifests.append(manifest)
-            except Exception:  # noqa: S112 - batch continues on individual failures
+            except Exception:
+                logger.debug("batch_generate: spec %s failed", getattr(spec, "description", "<unknown>"), exc_info=True)
                 continue
 
         return extend_data(manifests)

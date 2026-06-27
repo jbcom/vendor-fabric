@@ -10,6 +10,7 @@ import json
 from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
+import httpx
 import pytest
 
 from extended_data.containers import ExtendedDict, ExtendedString, extend_data
@@ -447,7 +448,7 @@ class TestWebhookHandlerArtifactDownload:
         )
 
         with patch("vendor_fabric.meshy.webhooks.handler.base") as mock_base:
-            mock_base.download.side_effect = Exception("Network error")
+            mock_base.download.side_effect = httpx.HTTPError("Network error")
 
             artifact = handler._download_glb_artifact(
                 project="project1",
