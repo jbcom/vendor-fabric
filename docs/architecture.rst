@@ -35,38 +35,75 @@ from ``extended_data.ExtendedData`` and extends that data behavior with
 provider state.
 
 The outer ``VendorData`` object owns provider context. Its internal
-``_data`` value owns the current extended shape.
+``_data`` value owns the current extended shape. The facade owns a
+``ConnectorFabric`` (created lazily when none is supplied), an optional
+logger exposed as ``logging`` (falling back to the fabric's logger), a
+declared-capability tuple, and an active-provider id available through
+the read-only ``active_provider`` property.
 
 .. code:: python
 
    from extended_data import ExtendedData
+   from vendor_fabric.connectors import ConnectorFabric
 
 
    class VendorData(ExtendedData):
-       def __init__(self, value=None, *, fabric=None, logger=None):
+       def __new__(cls, value=None, *, fabric=None, logger=None,
+                   capabilities=(), **fabric_kwargs):
+           return object.__new__(cls)
+
+       def __init__(self, value=None, *, fabric=None, logger=None,
+                    capabilities=(), **fabric_kwargs):
            self._data = ExtendedData(value)
-           self.fabric = fabric
-           self.logger = logger
-           self.active_provider = None
+           self.fabric = fabric or ConnectorFabric(
+               logger=logger, **fabric_kwargs)
+           self.logging = logger or getattr(self.fabric, "logging", None)
+           self._declared_capabilities = tuple(capabilities)
+           self._capability_index = _index_capabilities(
+               self._declared_capabilities)
+           self._provider_capability_cache = {}
+           self._providers = {}
+           self._unavailable = {}
+           self._active_provider = None
 
        @property
        def value(self):
            return self._data
+
+       @property
+       def active_provider(self):
+           return self._active_provider
 
        def cast(self, value):
            self._data = ExtendedData(value)
            return self
 
 This preserves the ``ExtendedData`` contract while letting the vendor
-layer add provider-aware operations such as:
+layer add provider-aware operations. Operations take the provider id as
+their first positional argument and dispatch to the connector method
+declared in the capability matrix, falling back to the active provider
+when none is given:
 
 .. code:: python
 
+   from vendor_fabric.vendor_data import VendorData
+
    data = VendorData({"resource": "config"})
    data.open("aws")
-   data.get_file("s3://bucket/key.json")
-   data.get_file("github", owner="jbcom", repo="extended-data", path="README.md")
-   data.sync_secret("vault", "aws", name="prod/api")
+   data.call("get_object", "aws", bucket="my-bucket", key="config.json")
+
+   github = VendorData(fabric=fabric).open("github",
+                                            github_owner="jbcom",
+                                            github_repo="extended-data")
+   github.call("get_repository_file", "github", file_path="README.md")
+
+``VendorData`` also exposes two helpers for inspecting support: the
+``capabilities(provider=None)`` method returns the full route set (or
+one provider's routes), and ``capability_matrix()`` returns an
+``operation -> provider -> route`` mapping. Use ``supports(provider,
+operation)`` to query a single route. There is no ``__dir__`` override;
+caller-side autocomplete reflects the static API plus whatever
+``open_<provider>`` lambdas ``__getattr__`` synthesises.
 
 Provider Capability Registry
 ----------------------------
@@ -76,19 +113,26 @@ as a large repeated pass-through method matrix.
 
 Use normal Python mechanisms:
 
-- ``typing.Protocol`` for structural provider contracts
 - abstract base classes for common connector behavior
-- a ``@capability(...)`` decorator on provider methods
+  (``vendor_fabric.base.ConnectorBase`` mixes in
+  ``CapabilityProviderMixin``)
+- a ``@capability(...)`` decorator on provider methods; decorated methods
+  carry a ``_vendor_capabilities`` tuple of ``CapabilitySpec`` records
 - ``CapabilityProviderMixin.__init_subclass__`` to collect decorated
   methods from the full method resolution order
-- a read-only ``capabilities`` mapping for inspection and dispatch
-- ``__getattr__`` only as a thin convenience for declared capabilities
-- ``__dir__`` so editor autocomplete can show available dynamic
-  operations
+- a ``capabilities`` mapping (``vendor_capabilities`` /
+  ``vendor_capability_methods``) on provider classes for inspection and
+  dispatch
+- ``__getattr__`` on ``VendorData`` only as a thin convenience for the
+  declared operations (``open_<provider>`` and the bare operation name)
 
-Do not use custom dunder names such as ``__SUPPORTS__``. Use ordinary
-metadata such as ``_capability_spec`` on decorated methods and
-``capabilities`` on provider classes.
+Connectors may also declare a ``__supports__`` mapping on the class to
+publish additional operation aliases that are not themselves decorated
+methods (for example, mapping ``"get_file"`` to a concrete
+``get_object`` method). ``VendorData.declare_supports`` attaches this
+metadata; the ``_declared_supports`` helper reads it back. Use ordinary
+metadata such as ``_vendor_capabilities`` on decorated methods and
+``__supports__`` on provider classes.
 
 .. code:: python
 
