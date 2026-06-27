@@ -29,12 +29,7 @@ asyncio_mode = "auto"
 timeout = 30
 timeout_method = "thread"
 markers = [
-    "crewai: tests that require CrewAI runtime dependencies",
     "e2e: end-to-end tests that require external runtime dependencies",
-    "langchain: tests that require LangChain runtime dependencies",
-    "langgraph: tests that require LangGraph runtime dependencies",
-    "strands: tests that require Strands runtime dependencies",
-    "vcr: tests that use recorded HTTP cassettes",
 ]
 
 [tool.coverage.run]

@@ -9,7 +9,7 @@ pip install pytest-vendor-fabric
 
 The plugin registers:
 
-- E2E controls: `--e2e` and `--framework`
+- E2E controls: `--e2e`
 - Connector fixtures: `mock_logger` and `base_connector_kwargs`
 - Credential guards: `check_api_key` and `check_aws_credentials`
 

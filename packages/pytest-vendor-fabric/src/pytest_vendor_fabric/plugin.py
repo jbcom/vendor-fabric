@@ -10,9 +10,6 @@ from unittest.mock import MagicMock
 import pytest
 
 
-FRAMEWORK_MARKERS = {"crewai", "langchain", "langgraph", "strands"}
-
-
 def pytest_addoption(parser: Any) -> None:
     """Add vendor-fabric test-suite options."""
     parser.addoption(
@@ -21,41 +18,22 @@ def pytest_addoption(parser: Any) -> None:
         default=False,
         help="Run E2E tests that require real vendor credentials and external services",
     )
-    parser.addoption(
-        "--framework",
-        action="store",
-        choices=tuple(sorted(FRAMEWORK_MARKERS)),
-        default=None,
-        help="Run tests for a single vendor-fabric AI framework",
-    )
 
 
 def pytest_configure(config: Any) -> None:
     """Register markers used by vendor-fabric test suites."""
-    config.addinivalue_line("markers", "crewai: tests that require CrewAI runtime dependencies")
     config.addinivalue_line("markers", "e2e: end-to-end tests requiring credentials or external services")
-    config.addinivalue_line("markers", "langchain: tests that require LangChain runtime dependencies")
-    config.addinivalue_line("markers", "langgraph: tests that require LangGraph runtime dependencies")
-    config.addinivalue_line("markers", "strands: tests that require Strands runtime dependencies")
-    config.addinivalue_line("markers", "vcr: tests that use recorded HTTP cassettes")
 
 
 def pytest_collection_modifyitems(config: Any, items: list[pytest.Item]) -> None:
-    """Skip live E2E tests by default and apply framework filtering."""
+    """Skip live E2E tests by default."""
     e2e_enabled = config.getoption("--e2e")
-    framework_filter = config.getoption("--framework")
 
     skip_e2e = pytest.mark.skip(reason="E2E tests disabled; pass --e2e to run them")
-    skip_framework = pytest.mark.skip(reason=f"Test not selected by --framework={framework_filter}")
 
     for item in items:
         if "e2e" in item.keywords and not e2e_enabled:
             item.add_marker(skip_e2e)
-
-        if framework_filter:
-            test_frameworks = FRAMEWORK_MARKERS.intersection(item.keywords)
-            if test_frameworks and framework_filter not in test_frameworks:
-                item.add_marker(skip_framework)
 
 
 @pytest.fixture

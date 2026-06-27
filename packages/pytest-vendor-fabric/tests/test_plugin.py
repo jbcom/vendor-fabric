@@ -30,14 +30,13 @@ class FakeItem:
 
 
 def test_pytest_addoption_registers_vendor_options() -> None:
-    """The plugin should register E2E and framework selection options."""
+    """The plugin should register E2E control options."""
     parser = MagicMock()
 
     plugin.pytest_addoption(parser)
 
     option_names = [call.args[0] for call in parser.addoption.call_args_list]
-    assert option_names == ["--e2e", "--framework"]
-    assert parser.addoption.call_args_list[1].kwargs["choices"] == tuple(sorted(plugin.FRAMEWORK_MARKERS))
+    assert option_names == ["--e2e"]
 
 
 def test_pytest_configure_registers_markers() -> None:
@@ -47,20 +46,13 @@ def test_pytest_configure_registers_markers() -> None:
     plugin.pytest_configure(config)
 
     marker_lines = [call.args[1] for call in config.addinivalue_line.call_args_list]
-    assert marker_lines == [
-        "crewai: tests that require CrewAI runtime dependencies",
-        "e2e: end-to-end tests requiring credentials or external services",
-        "langchain: tests that require LangChain runtime dependencies",
-        "langgraph: tests that require LangGraph runtime dependencies",
-        "strands: tests that require Strands runtime dependencies",
-        "vcr: tests that use recorded HTTP cassettes",
-    ]
+    assert marker_lines == ["e2e: end-to-end tests requiring credentials or external services"]
 
 
-def test_pytest_collection_modifyitems_applies_e2e_and_framework_skips() -> None:
-    """Collection filtering should skip disabled E2E and unselected frameworks."""
+def test_pytest_collection_modifyitems_skips_disabled_e2e() -> None:
+    """Collection filtering should skip disabled E2E tests."""
     config = MagicMock()
-    config.getoption.side_effect = lambda option: {"--e2e": False, "--framework": "langgraph"}[option]
+    config.getoption.side_effect = lambda option: {"--e2e": False}[option]
     live_item = FakeItem({"e2e"})
     crew_item = FakeItem({"crewai"})
     langgraph_item = FakeItem({"langgraph"})
@@ -68,7 +60,7 @@ def test_pytest_collection_modifyitems_applies_e2e_and_framework_skips() -> None
     plugin.pytest_collection_modifyitems(config, [live_item, crew_item, langgraph_item])
 
     assert [marker.kwargs["reason"] for marker in live_item.markers] == ["E2E tests disabled; pass --e2e to run them"]
-    assert [marker.kwargs["reason"] for marker in crew_item.markers] == ["Test not selected by --framework=langgraph"]
+    assert crew_item.markers == []
     assert langgraph_item.markers == []
 
 
@@ -142,28 +134,6 @@ def test_unit():
     )
 
     result = pytester.runpytest("-p", "pytest_vendor_fabric.plugin", "-q")
-
-    result.assert_outcomes(passed=1, skipped=1)
-
-
-def test_framework_filter_selects_marked_tests(pytester: Any, monkeypatch: Any) -> None:
-    """The --framework option skips tests for other framework markers."""
-    _disable_autoload(monkeypatch)
-    pytester.makepyfile(
-        """
-import pytest
-
-@pytest.mark.crewai
-def test_crewai():
-    assert False
-
-@pytest.mark.langgraph
-def test_langgraph():
-    assert True
-""",
-    )
-
-    result = pytester.runpytest("-p", "pytest_vendor_fabric.plugin", "--framework=langgraph", "-q")
 
     result.assert_outcomes(passed=1, skipped=1)
 

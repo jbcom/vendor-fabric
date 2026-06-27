@@ -26,11 +26,10 @@ tox -e build
 GitHub, Slack, Vault, MCP, and LangChain unit tests. Live E2E tests remain
 opt-in.
 
-Live E2E tests are opt-in:
+Live provider E2E tests are opt-in and may call paid provider APIs:
 
 ```bash
 tox -e e2e -- --e2e
-tox -e e2e -- --e2e --framework=crewai
 ```
 
 The test matrix intentionally does not skip missing Python interpreters. Python
