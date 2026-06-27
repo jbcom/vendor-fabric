@@ -3,18 +3,29 @@
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from extended_data.containers import ExtendedData, ExtendedDict
 
 from vendor_fabric.secrets_sync import (
     InMemorySecretStore,
+    OutputFormat,
     SecretSyncConfig,
     SecretSyncPipeline,
     StoreRegistry,
     SyncOperation,
     SyncOptions,
+    get_config_info,
+    merge,
+    run_pipeline,
+    sync,
     sync_mapping_to_file,
+    validate_config,
 )
+from vendor_fabric.secrets_sync.models import TargetDiff
+from vendor_fabric.secrets_sync.pipeline import format_diff
 
 
 def test_native_pipeline_merges_sources_and_syncs_target_store() -> None:
@@ -108,3 +119,123 @@ def test_sync_mapping_to_file_uses_extended_data_sync_primitive(tmp_path: Path) 
     assert isinstance(result, ExtendedDict)
     assert result["changed"] is True
     assert (tmp_path / "payload.json").exists()
+
+
+def test_pipeline_from_file_and_module_wrappers_delegate(tmp_path: Path) -> None:
+    """Module-level wrappers should create a pipeline and pass expected options."""
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text("targets:\n  prod:\n    imports: []\n", encoding="utf-8")
+    pipeline = MagicMock()
+    pipeline.run.return_value.to_dict.return_value = {"success": True}
+
+    with patch.object(SecretSyncPipeline, "from_file", return_value=pipeline) as from_file:
+        assert run_pipeline(str(config_path)) == {"success": True}
+        dry_merge = merge(str(config_path), dry_run=True)
+        dry_sync = sync(str(config_path), dry_run=True)
+
+    assert dry_merge == {"success": True}
+    assert dry_sync == {"success": True}
+    assert from_file.call_count == 3
+    merge_options = pipeline.run.call_args_list[1].args[0]
+    sync_options = pipeline.run.call_args_list[2].args[0]
+    assert merge_options.operation is SyncOperation.MERGE
+    assert merge_options.dry_run is True
+    assert merge_options.compute_diff is True
+    assert sync_options.operation is SyncOperation.SYNC
+
+
+def test_validate_and_info_wrappers_report_failures(tmp_path: Path) -> None:
+    """Validation and info helpers should return redacted failure payloads."""
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text("- not\n- mapping\n", encoding="utf-8")
+
+    validation = validate_config(str(config_path))
+    info = get_config_info(str(config_path))
+
+    assert validation["valid"] is False
+    assert "must be a mapping" in validation["message"]
+    assert info["valid"] is False
+    assert "must be a mapping" in info["error_message"]
+
+
+def test_pipeline_run_records_errors_when_continue_on_error() -> None:
+    """Pipeline execution should aggregate redacted errors when continuing."""
+    pipeline = SecretSyncPipeline(SecretSyncConfig.from_mapping({"targets": {"prod": {"imports": []}}}))
+    with patch.object(pipeline, "merge_target", side_effect=RuntimeError("password=hunter2 Authorization: Bearer raw")):
+        result = pipeline.run(SyncOptions(operation=SyncOperation.MERGE, continue_on_error=True))
+
+    assert result.success is True
+    assert "hunter2" not in result.error_message
+    assert "[REDACTED]" in result.error_message
+
+
+def test_pipeline_run_reraises_when_continue_on_error_is_false() -> None:
+    """Pipeline execution should re-raise operation errors when requested."""
+    pipeline = SecretSyncPipeline(SecretSyncConfig.from_mapping({"targets": {"prod": {"imports": []}}}))
+    with patch.object(pipeline, "merge_target", side_effect=RuntimeError("boom")):
+        with pytest.raises(RuntimeError, match="boom"):
+            pipeline.run(SyncOptions(operation=SyncOperation.MERGE, continue_on_error=False))
+
+
+def test_pipeline_validate_config_failure_and_target_resolution() -> None:
+    """Pipeline instance helpers should expose validation and target dependency behavior."""
+    config = SecretSyncConfig.from_mapping(
+        {
+            "sources": {"base": {"vault": {"mount": "base"}}},
+            "targets": {
+                "shared": {"imports": ["base"]},
+                "prod": {"imports": ["shared"]},
+            },
+        }
+    )
+    pipeline = SecretSyncPipeline(config)
+    config.targets["prod"].account_id = "bad"
+
+    assert pipeline.validate_config()["valid"] is False
+    assert pipeline.config_info().target_count == 2
+    assert pipeline.resolve_targets(["prod"]) == ["shared", "prod"]
+
+
+def test_pipeline_private_store_selection_branches() -> None:
+    """Pipeline should select injected and configured stores before defaults."""
+    source_store = MagicMock()
+    target_store = MagicMock()
+    merge_store = MagicMock()
+    pipeline = SecretSyncPipeline(
+        SecretSyncConfig.from_mapping(
+            {
+                "sources": {"base": {"vault": {"mount": "base"}}},
+                "targets": {"prod": {"imports": ["base"]}},
+            }
+        ),
+        stores=StoreRegistry(sources={"base": source_store}, targets={"prod": target_store}, merge_store=merge_store),
+    )
+
+    assert pipeline._source_store("base", pipeline.config.sources["base"]) is source_store
+    assert pipeline._target_store("prod", pipeline.config.targets["prod"]) is target_store
+    assert pipeline._merge_store() is merge_store
+    with pytest.raises(ValueError, match="target not found"):
+        pipeline.bundle_path_for_target("missing")
+
+
+def test_format_diff_human_output() -> None:
+    """Human diff output should include populated sections only."""
+    rendered = format_diff(
+        [
+            TargetDiff(
+                target="prod",
+                phase="sync",
+                added=["db"],
+                modified=["api"],
+                removed=["old"],
+                unchanged=["cache"],
+            )
+        ],
+        output_format=OutputFormat.HUMAN,
+    )
+
+    assert "sync:prod" in rendered
+    assert "added: db" in rendered
+    assert "modified: api" in rendered
+    assert "removed: old" in rendered
+    assert "unchanged: cache" in rendered

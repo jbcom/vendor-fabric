@@ -136,7 +136,7 @@ class VaultSecretStore:
                 summary.unchanged += 1
             else:
                 summary.modified += 1
-            if not dry_run:
+            if not dry_run and (existing is None or not deep_equal(existing, normalized)):
                 self.connector.write_secret(path=join_secret_path(root, rel_path), data=normalized, mount_point=self.mount)
         return summary
 

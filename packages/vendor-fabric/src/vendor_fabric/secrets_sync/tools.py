@@ -269,7 +269,7 @@ def get_targets(config_path: str) -> ExtendedDict:
             }
         )
     except Exception as exc:
-        return _redacted_extended_payload({"targets": [], "count": 0, "error_message": exc})
+        return _redacted_extended_payload({"targets": [], "count": 0, "error_message": redact_sensitive_text(exc)})
 
 
 def get_sources(config_path: str) -> ExtendedDict:
@@ -291,7 +291,7 @@ def get_sources(config_path: str) -> ExtendedDict:
             }
         )
     except Exception as exc:
-        return _redacted_extended_payload({"sources": [], "count": 0, "error_message": exc})
+        return _redacted_extended_payload({"sources": [], "count": 0, "error_message": redact_sensitive_text(exc)})
 
 
 # =============================================================================
