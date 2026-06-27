@@ -181,9 +181,8 @@ Testing Package
 ---------------
 
 ``pytest-vendor-fabric`` is a sibling package in this repository. It
-should cover provider fixtures, optional dependency markers, registry
-assertions, credential guards, mocked provider responses, and live E2E
-opt-in controls.
+provides connector fixtures, a mock logger, credential guards, the
+``e2e`` marker, and the ``--e2e`` opt-in control for live E2E tests.
 
 Agent runtime fixtures belong in ``pytest-agentic-fabric``, not here.
 

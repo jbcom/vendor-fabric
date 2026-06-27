@@ -33,3 +33,4 @@ pipeline semantics, CLI, and gopy binding source live in
    testing
    ownership-map
    api/index
+   api/internal
