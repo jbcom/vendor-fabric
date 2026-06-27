@@ -44,7 +44,7 @@ class CrewAgents:
     def crew(self) -> Crew:
         """Lazy load crew from YAML."""
         if self._crew is None:
-            self._crew = Crew.from_yaml(str(self.config_path))  # type: ignore[attr-defined]
+            self._crew = Crew.from_yaml(str(self.config_path))
         return self._crew
 
     def _get_crew_for_task(self, task_name: str | None = None) -> Crew:
@@ -66,7 +66,7 @@ class CrewAgents:
             return self.crew
 
         # Create fresh crew for task filtering to avoid mutating cached instance
-        crew = Crew.from_yaml(str(self.config_path))  # type: ignore[attr-defined]
+        crew = Crew.from_yaml(str(self.config_path))
         matching_tasks = [t for t in crew.tasks if t.name == task_name]
 
         if not matching_tasks:
@@ -74,7 +74,7 @@ class CrewAgents:
             raise ValueError(f"Task '{task_name}' not found. Available: {available}")
 
         crew.tasks = matching_tasks
-        return crew  # type: ignore[return-value, no-any-return]
+        return crew
 
     def kickoff(self, inputs: dict[str, Any] | None = None) -> Any:
         """Execute the crew with given inputs.
@@ -109,14 +109,14 @@ class CrewAgents:
         return crew.kickoff_async(inputs=filtered_inputs)
 
 
-def load_crewbase():
+def load_crewbase() -> dict[str, Any]:
     """Load crewbase.yaml configuration."""
     crewbase_path = Path(__file__).parent.parent.parent / "crewbase.yaml"
     with open(crewbase_path) as f:
         return yaml.safe_load(f)
 
 
-def kickoff(inputs: dict[str, Any] | None = None):
+def kickoff(inputs: dict[str, Any] | None = None) -> Any:
     """Main entry point for crewai run.
 
     Args:
@@ -131,7 +131,7 @@ def kickoff(inputs: dict[str, Any] | None = None):
 
     # CrewAI will automatically load agents/tasks from crewbase.yaml
     # The MCP tools are declared in crewbase.yaml using mcp:// syntax
-    crew = Crew.from_yaml(str(Path(__file__).parent.parent.parent / "crewbase.yaml"))  # type: ignore[attr-defined]
+    crew = Crew.from_yaml(str(Path(__file__).parent.parent.parent / "crewbase.yaml"))
 
     # If specific task requested, filter to that task
     # Create filtered inputs without mutating original
@@ -146,10 +146,10 @@ def kickoff(inputs: dict[str, Any] | None = None):
     return crew.kickoff(inputs=filtered_inputs)
 
 
-def train(n_iterations: int = 5, inputs: dict[str, Any] | None = None):
+def train(n_iterations: int = 5, inputs: dict[str, Any] | None = None) -> None:
     """Train the crew using memory/learning features."""
     load_crewbase()
-    crew = Crew.from_yaml(str(Path(__file__).parent.parent.parent / "crewbase.yaml"))  # type: ignore[attr-defined]
+    crew = Crew.from_yaml(str(Path(__file__).parent.parent.parent / "crewbase.yaml"))
 
     crew.train(n_iterations=n_iterations, inputs=inputs)
 

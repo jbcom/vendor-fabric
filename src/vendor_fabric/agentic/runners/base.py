@@ -37,7 +37,7 @@ To create a new runner for a framework:
 class SimpleRunner(BaseRunner):
     framework_name = "simple"
 
-    def __init__(self):
+    def __init__(self) -> None:
         try:
             import simple_framework
         except ImportError as e:
@@ -239,7 +239,7 @@ class BaseRunner(ABC):
         return self.run(crew, inputs or {})
 
     @abstractmethod
-    def build_agent(self, agent_config: dict[str, Any], tools: list | None = None) -> Any:
+    def build_agent(self, agent_config: dict[str, Any], tools: list[Any] | None = None) -> Any:
         """Build a framework-specific agent.
 
         Creates a single agent from the universal configuration. Called by

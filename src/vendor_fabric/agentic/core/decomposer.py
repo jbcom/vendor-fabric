@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from vendor_fabric.agentic.runners.base import BaseRunner
-    from vendor_fabric.agentic.runners.single_agent_runner import SingleAgentRunner
+    from vendor_fabric.agentic.runners.local_cli_runner import LocalCLIRunner
 
 # Framework detection cache
 _framework_cache: dict[str, bool] = {}
@@ -141,7 +141,7 @@ def get_runner(framework: str | None = None) -> BaseRunner:
 def get_cli_runner(
     profile: str | dict[str, Any],
     model: str | None = None,
-) -> SingleAgentRunner:
+) -> LocalCLIRunner:
     """Get a single-agent CLI runner for the specified profile.
 
     Args:

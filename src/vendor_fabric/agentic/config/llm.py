@@ -16,7 +16,7 @@ try:
     from crewai import LLM
 except ImportError:
     # Allow module to load even if crewai not installed (for testing)
-    LLM = None  # type: ignore[assignment]
+    LLM = None
 
 
 class LLMProvider(Enum):

@@ -191,7 +191,7 @@ def get_framework_from_config_dir(config_dir: Path) -> str | None:
     return DIR_TO_FRAMEWORK.get(dir_name)
 
 
-def get_crew_config(config_dir: Path, crew_name: str) -> dict:
+def get_crew_config(config_dir: Path, crew_name: str) -> dict[str, Any]:
     """Load a specific crew's configuration.
 
     Args:
@@ -222,7 +222,7 @@ def get_crew_config(config_dir: Path, crew_name: str) -> dict:
     tasks = (yaml.safe_load(tasks_path.read_text()) if tasks_path.exists() else None) or {}
 
     # Resolve knowledge paths
-    knowledge_paths = []
+    knowledge_paths: list[Path] = []
     for kp in crew_config.get("knowledge", []):
         full_path = config_dir / kp
         if full_path.exists():
@@ -270,7 +270,7 @@ def get_crew_config(config_dir: Path, crew_name: str) -> dict:
 def list_crews(
     package_name: str | None = None,
     framework: str | None = None,
-) -> dict[str, list[dict]]:
+) -> dict[str, list[dict[str, Any]]]:
     """List all available crews, optionally filtered by package or framework.
 
     Args:
@@ -285,7 +285,7 @@ def list_crews(
         - required_framework: Framework required (if in framework-specific dir)
     """
     packages = discover_packages(framework=framework)
-    result = {}
+    result: dict[str, list[dict[str, Any]]] = {}
 
     for pkg_name, config_dir in packages.items():
         if package_name and pkg_name != package_name:
@@ -294,7 +294,7 @@ def list_crews(
         manifest = load_manifest(config_dir)
         required_framework = get_framework_from_config_dir(config_dir)
 
-        crews = []
+        crews: list[dict[str, Any]] = []
         for crew_name, crew_config in manifest.get("crews", {}).items():
             crews.append(
                 {

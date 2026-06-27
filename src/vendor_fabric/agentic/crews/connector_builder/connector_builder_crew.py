@@ -8,6 +8,7 @@ documentation.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from crewai import Agent, Crew, Task
 
@@ -28,7 +29,7 @@ class ConnectorBuilderCrew:
                   tasks for connector building.
     """
 
-    def __init__(self, output_dir: str = "output"):
+    def __init__(self, output_dir: str = "output") -> None:
         """Initializes the ConnectorBuilderCrew.
 
         Loads agent and task configurations from YAML files, creates Agent
@@ -66,7 +67,7 @@ class ConnectorBuilderCrew:
             verbose=2,
         )
 
-    def kickoff(self, inputs: dict) -> str:
+    def kickoff(self, inputs: dict[str, Any]) -> str:
         """Starts the crew's execution with the given inputs.
 
         Args:

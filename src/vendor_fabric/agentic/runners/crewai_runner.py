@@ -27,7 +27,7 @@ class CrewAIRunner(BaseRunner):
 
     framework_name = "crewai"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize CrewAI runner."""
         # Verify CrewAI is available
         try:
@@ -103,7 +103,7 @@ class CrewAIRunner(BaseRunner):
         result = crew.kickoff(inputs=inputs)
         return result.raw if hasattr(result, "raw") else str(result)
 
-    def build_agent(self, agent_config: dict[str, Any], tools: list | None = None) -> Any:
+    def build_agent(self, agent_config: dict[str, Any], tools: list[Any] | None = None) -> Any:
         """Build a CrewAI Agent.
 
         Args:
@@ -129,7 +129,7 @@ class CrewAIRunner(BaseRunner):
         self,
         task_config: dict[str, Any],
         agent: Any,
-        context: list | None = None,
+        context: list[Any] | None = None,
     ) -> Any:
         """Build a CrewAI Task.
 
@@ -155,7 +155,7 @@ class CrewAIRunner(BaseRunner):
 
         return Task(**task_kwargs)
 
-    def _resolve_tools(self, tool_names: list[str]) -> list:
+    def _resolve_tools(self, tool_names: list[str]) -> list[Any]:
         """Resolve tool names to actual tool instances.
 
         Args:
@@ -166,7 +166,7 @@ class CrewAIRunner(BaseRunner):
         """
         return resolve_tools(tool_names)
 
-    def _load_knowledge(self, knowledge_paths: list[Path]) -> list:
+    def _load_knowledge(self, knowledge_paths: list[Path]) -> list[Any]:
         """Load knowledge sources from paths.
 
         Args:
@@ -177,7 +177,7 @@ class CrewAIRunner(BaseRunner):
         """
         from crewai.knowledge.source.text_file_knowledge_source import TextFileKnowledgeSource
 
-        sources = []
+        sources: list[Any] = []
         for knowledge_path in knowledge_paths:
             resolved_path = knowledge_path if isinstance(knowledge_path, Path) else Path(knowledge_path)
             if not resolved_path.exists():

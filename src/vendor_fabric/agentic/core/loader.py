@@ -22,7 +22,7 @@ from vendor_fabric.agentic.tools.registry import resolve_tools
 logger = logging.getLogger(__name__)
 
 
-def load_knowledge_sources(knowledge_paths: list[Path]) -> list:
+def load_knowledge_sources(knowledge_paths: list[Path]) -> list[Any]:
     """Load knowledge sources from the specified paths.
 
     Args:
@@ -36,7 +36,7 @@ def load_knowledge_sources(knowledge_paths: list[Path]) -> list:
     """
     from crewai.knowledge.source.text_file_knowledge_source import TextFileKnowledgeSource
 
-    sources = []
+    sources: list[Any] = []
 
     for knowledge_path in knowledge_paths:
         if not knowledge_path.exists():
@@ -62,8 +62,8 @@ def load_knowledge_sources(knowledge_paths: list[Path]) -> list:
 
 def create_agent_from_config(
     agent_name: str,
-    agent_config: dict,
-    tools: list | None = None,
+    agent_config: dict[str, Any],
+    tools: list[Any] | None = None,
 ) -> Agent:
     """Create an Agent from YAML configuration.
 
@@ -95,7 +95,7 @@ def create_agent_from_config(
 
 def create_task_from_config(
     task_name: str,
-    task_config: dict,
+    task_config: dict[str, Any],
     agent: Agent,
 ) -> Task:
     """Create a Task from YAML configuration.
@@ -120,7 +120,7 @@ def create_task_from_config(
     )
 
 
-def load_crew_from_config(crew_config: dict) -> Crew:
+def load_crew_from_config(crew_config: dict[str, Any]) -> Crew:
     """Load a complete Crew from configuration.
 
     Args:
@@ -164,7 +164,7 @@ def load_crew_from_config(crew_config: dict) -> Crew:
 
     # Create tasks
     tasks_config = crew_config.get("tasks", {})
-    tasks = []
+    tasks: list[Any] = []
 
     for task_name, task_cfg in tasks_config.items():
         # Find the agent for this task

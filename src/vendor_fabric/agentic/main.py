@@ -35,7 +35,7 @@ from vendor_fabric.agentic.core.discovery import discover_packages, get_crew_con
 from vendor_fabric.agentic.core.runner import run_crew
 
 
-def cmd_list(args):
+def cmd_list(args: argparse.Namespace) -> None:
     """List available packages and crews."""
     framework = getattr(args, "framework", None)
     use_json = getattr(args, "json", False)
@@ -84,7 +84,7 @@ def cmd_list(args):
             print(f"   • {crew['name']}{framework_info}: {desc}")
 
 
-def cmd_run(args):
+def cmd_run(args: argparse.Namespace) -> None:
     """Run a specific crew or single-agent task."""
     use_json = getattr(args, "json", False)
     start_time = time.time()
@@ -208,7 +208,7 @@ def cmd_run(args):
         sys.exit(1)  # Exit code 1 = crew execution failed
 
 
-def _cmd_run_single_agent(args, use_json: bool, start_time: float):
+def _cmd_run_single_agent(args: argparse.Namespace, use_json: bool, start_time: float) -> None:
     """Run a task with a single-agent CLI runner."""
     from vendor_fabric.agentic.core.decomposer import get_available_cli_runners, get_cli_runner
 
@@ -321,7 +321,7 @@ def _cmd_run_single_agent(args, use_json: bool, start_time: float):
         sys.exit(1)
 
 
-def cmd_build(args):
+def cmd_build(args: argparse.Namespace) -> None:
     """Legacy build command - runs otterfall game_builder."""
     print("=" * 60)
     print("🎮 OTTERFALL GAME BUILDER")
@@ -343,7 +343,7 @@ def cmd_build(args):
         sys.exit(1)
 
 
-def cmd_info(args):
+def cmd_info(args: argparse.Namespace) -> None:
     """Show detailed info about a crew."""
     use_json = getattr(args, "json", False)
     packages = discover_packages()
@@ -416,7 +416,7 @@ def cmd_info(args):
         print(f"   • {kp}")
 
 
-def cmd_list_runners(args):
+def cmd_list_runners(args: argparse.Namespace) -> None:
     """List available single-agent CLI runners."""
     from vendor_fabric.agentic.core.decomposer import (
         get_available_cli_runners,
@@ -488,7 +488,7 @@ def cmd_list_runners(args):
         sys.exit(2)
 
 
-def main():
+def main() -> None:
     """CLI entry point."""
     parser = argparse.ArgumentParser(
         description="vendor-fabric-agent - Framework-Agnostic Crew Runner",

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from vendor_fabric.agentic.core.discovery import discover_packages, get_crew_config
 from vendor_fabric.agentic.core.loader import load_crew_from_config
@@ -11,7 +12,7 @@ from vendor_fabric.agentic.core.loader import load_crew_from_config
 def run_crew(
     package_name: str,
     crew_name: str,
-    inputs: dict | None = None,
+    inputs: dict[str, Any] | None = None,
     workspace_root: Path | None = None,
 ) -> str:
     """Run a crew from a package with the given inputs.
@@ -52,7 +53,7 @@ def run_crew(
 def run_crew_from_path(
     crewai_dir: Path,
     crew_name: str,
-    inputs: dict | None = None,
+    inputs: dict[str, Any] | None = None,
 ) -> str:
     """Run a crew directly from a .crewai/ directory path.
 

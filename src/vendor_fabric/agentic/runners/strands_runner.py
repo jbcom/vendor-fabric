@@ -20,7 +20,7 @@ class StrandsRunner(BaseRunner):
 
     framework_name = "strands"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Strands runner."""
         try:
             import strands  # noqa: F401
@@ -62,7 +62,7 @@ class StrandsRunner(BaseRunner):
 
         return Agent(**agent_kwargs)
 
-    def _get_model_provider(self, llm_config: dict | str | None) -> str | None:
+    def _get_model_provider(self, llm_config: dict[str, Any] | str | None) -> str | None:
         """Get Strands-compatible model provider from LLM config.
 
         Args:
@@ -97,7 +97,7 @@ class StrandsRunner(BaseRunner):
 
         return str(result)
 
-    def build_agent(self, agent_config: dict[str, Any], tools: list | None = None) -> Any:
+    def build_agent(self, agent_config: dict[str, Any], tools: list[Any] | None = None) -> Any:
         """Build a Strands agent.
 
         Args:
@@ -183,7 +183,7 @@ class StrandsRunner(BaseRunner):
 
         return "\n".join(parts)
 
-    def _collect_tools(self, crew_config: dict[str, Any]) -> list:
+    def _collect_tools(self, crew_config: dict[str, Any]) -> list[Any]:
         """Collect tools declared by agents in crew configuration."""
         tool_names: list[str] = []
         for agent_cfg in crew_config.get("agents", {}).values():

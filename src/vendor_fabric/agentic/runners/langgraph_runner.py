@@ -20,7 +20,7 @@ class LangGraphRunner(BaseRunner):
 
     framework_name = "langgraph"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize LangGraph runner."""
         try:
             import langgraph  # noqa: F401
@@ -94,7 +94,7 @@ class LangGraphRunner(BaseRunner):
         default_model = "claude-haiku-4-5-20251001"
         return ChatAnthropic(model=model or default_model)
 
-    def build_agent(self, agent_config: dict[str, Any], tools: list | None = None) -> Any:
+    def build_agent(self, agent_config: dict[str, Any], tools: list[Any] | None = None) -> Any:
         """Build a LangGraph-compatible agent.
 
         Args:
@@ -129,7 +129,7 @@ class LangGraphRunner(BaseRunner):
             "agent": agent,
         }
 
-    def _build_tools_from_config(self, crew_config: dict[str, Any]) -> list:
+    def _build_tools_from_config(self, crew_config: dict[str, Any]) -> list[Any]:
         """Resolve configured agent tools into LangGraph-compatible tools."""
         tool_names: list[str] = []
         for agent_cfg in crew_config.get("agents", {}).values():
