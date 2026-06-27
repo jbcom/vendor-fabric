@@ -1,8 +1,9 @@
 # Vendor Fabric
 
 `vendor-fabric` is the optional vendor integration layer for the
-Extended Data Python stack. It depends on `extended-data` for primitives,
-containers, local file sync, inputs, logging, and workflow utilities, then adds
+Extended Data Python stack. It depends on `extended-data>=8.3.0` for the
+polymorphic `ExtendedData` root, concrete containers, local file sync, inputs,
+logging, and workflow utilities, then adds
 adapter-registered API clients, vendor-backed sync capabilities, and agentic
 workflow adapters.
 
@@ -45,3 +46,8 @@ result = pipeline.run_extended(SyncOptions(dry_run=True))
 
 print(result["success"])
 ```
+
+Connector and sync payloads are `ExtendedData` values at the boundary. Dict,
+list, string, tuple, and set payloads are concrete extended subclasses, so code
+can use normal container operations and extended-data methods without import
+juggling.

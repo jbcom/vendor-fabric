@@ -349,7 +349,7 @@ class ConnectorBase(InputProvider, ABC):
         """Decode an HTTP response body through the extended-data IO layer.
 
         Structured response bodies are decoded from JSON, YAML, TOML, or HCL and
-        promoted to Tier 2 containers by default. Text responses become raw
+        promoted through the ExtendedData root by default. Text responses become raw
         strings, and unknown binary responses remain bytes.
         """
         if not response.content:
@@ -446,7 +446,7 @@ class ConnectorBase(InputProvider, ABC):
         )
 
     def extend_result(self, value: Any) -> Any:
-        """Promote connector data payloads into Tier 2 containers."""
+        """Promote connector data payloads through the ExtendedData root."""
         from extended_data.containers import extend_data
 
         return extend_data(value)

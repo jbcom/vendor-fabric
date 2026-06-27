@@ -9,7 +9,7 @@ from typing import Any, get_args, get_origin, get_type_hints
 
 import pytest
 
-from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString, ExtendedTuple
+from extended_data.containers import ExtendedData, ExtendedDict, ExtendedList, ExtendedString, ExtendedTuple
 from extended_data.inputs import InputProvider
 
 import vendor_fabric as connector_exports
@@ -355,6 +355,15 @@ def test_direct_connector_methods_advertise_extended_payloads(method: object, ex
 def test_payload_methods_are_accepted_by_connector_data_surface(method: object, expected_return: object) -> None:
     """Every annotated connector payload method should be eligible for data-surface exposure."""
     assert is_connector_data_method(method), f"{method!r} -> {expected_return!r}"
+
+
+def test_connector_data_surface_accepts_extended_data_root_annotation() -> None:
+    """Connector APIs may advertise the polymorphic ExtendedData root directly."""
+
+    def root_payload() -> ExtendedData:
+        return ExtendedData({"ok": True})
+
+    assert is_connector_data_method(root_payload)
 
 
 @pytest.mark.parametrize("method", RAW_DATA_SURFACE_METHODS)

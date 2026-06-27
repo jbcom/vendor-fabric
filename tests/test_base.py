@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 import httpx
 import pytest
 
-from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString
+from extended_data.containers import ExtendedData, ExtendedDict, ExtendedList, ExtendedString
 from extended_data.io import DataFile
 from extended_data.logging import Logging
 from extended_data.workflows import DataWorkflow
@@ -52,8 +52,11 @@ def test_decode_response_promotes_json_to_extended_containers() -> None:
     data = connector.decode_response(response)
 
     assert isinstance(data, ExtendedDict)
+    assert isinstance(data, ExtendedData)
     assert isinstance(data["service"], ExtendedDict)
+    assert isinstance(data["service"], ExtendedData)
     assert isinstance(data["service"]["name"], ExtendedString)
+    assert isinstance(data["service"]["name"], ExtendedData)
     assert data["service"]["name"].upper_first() == "Api"
 
 
@@ -84,6 +87,7 @@ def test_decode_response_promotes_text_to_extended_string() -> None:
     data = connector.decode_response(response)
 
     assert isinstance(data, ExtendedString)
+    assert isinstance(data, ExtendedData)
     assert data.to_snake_case() == "api_response"
 
 
@@ -114,6 +118,7 @@ def test_request_data_decodes_response_body() -> None:
 
     assert data == {"ok": True}
     assert isinstance(data, ExtendedDict)
+    assert isinstance(data, ExtendedData)
     mock_client.request.assert_called_once()
     assert mock_client.request.call_args.args[0] == "GET"
     assert mock_client.request.call_args.args[1] == "https://api.example.com/status"
@@ -135,6 +140,7 @@ def test_decode_response_file_returns_artifact_with_metadata() -> None:
     assert artifact.source == "https://api.example.com/status"
     assert artifact.encoding == "json"
     assert isinstance(artifact.data, ExtendedDict)
+    assert isinstance(artifact.data, ExtendedData)
     assert artifact.data["service"]["name"].upper_first() == "Api"
     assert artifact.metadata["status_code"] == 200
     assert artifact.metadata["content_type"] == "application/json"
