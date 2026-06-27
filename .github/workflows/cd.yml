@@ -33,7 +33,7 @@ jobs:
       - name: Verify
         run: |
           uv tool install tox --with tox-uv --with tox-gh
-          tox -e lint,typecheck,py311,py312,py313,py314,docs,build -- -q
+          tox -e lint,typecheck,py311,py312,py313,py314,plugin,docs,build -- -q
       - name: Publish to PyPI
         run: uv publish --trusted-publishing always
 

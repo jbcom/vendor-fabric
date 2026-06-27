@@ -1,17 +1,15 @@
 {
   "release-type": "python",
   "packages": {
-    ".": {
+    "packages/vendor-fabric": {
       "package-name": "vendor-fabric",
       "component": "vendor-fabric",
-      "include-component-in-tag": true,
-      "extra-files": [
-        {
-          "type": "toml",
-          "path": "uv.lock",
-          "jsonpath": "$.package[?(@.name.value=='vendor-fabric')].version"
-        }
-      ]
+      "include-component-in-tag": true
+    },
+    "packages/pytest-vendor-fabric": {
+      "package-name": "pytest-vendor-fabric",
+      "component": "pytest-vendor-fabric",
+      "include-component-in-tag": true
     }
   }
 }

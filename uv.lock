@@ -9,6 +9,13 @@ resolution-markers = [
     "python_full_version < '3.12'",
 ]
 
+[manifest]
+members = [
+    "pytest-vendor-fabric",
+    "vendor-fabric",
+    "vendor-fabric-workspace",
+]
+
 [[package]]
 name = "accessible-pygments"
 version = "0.0.5"
@@ -4005,6 +4012,45 @@ wheels = [
 ]
 
 [[package]]
+name = "pytest-vendor-fabric"
+version = "0.1.0"
+source = { editable = "packages/pytest-vendor-fabric" }
+dependencies = [
+    { name = "pytest" },
+    { name = "vendor-fabric" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-timeout" },
+    { name = "ruff" },
+]
+tests = [
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-timeout" },
+]
+typing = [
+    { name = "mypy" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "mypy", marker = "extra == 'typing'", specifier = ">=1.20.1" },
+    { name = "pytest", specifier = ">=9.0.3" },
+    { name = "pytest", marker = "extra == 'tests'", specifier = ">=9.0.3" },
+    { name = "pytest-asyncio", marker = "extra == 'tests'", specifier = ">=1.3.0" },
+    { name = "pytest-timeout", marker = "extra == 'tests'", specifier = ">=2.4.0" },
+    { name = "pytest-vendor-fabric", extras = ["tests", "typing"], marker = "extra == 'dev'", editable = "packages/pytest-vendor-fabric" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.0" },
+    { name = "vendor-fabric", editable = "packages/vendor-fabric" },
+]
+provides-extras = ["tests", "typing", "dev"]
+
+[[package]]
 name = "pytest-xdist"
 version = "3.8.0"
 source = { registry = "https://pypi.org/simple" }
@@ -5236,7 +5282,7 @@ wheels = [
 [[package]]
 name = "vendor-fabric"
 version = "2.1.2"
-source = { editable = "." }
+source = { editable = "packages/vendor-fabric" }
 dependencies = [
     { name = "extended-data" },
     { name = "httpx" },
@@ -5259,7 +5305,6 @@ ai = [
 ]
 all = [
     { name = "anthropic" },
-    { name = "beautifulsoup4" },
     { name = "boto3" },
     { name = "crewai", extra = ["anthropic", "tools"] },
     { name = "fastapi" },
@@ -5343,9 +5388,6 @@ meshy = [
     { name = "rich" },
     { name = "validators" },
 ]
-scraping = [
-    { name = "beautifulsoup4" },
-]
 secrets-sync = [
     { name = "boto3" },
     { name = "hvac" },
@@ -5388,8 +5430,6 @@ webhooks = [
 requires-dist = [
     { name = "anthropic", marker = "extra == 'all'", specifier = ">=0.96.0" },
     { name = "anthropic", marker = "extra == 'anthropic'", specifier = ">=0.96.0" },
-    { name = "beautifulsoup4", marker = "extra == 'all'", specifier = ">=4.12.0" },
-    { name = "beautifulsoup4", marker = "extra == 'scraping'", specifier = ">=4.12.0" },
     { name = "boto3", marker = "extra == 'all'", specifier = ">=1.42.92" },
     { name = "boto3", marker = "extra == 'aws'", specifier = ">=1.42.92" },
     { name = "boto3", marker = "extra == 'secrets-sync'", specifier = ">=1.42.92" },
@@ -5471,9 +5511,14 @@ requires-dist = [
     { name = "uvicorn", marker = "extra == 'webhooks'", specifier = ">=0.45.0" },
     { name = "validators", marker = "extra == 'all'", specifier = ">=0.35.0" },
     { name = "validators", marker = "extra == 'meshy'", specifier = ">=0.35.0" },
-    { name = "vendor-fabric", extras = ["tests", "typing"], marker = "extra == 'dev'" },
+    { name = "vendor-fabric", extras = ["tests", "typing"], marker = "extra == 'dev'", editable = "packages/vendor-fabric" },
 ]
-provides-extras = ["aws", "google", "github", "slack", "vault", "zoom", "anthropic", "cursor", "meshy", "langchain", "crewai", "langgraph", "strands", "mcp", "scraping", "secrets-sync", "ai", "webhooks", "vector", "tests", "typing", "dev", "docs", "all"]
+provides-extras = ["aws", "google", "github", "slack", "vault", "zoom", "anthropic", "cursor", "meshy", "langchain", "crewai", "langgraph", "strands", "mcp", "secrets-sync", "ai", "webhooks", "vector", "tests", "typing", "dev", "docs", "all"]
+
+[[package]]
+name = "vendor-fabric-workspace"
+version = "0.0.0"
+source = { virtual = "." }
 
 [[package]]
 name = "watchdog"
