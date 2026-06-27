@@ -12,29 +12,29 @@ import pytest
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString, ExtendedTuple
 from extended_data.inputs import InputProvider
 
-import cloud_connectors as connector_exports
+import vendor_fabric as connector_exports
 
-from cloud_connectors.anthropic import AnthropicConnector
-from cloud_connectors.aws import AWSConnector
-from cloud_connectors.aws.codedeploy import create_codedeploy_deployment, get_aws_codedeploy_deployments
-from cloud_connectors.aws.organizations import AWSOrganizationsMixin
-from cloud_connectors.aws.s3 import AWSS3Mixin
-from cloud_connectors.aws.sso import AWSSSOmixin
-from cloud_connectors.base import ConnectorBase
-from cloud_connectors.cursor import CursorConnector
-from cloud_connectors.github import GitHubConnector
-from cloud_connectors.google import GoogleConnector
-from cloud_connectors.google.billing import GoogleBillingMixin
-from cloud_connectors.google.cloud import GoogleCloudMixin
-from cloud_connectors.google.jules import JulesConnector
-from cloud_connectors.google.services import GoogleServicesMixin
-from cloud_connectors.google.workspace import GoogleWorkspaceMixin
-from cloud_connectors.meshy.connector import MeshyConnector
-from cloud_connectors.registry import BUILTIN_CONNECTORS
-from cloud_connectors.slack import SlackConnector
-from cloud_connectors.surface import connector_data_methods, is_connector_data_method
-from cloud_connectors.vault import VaultConnector
-from cloud_connectors.zoom import ZoomConnector
+from vendor_fabric.anthropic import AnthropicConnector
+from vendor_fabric.aws import AWSConnector
+from vendor_fabric.aws.codedeploy import create_codedeploy_deployment, get_aws_codedeploy_deployments
+from vendor_fabric.aws.organizations import AWSOrganizationsMixin
+from vendor_fabric.aws.s3 import AWSS3Mixin
+from vendor_fabric.aws.sso import AWSSSOmixin
+from vendor_fabric.base import ConnectorBase
+from vendor_fabric.cursor import CursorConnector
+from vendor_fabric.github import GitHubConnector
+from vendor_fabric.google import GoogleConnector
+from vendor_fabric.google.billing import GoogleBillingMixin
+from vendor_fabric.google.cloud import GoogleCloudMixin
+from vendor_fabric.google.jules import JulesConnector
+from vendor_fabric.google.services import GoogleServicesMixin
+from vendor_fabric.google.workspace import GoogleWorkspaceMixin
+from vendor_fabric.meshy.connector import MeshyConnector
+from vendor_fabric.registry import BUILTIN_CONNECTORS
+from vendor_fabric.slack import SlackConnector
+from vendor_fabric.surface import connector_data_methods, is_connector_data_method
+from vendor_fabric.vault import VaultConnector
+from vendor_fabric.zoom import ZoomConnector
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -200,10 +200,10 @@ PAYLOAD_METHODS = (
 )
 
 RAW_CONNECTOR_BOUNDARIES = {
-    ("src/cloud_connectors/ai_tools.py", "build_langchain_tools"),
-    ("src/cloud_connectors/base.py", "ConnectorBase.get_tools"),
-    ("src/cloud_connectors/surface.py", "connector_data_methods"),
-    ("src/cloud_connectors/zoom/__init__.py", "ZoomConnector.get_headers"),
+    ("src/vendor_fabric/ai_tools.py", "build_langchain_tools"),
+    ("src/vendor_fabric/base.py", "ConnectorBase.get_tools"),
+    ("src/vendor_fabric/surface.py", "connector_data_methods"),
+    ("src/vendor_fabric/zoom/__init__.py", "ZoomConnector.get_headers"),
 }
 
 RAW_DATA_SURFACE_METHOD_NAMES = {

@@ -1,4 +1,4 @@
-"""Tests for cloud_connectors.meshy.tools module.
+"""Tests for vendor_fabric.meshy.tools module.
 
 Tests tool implementations with mocked Meshy API calls.
 Framework-specific tools (LangChain, CrewAI) are tested separately
@@ -34,14 +34,14 @@ class TestToolDefinitions:
 
     def test_tool_definitions_has_all_tools(self):
         """Test that TOOL_DEFINITIONS contains all expected tools."""
-        from cloud_connectors.meshy.tools import TOOL_DEFINITIONS
+        from vendor_fabric.meshy.tools import TOOL_DEFINITIONS
 
         tool_names = {defn["name"] for defn in TOOL_DEFINITIONS}
         assert tool_names == EXPECTED_MESHY_TOOLS
 
     def test_tool_definitions_have_required_fields(self):
         """Test that each tool definition has func, name, description."""
-        from cloud_connectors.meshy.tools import TOOL_DEFINITIONS
+        from vendor_fabric.meshy.tools import TOOL_DEFINITIONS
 
         for defn in TOOL_DEFINITIONS:
             assert "func" in defn, f"Missing 'func' in {defn.get('name')}"
@@ -55,7 +55,7 @@ class TestStrandsTools:
 
     def test_get_strands_tools_returns_functions(self):
         """Test that get_strands_tools returns plain functions."""
-        from cloud_connectors.meshy.tools import get_strands_tools
+        from vendor_fabric.meshy.tools import get_strands_tools
 
         tools = get_strands_tools()
         assert isinstance(tools, list)
@@ -68,7 +68,7 @@ class TestText3DGenerate:
 
     def test_successful_generation(self):
         """Test successful 3D model generation."""
-        from cloud_connectors.meshy.tools import text3d_generate
+        from vendor_fabric.meshy.tools import text3d_generate
 
         # Mock the meshy module
         mock_result = MagicMock()
@@ -78,7 +78,7 @@ class TestText3DGenerate:
         mock_result.model_urls.glb = "https://example.com/model.glb"
         mock_result.thumbnail_url = "https://example.com/thumb.png"
 
-        with patch("cloud_connectors.meshy.text3d.generate", return_value=mock_result):
+        with patch("vendor_fabric.meshy.text3d.generate", return_value=mock_result):
             result = text3d_generate(
                 prompt="a medieval sword",
                 art_style="realistic",
@@ -93,7 +93,7 @@ class TestText3DGenerate:
 
     def test_successful_generation_accepts_extended_payload(self):
         """Tool wrapper should consume the real extended result payload shape."""
-        from cloud_connectors.meshy.tools import text3d_generate
+        from vendor_fabric.meshy.tools import text3d_generate
 
         mock_result = extend_data(
             {
@@ -104,7 +104,7 @@ class TestText3DGenerate:
             }
         )
 
-        with patch("cloud_connectors.meshy.text3d.generate", return_value=mock_result):
+        with patch("vendor_fabric.meshy.text3d.generate", return_value=mock_result):
             result = text3d_generate(prompt="a medieval sword")
 
         assert isinstance(result, ExtendedDict)
@@ -119,7 +119,7 @@ class TestText3DGenerate:
         - art_style: realistic
         - target_polycount: 30000
         """
-        from cloud_connectors.meshy.tools import text3d_generate
+        from vendor_fabric.meshy.tools import text3d_generate
 
         mock_result = MagicMock()
         mock_result.id = "task_456"
@@ -128,7 +128,7 @@ class TestText3DGenerate:
         mock_result.model_urls.glb = "https://example.com/model.glb"
         mock_result.thumbnail_url = None
 
-        with patch("cloud_connectors.meshy.text3d.generate", return_value=mock_result) as mock_gen:
+        with patch("vendor_fabric.meshy.text3d.generate", return_value=mock_result) as mock_gen:
             result = text3d_generate(prompt="test prompt")
 
             # Verify defaults were used (per Meshy API docs)
@@ -150,7 +150,7 @@ class TestImage3DGenerate:
 
     def test_successful_image_to_3d(self):
         """Test successful image-to-3D generation."""
-        from cloud_connectors.meshy.tools import image3d_generate
+        from vendor_fabric.meshy.tools import image3d_generate
 
         mock_result = MagicMock()
         mock_result.id = "img_task_456"
@@ -159,7 +159,7 @@ class TestImage3DGenerate:
         mock_result.model_urls.glb = "https://example.com/img_model.glb"
         mock_result.thumbnail_url = None
 
-        with patch("cloud_connectors.meshy.image3d.generate", return_value=mock_result):
+        with patch("vendor_fabric.meshy.image3d.generate", return_value=mock_result):
             result = image3d_generate(
                 image_url="https://example.com/image.png",
                 topology="quad",
@@ -177,13 +177,13 @@ class TestRigModel:
 
     def test_successful_rigging_with_wait(self):
         """Test successful model rigging with wait=True."""
-        from cloud_connectors.meshy.tools import rig_model
+        from vendor_fabric.meshy.tools import rig_model
 
         mock_result = MagicMock()
         mock_result.id = "rig_789"
         mock_result.status.value = "SUCCEEDED"
 
-        with patch("cloud_connectors.meshy.rigging.rig", return_value=mock_result):
+        with patch("vendor_fabric.meshy.rigging.rig", return_value=mock_result):
             result = rig_model(model_id="model_123", wait=True)
 
         assert isinstance(result, ExtendedDict)
@@ -194,10 +194,10 @@ class TestRigModel:
 
     def test_rigging_without_wait(self):
         """Test model rigging with wait=False."""
-        from cloud_connectors.meshy.tools import rig_model
+        from vendor_fabric.meshy.tools import rig_model
 
         # When wait=False, rigging.rig returns just the task_id string
-        with patch("cloud_connectors.meshy.rigging.rig", return_value="pending_rig_task"):
+        with patch("vendor_fabric.meshy.rigging.rig", return_value="pending_rig_task"):
             result = rig_model(model_id="model_123", wait=False)
 
         assert isinstance(result, ExtendedDict)
@@ -210,14 +210,14 @@ class TestApplyAnimation:
 
     def test_successful_animation(self):
         """Test successful animation application."""
-        from cloud_connectors.meshy.tools import apply_animation
+        from vendor_fabric.meshy.tools import apply_animation
 
         mock_result = MagicMock()
         mock_result.id = "anim_task_123"
         mock_result.status.value = "SUCCEEDED"
         mock_result.animation_glb_url = "https://example.com/animated.glb"
 
-        with patch("cloud_connectors.meshy.animate.apply", return_value=mock_result):
+        with patch("vendor_fabric.meshy.animate.apply", return_value=mock_result):
             result = apply_animation(
                 model_id="rigged_model",
                 animation_id=42,
@@ -232,9 +232,9 @@ class TestApplyAnimation:
 
     def test_animation_without_wait(self):
         """Test animation without waiting."""
-        from cloud_connectors.meshy.tools import apply_animation
+        from vendor_fabric.meshy.tools import apply_animation
 
-        with patch("cloud_connectors.meshy.animate.apply", return_value="anim_pending"):
+        with patch("vendor_fabric.meshy.animate.apply", return_value="anim_pending"):
             result = apply_animation(
                 model_id="model",
                 animation_id=1,
@@ -251,14 +251,14 @@ class TestRetextureModel:
 
     def test_successful_retexture(self):
         """Test successful retexturing."""
-        from cloud_connectors.meshy.tools import retexture_model
+        from vendor_fabric.meshy.tools import retexture_model
 
         mock_result = MagicMock()
         mock_result.id = "retex_123"
         mock_result.status.value = "SUCCEEDED"
         mock_result.model_url = "https://example.com/retextured.glb"
 
-        with patch("cloud_connectors.meshy.retexture.apply", return_value=mock_result):
+        with patch("vendor_fabric.meshy.retexture.apply", return_value=mock_result):
             result = retexture_model(
                 model_id="original_model",
                 texture_prompt="golden metallic finish",
@@ -274,7 +274,7 @@ class TestListAnimations:
 
     def test_list_all_animations(self):
         """Test listing all animations."""
-        from cloud_connectors.meshy.tools import list_animations
+        from vendor_fabric.meshy.tools import list_animations
 
         # Create mock animations
         mock_anim_1 = MagicMock()
@@ -291,7 +291,7 @@ class TestListAnimations:
 
         mock_animations = {1: mock_anim_1, 2: mock_anim_2}
 
-        with patch("cloud_connectors.meshy.animations.ANIMATIONS", mock_animations):
+        with patch("vendor_fabric.meshy.animations.ANIMATIONS", mock_animations):
             result = list_animations()
 
         assert isinstance(result, ExtendedDict)
@@ -303,7 +303,7 @@ class TestListAnimations:
 
     def test_list_animations_with_category_filter(self):
         """Test listing animations with category filter."""
-        from cloud_connectors.meshy.tools import list_animations
+        from vendor_fabric.meshy.tools import list_animations
 
         mock_anim_fight = MagicMock()
         mock_anim_fight.id = 1
@@ -319,7 +319,7 @@ class TestListAnimations:
 
         mock_animations = {1: mock_anim_fight, 2: mock_anim_walk}
 
-        with patch("cloud_connectors.meshy.animations.ANIMATIONS", mock_animations):
+        with patch("vendor_fabric.meshy.animations.ANIMATIONS", mock_animations):
             result = list_animations(category="Fighting")
 
         assert isinstance(result, ExtendedDict)
@@ -329,7 +329,7 @@ class TestListAnimations:
 
     def test_list_animations_with_limit(self):
         """Test listing animations with limit."""
-        from cloud_connectors.meshy.tools import list_animations
+        from vendor_fabric.meshy.tools import list_animations
 
         mock_animations = {}
         for i in range(100):
@@ -340,7 +340,7 @@ class TestListAnimations:
             mock_anim.subcategory = "Test"
             mock_animations[i] = mock_anim
 
-        with patch("cloud_connectors.meshy.animations.ANIMATIONS", mock_animations):
+        with patch("vendor_fabric.meshy.animations.ANIMATIONS", mock_animations):
             result = list_animations(limit=10)
 
         assert result["count"] == 10
@@ -352,7 +352,7 @@ class TestCheckTaskStatus:
 
     def test_check_text3d_status(self):
         """Test checking text-to-3D task status."""
-        from cloud_connectors.meshy.tools import check_task_status
+        from vendor_fabric.meshy.tools import check_task_status
 
         mock_result = MagicMock()
         mock_result.status.value = "SUCCEEDED"
@@ -360,7 +360,7 @@ class TestCheckTaskStatus:
         mock_result.model_urls = MagicMock()
         mock_result.model_urls.glb = "https://example.com/model.glb"
 
-        with patch("cloud_connectors.meshy.text3d.get", return_value=mock_result):
+        with patch("vendor_fabric.meshy.text3d.get", return_value=mock_result):
             result = check_task_status(
                 task_id="task_123",
                 task_type="text-to-3d",
@@ -375,7 +375,7 @@ class TestCheckTaskStatus:
 
     def test_check_text3d_status_accepts_extended_payload(self):
         """Task status wrapper should consume the real extended get() payload."""
-        from cloud_connectors.meshy.tools import check_task_status
+        from vendor_fabric.meshy.tools import check_task_status
 
         mock_result = extend_data(
             {
@@ -385,7 +385,7 @@ class TestCheckTaskStatus:
             }
         )
 
-        with patch("cloud_connectors.meshy.text3d.get", return_value=mock_result):
+        with patch("vendor_fabric.meshy.text3d.get", return_value=mock_result):
             result = check_task_status(task_id="task_123", task_type="text-to-3d")
 
         assert isinstance(result, ExtendedDict)
@@ -395,7 +395,7 @@ class TestCheckTaskStatus:
 
     def test_check_unknown_task_type(self):
         """Test checking unknown task type."""
-        from cloud_connectors.meshy.tools import check_task_status
+        from vendor_fabric.meshy.tools import check_task_status
 
         with pytest.raises(ValueError, match="Unknown task type"):
             check_task_status(
@@ -409,7 +409,7 @@ class TestGetAnimation:
 
     def test_get_existing_animation(self):
         """Test getting an existing animation."""
-        from cloud_connectors.meshy.tools import get_animation
+        from vendor_fabric.meshy.tools import get_animation
 
         mock_anim = MagicMock()
         mock_anim.id = 42
@@ -418,7 +418,7 @@ class TestGetAnimation:
         mock_anim.subcategory = "Casual"
         mock_anim.preview_url = "https://example.com/preview.gif"
 
-        with patch("cloud_connectors.meshy.animations.ANIMATIONS", {42: mock_anim}):
+        with patch("vendor_fabric.meshy.animations.ANIMATIONS", {42: mock_anim}):
             result = get_animation(animation_id=42)
 
         assert isinstance(result, ExtendedDict)
@@ -429,9 +429,9 @@ class TestGetAnimation:
 
     def test_get_nonexistent_animation(self):
         """Test getting a nonexistent animation."""
-        from cloud_connectors.meshy.tools import get_animation
+        from vendor_fabric.meshy.tools import get_animation
 
-        with patch("cloud_connectors.meshy.animations.ANIMATIONS", {}):
+        with patch("vendor_fabric.meshy.animations.ANIMATIONS", {}):
             with pytest.raises(ValueError, match="not found"):
                 get_animation(animation_id=999)
 
@@ -445,7 +445,7 @@ class TestLangChainTools:
     )
     def test_get_langchain_tools_returns_structured_tools(self):
         """Test that get_langchain_tools returns LangChain StructuredTools."""
-        from cloud_connectors.meshy.tools import get_langchain_tools
+        from vendor_fabric.meshy.tools import get_langchain_tools
 
         tools = get_langchain_tools()
         assert isinstance(tools, list)
@@ -468,7 +468,7 @@ class TestCrewAITools:
     def test_get_crewai_tools_requires_crewai(self):
         """Test that get_crewai_tools raises ImportError without crewai."""
         with patch.dict("sys.modules", {"crewai": None, "crewai.tools": None}):
-            from cloud_connectors.meshy import tools as meshy_tools
+            from vendor_fabric.meshy import tools as meshy_tools
 
             with pytest.raises(ImportError, match="crewai is required"):
                 meshy_tools.get_crewai_tools()
@@ -479,7 +479,7 @@ class TestAutoDetection:
 
     def test_get_tools_with_explicit_framework(self):
         """Test get_tools with explicit framework selection."""
-        from cloud_connectors.meshy.tools import get_tools
+        from vendor_fabric.meshy.tools import get_tools
 
         # Strands always works because it returns plain functions.
         tools = get_tools("strands")
@@ -488,14 +488,14 @@ class TestAutoDetection:
 
     def test_get_tools_rejects_functions_alias(self):
         """Plain-function tools should use the canonical strands framework name."""
-        from cloud_connectors.meshy.tools import get_tools
+        from vendor_fabric.meshy.tools import get_tools
 
         with pytest.raises(ValueError, match="Unknown framework"):
             get_tools("functions")
 
     def test_get_tools_invalid_framework(self):
         """Test get_tools raises ValueError for invalid framework."""
-        from cloud_connectors.meshy.tools import get_tools
+        from vendor_fabric.meshy.tools import get_tools
 
         with pytest.raises(ValueError, match="Unknown framework"):
             get_tools("invalid_framework")

@@ -509,209 +509,6 @@ wheels = [
 ]
 
 [[package]]
-name = "cloud-connectors"
-version = "2.0.0"
-source = { editable = "." }
-dependencies = [
-    { name = "extended-data" },
-    { name = "httpx" },
-    { name = "more-itertools" },
-    { name = "pydantic" },
-    { name = "requests" },
-    { name = "tenacity" },
-]
-
-[package.optional-dependencies]
-ai = [
-    { name = "langchain-core" },
-    { name = "langsmith" },
-    { name = "mcp" },
-    { name = "strands-agents" },
-]
-all = [
-    { name = "anthropic" },
-    { name = "boto3" },
-    { name = "fastapi" },
-    { name = "filelock" },
-    { name = "google-api-python-client" },
-    { name = "google-cloud-billing" },
-    { name = "google-cloud-resource-manager" },
-    { name = "hvac" },
-    { name = "langchain-core" },
-    { name = "langsmith" },
-    { name = "mcp" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "pygithub" },
-    { name = "pyngrok" },
-    { name = "python-graphql-client" },
-    { name = "rich" },
-    { name = "slack-sdk" },
-    { name = "sqlite-vec" },
-    { name = "starlette" },
-    { name = "strands-agents" },
-    { name = "uvicorn" },
-    { name = "validators" },
-]
-anthropic = [
-    { name = "anthropic" },
-]
-aws = [
-    { name = "boto3" },
-]
-dev = [
-    { name = "coverage", extra = ["toml"] },
-    { name = "hypothesis" },
-    { name = "mypy" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "pytest-mock" },
-    { name = "pytest-timeout" },
-    { name = "pytest-xdist" },
-    { name = "ruff" },
-    { name = "types-requests" },
-]
-docs = [
-    { name = "furo" },
-    { name = "myst-parser" },
-    { name = "sphinx" },
-    { name = "sphinx-autodoc2" },
-    { name = "sphinx-copybutton" },
-]
-github = [
-    { name = "pygithub" },
-    { name = "python-graphql-client" },
-]
-google = [
-    { name = "google-api-python-client" },
-    { name = "google-cloud-billing" },
-    { name = "google-cloud-resource-manager" },
-]
-langchain = [
-    { name = "langchain-core" },
-    { name = "langsmith" },
-]
-mcp = [
-    { name = "mcp" },
-]
-meshy = [
-    { name = "filelock" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "rich" },
-    { name = "validators" },
-]
-slack = [
-    { name = "slack-sdk" },
-]
-strands = [
-    { name = "strands-agents" },
-]
-tests = [
-    { name = "coverage", extra = ["toml"] },
-    { name = "hypothesis" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "pytest-mock" },
-    { name = "pytest-timeout" },
-    { name = "pytest-xdist" },
-]
-typing = [
-    { name = "mypy" },
-    { name = "types-requests" },
-]
-vault = [
-    { name = "hvac" },
-]
-vector = [
-    { name = "sqlite-vec" },
-]
-webhooks = [
-    { name = "fastapi" },
-    { name = "pyngrok" },
-    { name = "starlette" },
-    { name = "uvicorn" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "anthropic", marker = "extra == 'all'", specifier = ">=0.96.0" },
-    { name = "anthropic", marker = "extra == 'anthropic'", specifier = ">=0.96.0" },
-    { name = "boto3", marker = "extra == 'all'", specifier = ">=1.42.92" },
-    { name = "boto3", marker = "extra == 'aws'", specifier = ">=1.42.92" },
-    { name = "cloud-connectors", extras = ["tests", "typing"], marker = "extra == 'dev'" },
-    { name = "coverage", extras = ["toml"], marker = "extra == 'tests'", specifier = ">=7.6.0" },
-    { name = "extended-data", specifier = ">=8.0.0,<9.0.0" },
-    { name = "fastapi", marker = "extra == 'all'", specifier = ">=0.136.0" },
-    { name = "fastapi", marker = "extra == 'webhooks'", specifier = ">=0.136.0" },
-    { name = "filelock", marker = "extra == 'all'", specifier = ">=3.29.0" },
-    { name = "filelock", marker = "extra == 'meshy'", specifier = ">=3.29.0" },
-    { name = "furo", marker = "extra == 'docs'", specifier = ">=2025.12.19" },
-    { name = "google-api-python-client", marker = "extra == 'all'", specifier = ">=2.194.0" },
-    { name = "google-api-python-client", marker = "extra == 'google'", specifier = ">=2.194.0" },
-    { name = "google-cloud-billing", marker = "extra == 'all'", specifier = ">=1.19.0" },
-    { name = "google-cloud-billing", marker = "extra == 'google'", specifier = ">=1.19.0" },
-    { name = "google-cloud-resource-manager", marker = "extra == 'all'", specifier = ">=1.17.0" },
-    { name = "google-cloud-resource-manager", marker = "extra == 'google'", specifier = ">=1.17.0" },
-    { name = "httpx", specifier = ">=0.28.1" },
-    { name = "hvac", marker = "extra == 'all'", specifier = ">=2.4.0" },
-    { name = "hvac", marker = "extra == 'vault'", specifier = ">=2.4.0" },
-    { name = "hypothesis", marker = "extra == 'tests'", specifier = ">=6.100.2" },
-    { name = "langchain-core", marker = "extra == 'ai'", specifier = ">=1.3.0" },
-    { name = "langchain-core", marker = "extra == 'all'", specifier = ">=1.3.0" },
-    { name = "langchain-core", marker = "extra == 'langchain'", specifier = ">=1.3.0" },
-    { name = "langsmith", marker = "extra == 'ai'", specifier = ">=0.8.18" },
-    { name = "langsmith", marker = "extra == 'all'", specifier = ">=0.8.18" },
-    { name = "langsmith", marker = "extra == 'langchain'", specifier = ">=0.8.18" },
-    { name = "mcp", marker = "extra == 'ai'", specifier = ">=1.26.0,<1.27.dev0" },
-    { name = "mcp", marker = "extra == 'all'", specifier = ">=1.26.0,<1.27.dev0" },
-    { name = "mcp", marker = "extra == 'mcp'", specifier = ">=1.26.0,<1.27.dev0" },
-    { name = "more-itertools", specifier = ">=11.0.2" },
-    { name = "mypy", marker = "extra == 'typing'", specifier = ">=1.20.1" },
-    { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=4.0.1,<6.0.0" },
-    { name = "numpy", marker = "extra == 'all'", specifier = ">=2.2.6" },
-    { name = "numpy", marker = "extra == 'meshy'", specifier = ">=2.2.6" },
-    { name = "pydantic", specifier = ">=2.13.4,<3.0.0" },
-    { name = "pygithub", marker = "extra == 'all'", specifier = ">=2.9.1" },
-    { name = "pygithub", marker = "extra == 'github'", specifier = ">=2.9.1" },
-    { name = "pyngrok", marker = "extra == 'all'", specifier = ">=8.0.0" },
-    { name = "pyngrok", marker = "extra == 'webhooks'", specifier = ">=8.0.0" },
-    { name = "pytest", marker = "extra == 'tests'", specifier = ">=9.0.3" },
-    { name = "pytest-asyncio", marker = "extra == 'tests'", specifier = ">=1.3.0" },
-    { name = "pytest-cov", marker = "extra == 'tests'", specifier = ">=7.1.0" },
-    { name = "pytest-mock", marker = "extra == 'tests'", specifier = ">=3.15.1" },
-    { name = "pytest-timeout", marker = "extra == 'tests'", specifier = ">=2.4.0" },
-    { name = "pytest-xdist", marker = "extra == 'tests'", specifier = ">=3.6.1" },
-    { name = "python-graphql-client", marker = "extra == 'all'", specifier = ">=0.4.3" },
-    { name = "python-graphql-client", marker = "extra == 'github'", specifier = ">=0.4.3" },
-    { name = "requests", specifier = ">=2.33.1" },
-    { name = "rich", marker = "extra == 'all'", specifier = ">=13.7.0,<15.0.0" },
-    { name = "rich", marker = "extra == 'meshy'", specifier = ">=13.7.0,<15.0.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.0" },
-    { name = "slack-sdk", marker = "extra == 'all'", specifier = ">=3.41.0" },
-    { name = "slack-sdk", marker = "extra == 'slack'", specifier = ">=3.41.0" },
-    { name = "sphinx", marker = "extra == 'docs'", specifier = ">=8.2.3,<9.0.0" },
-    { name = "sphinx-autodoc2", marker = "extra == 'docs'", specifier = ">=0.5.0" },
-    { name = "sphinx-copybutton", marker = "extra == 'docs'", specifier = ">=0.5.2" },
-    { name = "sqlite-vec", marker = "extra == 'all'", specifier = ">=0.1.9" },
-    { name = "sqlite-vec", marker = "extra == 'vector'", specifier = ">=0.1.9" },
-    { name = "starlette", marker = "extra == 'all'", specifier = ">=1.3.1" },
-    { name = "starlette", marker = "extra == 'webhooks'", specifier = ">=1.3.1" },
-    { name = "strands-agents", marker = "extra == 'ai'", specifier = ">=1.36.0" },
-    { name = "strands-agents", marker = "extra == 'all'", specifier = ">=1.36.0" },
-    { name = "strands-agents", marker = "extra == 'strands'", specifier = ">=1.36.0" },
-    { name = "tenacity", specifier = ">=8.4.1,<9.0.0" },
-    { name = "types-requests", marker = "extra == 'typing'", specifier = ">=2.33.0.20260408" },
-    { name = "uvicorn", marker = "extra == 'all'", specifier = ">=0.45.0" },
-    { name = "uvicorn", marker = "extra == 'webhooks'", specifier = ">=0.45.0" },
-    { name = "validators", marker = "extra == 'all'", specifier = ">=0.35.0" },
-    { name = "validators", marker = "extra == 'meshy'", specifier = ">=0.35.0" },
-]
-provides-extras = ["aws", "google", "github", "slack", "vault", "zoom", "anthropic", "cursor", "meshy", "langchain", "strands", "mcp", "ai", "webhooks", "vector", "tests", "typing", "dev", "docs", "all"]
-
-[[package]]
 name = "colorama"
 version = "0.4.6"
 source = { registry = "https://pypi.org/simple" }
@@ -3814,6 +3611,209 @@ sdist = { url = "https://files.pythonhosted.org/packages/53/66/a435d9ae49850b2f0
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fa/6e/3e955517e22cbdd565f2f8b2e73d52528b14b8bcfdb04f62466b071de847/validators-0.35.0-py3-none-any.whl", hash = "sha256:e8c947097eae7892cb3d26868d637f79f47b4a0554bc6b80065dfe5aac3705dd", size = 44712, upload-time = "2025-05-01T05:42:04.203Z" },
 ]
+
+[[package]]
+name = "vendor-fabric"
+version = "2.0.0"
+source = { editable = "." }
+dependencies = [
+    { name = "extended-data" },
+    { name = "httpx" },
+    { name = "more-itertools" },
+    { name = "pydantic" },
+    { name = "requests" },
+    { name = "tenacity" },
+]
+
+[package.optional-dependencies]
+ai = [
+    { name = "langchain-core" },
+    { name = "langsmith" },
+    { name = "mcp" },
+    { name = "strands-agents" },
+]
+all = [
+    { name = "anthropic" },
+    { name = "boto3" },
+    { name = "fastapi" },
+    { name = "filelock" },
+    { name = "google-api-python-client" },
+    { name = "google-cloud-billing" },
+    { name = "google-cloud-resource-manager" },
+    { name = "hvac" },
+    { name = "langchain-core" },
+    { name = "langsmith" },
+    { name = "mcp" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "pygithub" },
+    { name = "pyngrok" },
+    { name = "python-graphql-client" },
+    { name = "rich" },
+    { name = "slack-sdk" },
+    { name = "sqlite-vec" },
+    { name = "starlette" },
+    { name = "strands-agents" },
+    { name = "uvicorn" },
+    { name = "validators" },
+]
+anthropic = [
+    { name = "anthropic" },
+]
+aws = [
+    { name = "boto3" },
+]
+dev = [
+    { name = "coverage", extra = ["toml"] },
+    { name = "hypothesis" },
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "pytest-mock" },
+    { name = "pytest-timeout" },
+    { name = "pytest-xdist" },
+    { name = "ruff" },
+    { name = "types-requests" },
+]
+docs = [
+    { name = "furo" },
+    { name = "myst-parser" },
+    { name = "sphinx" },
+    { name = "sphinx-autodoc2" },
+    { name = "sphinx-copybutton" },
+]
+github = [
+    { name = "pygithub" },
+    { name = "python-graphql-client" },
+]
+google = [
+    { name = "google-api-python-client" },
+    { name = "google-cloud-billing" },
+    { name = "google-cloud-resource-manager" },
+]
+langchain = [
+    { name = "langchain-core" },
+    { name = "langsmith" },
+]
+mcp = [
+    { name = "mcp" },
+]
+meshy = [
+    { name = "filelock" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "rich" },
+    { name = "validators" },
+]
+slack = [
+    { name = "slack-sdk" },
+]
+strands = [
+    { name = "strands-agents" },
+]
+tests = [
+    { name = "coverage", extra = ["toml"] },
+    { name = "hypothesis" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "pytest-mock" },
+    { name = "pytest-timeout" },
+    { name = "pytest-xdist" },
+]
+typing = [
+    { name = "mypy" },
+    { name = "types-requests" },
+]
+vault = [
+    { name = "hvac" },
+]
+vector = [
+    { name = "sqlite-vec" },
+]
+webhooks = [
+    { name = "fastapi" },
+    { name = "pyngrok" },
+    { name = "starlette" },
+    { name = "uvicorn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "anthropic", marker = "extra == 'all'", specifier = ">=0.96.0" },
+    { name = "anthropic", marker = "extra == 'anthropic'", specifier = ">=0.96.0" },
+    { name = "boto3", marker = "extra == 'all'", specifier = ">=1.42.92" },
+    { name = "boto3", marker = "extra == 'aws'", specifier = ">=1.42.92" },
+    { name = "coverage", extras = ["toml"], marker = "extra == 'tests'", specifier = ">=7.6.0" },
+    { name = "extended-data", specifier = ">=8.0.0,<9.0.0" },
+    { name = "fastapi", marker = "extra == 'all'", specifier = ">=0.136.0" },
+    { name = "fastapi", marker = "extra == 'webhooks'", specifier = ">=0.136.0" },
+    { name = "filelock", marker = "extra == 'all'", specifier = ">=3.29.0" },
+    { name = "filelock", marker = "extra == 'meshy'", specifier = ">=3.29.0" },
+    { name = "furo", marker = "extra == 'docs'", specifier = ">=2025.12.19" },
+    { name = "google-api-python-client", marker = "extra == 'all'", specifier = ">=2.194.0" },
+    { name = "google-api-python-client", marker = "extra == 'google'", specifier = ">=2.194.0" },
+    { name = "google-cloud-billing", marker = "extra == 'all'", specifier = ">=1.19.0" },
+    { name = "google-cloud-billing", marker = "extra == 'google'", specifier = ">=1.19.0" },
+    { name = "google-cloud-resource-manager", marker = "extra == 'all'", specifier = ">=1.17.0" },
+    { name = "google-cloud-resource-manager", marker = "extra == 'google'", specifier = ">=1.17.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "hvac", marker = "extra == 'all'", specifier = ">=2.4.0" },
+    { name = "hvac", marker = "extra == 'vault'", specifier = ">=2.4.0" },
+    { name = "hypothesis", marker = "extra == 'tests'", specifier = ">=6.100.2" },
+    { name = "langchain-core", marker = "extra == 'ai'", specifier = ">=1.3.0" },
+    { name = "langchain-core", marker = "extra == 'all'", specifier = ">=1.3.0" },
+    { name = "langchain-core", marker = "extra == 'langchain'", specifier = ">=1.3.0" },
+    { name = "langsmith", marker = "extra == 'ai'", specifier = ">=0.8.18" },
+    { name = "langsmith", marker = "extra == 'all'", specifier = ">=0.8.18" },
+    { name = "langsmith", marker = "extra == 'langchain'", specifier = ">=0.8.18" },
+    { name = "mcp", marker = "extra == 'ai'", specifier = ">=1.26.0,<1.27.dev0" },
+    { name = "mcp", marker = "extra == 'all'", specifier = ">=1.26.0,<1.27.dev0" },
+    { name = "mcp", marker = "extra == 'mcp'", specifier = ">=1.26.0,<1.27.dev0" },
+    { name = "more-itertools", specifier = ">=11.0.2" },
+    { name = "mypy", marker = "extra == 'typing'", specifier = ">=1.20.1" },
+    { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=4.0.1,<6.0.0" },
+    { name = "numpy", marker = "extra == 'all'", specifier = ">=2.2.6" },
+    { name = "numpy", marker = "extra == 'meshy'", specifier = ">=2.2.6" },
+    { name = "pydantic", specifier = ">=2.13.4,<3.0.0" },
+    { name = "pygithub", marker = "extra == 'all'", specifier = ">=2.9.1" },
+    { name = "pygithub", marker = "extra == 'github'", specifier = ">=2.9.1" },
+    { name = "pyngrok", marker = "extra == 'all'", specifier = ">=8.0.0" },
+    { name = "pyngrok", marker = "extra == 'webhooks'", specifier = ">=8.0.0" },
+    { name = "pytest", marker = "extra == 'tests'", specifier = ">=9.0.3" },
+    { name = "pytest-asyncio", marker = "extra == 'tests'", specifier = ">=1.3.0" },
+    { name = "pytest-cov", marker = "extra == 'tests'", specifier = ">=7.1.0" },
+    { name = "pytest-mock", marker = "extra == 'tests'", specifier = ">=3.15.1" },
+    { name = "pytest-timeout", marker = "extra == 'tests'", specifier = ">=2.4.0" },
+    { name = "pytest-xdist", marker = "extra == 'tests'", specifier = ">=3.6.1" },
+    { name = "python-graphql-client", marker = "extra == 'all'", specifier = ">=0.4.3" },
+    { name = "python-graphql-client", marker = "extra == 'github'", specifier = ">=0.4.3" },
+    { name = "requests", specifier = ">=2.33.1" },
+    { name = "rich", marker = "extra == 'all'", specifier = ">=13.7.0,<15.0.0" },
+    { name = "rich", marker = "extra == 'meshy'", specifier = ">=13.7.0,<15.0.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.0" },
+    { name = "slack-sdk", marker = "extra == 'all'", specifier = ">=3.41.0" },
+    { name = "slack-sdk", marker = "extra == 'slack'", specifier = ">=3.41.0" },
+    { name = "sphinx", marker = "extra == 'docs'", specifier = ">=8.2.3,<9.0.0" },
+    { name = "sphinx-autodoc2", marker = "extra == 'docs'", specifier = ">=0.5.0" },
+    { name = "sphinx-copybutton", marker = "extra == 'docs'", specifier = ">=0.5.2" },
+    { name = "sqlite-vec", marker = "extra == 'all'", specifier = ">=0.1.9" },
+    { name = "sqlite-vec", marker = "extra == 'vector'", specifier = ">=0.1.9" },
+    { name = "starlette", marker = "extra == 'all'", specifier = ">=1.3.1" },
+    { name = "starlette", marker = "extra == 'webhooks'", specifier = ">=1.3.1" },
+    { name = "strands-agents", marker = "extra == 'ai'", specifier = ">=1.36.0" },
+    { name = "strands-agents", marker = "extra == 'all'", specifier = ">=1.36.0" },
+    { name = "strands-agents", marker = "extra == 'strands'", specifier = ">=1.36.0" },
+    { name = "tenacity", specifier = ">=8.4.1,<9.0.0" },
+    { name = "types-requests", marker = "extra == 'typing'", specifier = ">=2.33.0.20260408" },
+    { name = "uvicorn", marker = "extra == 'all'", specifier = ">=0.45.0" },
+    { name = "uvicorn", marker = "extra == 'webhooks'", specifier = ">=0.45.0" },
+    { name = "validators", marker = "extra == 'all'", specifier = ">=0.35.0" },
+    { name = "validators", marker = "extra == 'meshy'", specifier = ">=0.35.0" },
+    { name = "vendor-fabric", extras = ["tests", "typing"], marker = "extra == 'dev'" },
+]
+provides-extras = ["aws", "google", "github", "slack", "vault", "zoom", "anthropic", "cursor", "meshy", "langchain", "strands", "mcp", "ai", "webhooks", "vector", "tests", "typing", "dev", "docs", "all"]
 
 [[package]]
 name = "watchdog"

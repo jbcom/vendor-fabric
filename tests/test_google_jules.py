@@ -9,7 +9,7 @@ import pytest
 
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString
 
-from cloud_connectors.google.jules import JulesConnector, JulesError, Session
+from vendor_fabric.google.jules import JulesConnector, JulesError, Session
 
 
 def _response(payload: object, status_code: int = 200) -> httpx.Response:

@@ -11,8 +11,8 @@ import pytest
 
 from extended_data.containers import ExtendedDict
 
-from cloud_connectors import cli as cli_module
-from cloud_connectors.cli import cmd_call, cmd_info, cmd_list, cmd_methods, main
+from vendor_fabric import cli as cli_module
+from vendor_fabric.cli import cmd_call, cmd_info, cmd_list, cmd_methods, main
 
 
 class ExampleConnector:
@@ -115,7 +115,7 @@ def test_cli_info() -> None:
     assert "name: github" in output
     assert "category: development" in output
     assert "capabilities: repositories, teams, files, graphql, workflows" in output
-    assert "install: pip install cloud-connectors[github]" in output
+    assert "install: pip install vendor-fabric[github]" in output
 
 
 def test_cli_methods_lists_public_methods() -> None:
@@ -150,9 +150,9 @@ def test_cli_call_parses_dynamic_keyword_arguments() -> None:
     connector.fetch.return_value = {"ok": True}
 
     with (
-        patch("sys.argv", ["cloud-connectors", "call", "example", "fetch", "--enabled", "true", "--count", "3"]),
-        patch("cloud_connectors.cli.get_connector_class", return_value=ExampleConnector),
-        patch("cloud_connectors.cli.get_connector", return_value=connector),
+        patch("sys.argv", ["vendor-fabric", "call", "example", "fetch", "--enabled", "true", "--count", "3"]),
+        patch("vendor_fabric.cli.get_connector_class", return_value=ExampleConnector),
+        patch("vendor_fabric.cli.get_connector", return_value=connector),
         patch("sys.stdout.write") as mock_write,
     ):
         exit_code = main()
@@ -170,8 +170,8 @@ def test_cli_call_accepts_json_flag_after_method() -> None:
     args = argparse.Namespace(connector="example", method="fetch", extra=["--json"], json=False)
 
     with (
-        patch("cloud_connectors.cli.get_connector_class", return_value=ExampleConnector),
-        patch("cloud_connectors.cli.get_connector", return_value=connector),
+        patch("vendor_fabric.cli.get_connector_class", return_value=ExampleConnector),
+        patch("vendor_fabric.cli.get_connector", return_value=connector),
         patch("sys.stdout.write") as mock_write,
     ):
         exit_code = cmd_call(args)
@@ -188,10 +188,10 @@ def test_cli_call_serializes_extended_containers_as_data() -> None:
     args = argparse.Namespace(connector="example", method="fetch", extra=[], json=True)
 
     with (
-        patch("cloud_connectors.cli.get_connector_class", return_value=ExampleConnector),
-        patch("cloud_connectors.cli.get_connector", return_value=connector),
+        patch("vendor_fabric.cli.get_connector_class", return_value=ExampleConnector),
+        patch("vendor_fabric.cli.get_connector", return_value=connector),
         patch(
-            "cloud_connectors.cli.wrap_raw_data_for_export", wraps=cli_module.wrap_raw_data_for_export
+            "vendor_fabric.cli.wrap_raw_data_for_export", wraps=cli_module.wrap_raw_data_for_export
         ) as mock_wrap_for_export,
         patch("sys.stdout.write") as mock_write,
     ):
@@ -210,8 +210,8 @@ def test_cli_call_redacts_sensitive_json_output() -> None:
     args = argparse.Namespace(connector="example", method="secrets", extra=[], json=True)
 
     with (
-        patch("cloud_connectors.cli.get_connector_class", return_value=ExampleConnector),
-        patch("cloud_connectors.cli.get_connector", return_value=connector),
+        patch("vendor_fabric.cli.get_connector_class", return_value=ExampleConnector),
+        patch("vendor_fabric.cli.get_connector", return_value=connector),
         patch("sys.stdout.write") as mock_write,
     ):
         exit_code = cmd_call(args)
@@ -234,8 +234,8 @@ def test_cli_call_reports_missing_method() -> None:
     connector = object()
 
     with (
-        patch("cloud_connectors.cli.get_connector_class", return_value=ExampleConnector),
-        patch("cloud_connectors.cli.get_connector", return_value=connector),
+        patch("vendor_fabric.cli.get_connector_class", return_value=ExampleConnector),
+        patch("vendor_fabric.cli.get_connector", return_value=connector),
         patch("sys.stderr.write") as mock_write,
     ):
         exit_code = cmd_call(args)
@@ -260,8 +260,8 @@ def test_cli_call_reports_connector_errors() -> None:
     args = argparse.Namespace(connector="example", method="fetch", extra=[], json=False)
 
     with (
-        patch("cloud_connectors.cli.get_connector_class", return_value=ExampleConnector),
-        patch("cloud_connectors.cli.get_connector", side_effect=RuntimeError("boom")),
+        patch("vendor_fabric.cli.get_connector_class", return_value=ExampleConnector),
+        patch("vendor_fabric.cli.get_connector", side_effect=RuntimeError("boom")),
         patch("sys.stderr.write") as mock_write,
     ):
         exit_code = cmd_call(args)
@@ -276,8 +276,8 @@ def test_cli_call_redacts_sensitive_error_output() -> None:
     error = RuntimeError("failed password=hunter2 token: tok_123 Authorization: Bearer raw_token")
 
     with (
-        patch("cloud_connectors.cli.get_connector_class", return_value=ExampleConnector),
-        patch("cloud_connectors.cli.get_connector", side_effect=error),
+        patch("vendor_fabric.cli.get_connector_class", return_value=ExampleConnector),
+        patch("vendor_fabric.cli.get_connector", side_effect=error),
         patch("sys.stderr.write") as mock_write,
     ):
         exit_code = cmd_call(args)
@@ -311,8 +311,8 @@ def test_cli_call_redacts_explicit_argument_values_from_errors() -> None:
     )
 
     with (
-        patch("cloud_connectors.cli.get_connector_class", return_value=ExampleConnector),
-        patch("cloud_connectors.cli.get_connector", return_value=connector),
+        patch("vendor_fabric.cli.get_connector_class", return_value=ExampleConnector),
+        patch("vendor_fabric.cli.get_connector", return_value=connector),
         patch("sys.stderr.write") as mock_write,
     ):
         exit_code = cmd_call(args)
@@ -329,7 +329,7 @@ def test_cli_call_redacts_explicit_argument_values_from_errors() -> None:
     assert output.count("[REDACTED]") >= 3
 
 
-@patch("cloud_connectors.cli.decode_file", wraps=cli_module.decode_file)
+@patch("vendor_fabric.cli.decode_file", wraps=cli_module.decode_file)
 def test_cli_call_decodes_json_arguments_through_data_boundary(mock_decode_file: MagicMock) -> None:
     """Structured CLI method arguments should use the shared data decoder."""
     args = argparse.Namespace(
@@ -342,8 +342,8 @@ def test_cli_call_decodes_json_arguments_through_data_boundary(mock_decode_file:
     connector.fetch.return_value = {"ok": True}
 
     with (
-        patch("cloud_connectors.cli.get_connector_class", return_value=ExampleConnector),
-        patch("cloud_connectors.cli.get_connector", return_value=connector),
+        patch("vendor_fabric.cli.get_connector_class", return_value=ExampleConnector),
+        patch("vendor_fabric.cli.get_connector", return_value=connector),
         patch("sys.stdout.write"),
     ):
         exit_code = cmd_call(args)
@@ -355,7 +355,7 @@ def test_cli_call_decodes_json_arguments_through_data_boundary(mock_decode_file:
 
 def test_cli_main_help() -> None:
     """Test main CLI entry point with help."""
-    with patch("sys.argv", ["cloud-connectors", "--help"]):
+    with patch("sys.argv", ["vendor-fabric", "--help"]):
         with pytest.raises(SystemExit) as exc:
             main()
         assert exc.value.code == 0
@@ -364,8 +364,8 @@ def test_cli_main_help() -> None:
 def test_cli_main_reports_unexpected_command_errors() -> None:
     """Connector CLI entrypoint should not collapse unexpected failures silently."""
     with (
-        patch("sys.argv", ["cloud-connectors", "list"]),
-        patch("cloud_connectors.cli.cmd_list", side_effect=RuntimeError("failed password=hunter2")),
+        patch("sys.argv", ["vendor-fabric", "list"]),
+        patch("vendor_fabric.cli.cmd_list", side_effect=RuntimeError("failed password=hunter2")),
         patch("sys.stderr.write") as mock_write,
     ):
         exit_code = main()

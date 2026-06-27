@@ -5,7 +5,7 @@ This example demonstrates how to use Meshy AI tools with LangChain
 to create an AI agent capable of generating 3D assets.
 
 Requirements:
-    pip install cloud-connectors[meshy,langchain]
+    pip install vendor-fabric[meshy,langchain]
     pip install langchain-anthropic langgraph  # For Claude as the LLM and agent loop
 
 Environment Variables:
@@ -18,9 +18,9 @@ from __future__ import annotations
 import os
 import sys
 
-from cloud_connectors import ConnectorFabric
-from cloud_connectors._optional import require_extra
-from cloud_connectors.meshy.tools import get_tools
+from vendor_fabric import ConnectorFabric
+from vendor_fabric._optional import require_extra
+from vendor_fabric.meshy.tools import get_tools
 
 
 def main() -> int:
@@ -47,7 +47,7 @@ def main() -> int:
         langgraph_prebuilt = require_extra("langgraph.prebuilt", "langchain")
     except ImportError as exc:
         print(f"Error: {exc}")
-        print("Install with: pip install cloud-connectors[meshy,langchain] langchain-anthropic langgraph")
+        print("Install with: pip install vendor-fabric[meshy,langchain] langchain-anthropic langgraph")
         return 1
 
     # Get Meshy tools for LangChain

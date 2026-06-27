@@ -15,7 +15,7 @@ from extended_data.logging import Logging
 from extended_data.workflows import DataWorkflow
 from pydantic import BaseModel, Field
 
-from cloud_connectors.base import ConnectorAPIError, ConnectorBase, RateLimitError
+from vendor_fabric.base import ConnectorAPIError, ConnectorBase, RateLimitError
 
 
 class ExampleConnector(ConnectorBase):
@@ -307,7 +307,7 @@ def test_request_uses_connector_max_retries(mocker) -> None:
         MAX_RETRIES = 2
 
     connector = TwoAttemptConnector(from_environment=False)
-    mocker.patch("cloud_connectors.base.time.sleep")
+    mocker.patch("vendor_fabric.base.time.sleep")
     mock_client = MagicMock()
     mock_client.request.side_effect = [
         httpx.Response(500, content=b"temporary failure"),
@@ -388,5 +388,5 @@ def test_get_tools_requires_langchain_extra(monkeypatch) -> None:
 
     monkeypatch.setattr(builtins, "__import__", fake_import)
 
-    with pytest.raises(ImportError, match=r"cloud-connectors\[langchain\]"):
+    with pytest.raises(ImportError, match=r"vendor-fabric\[langchain\]"):
         connector.get_tools()

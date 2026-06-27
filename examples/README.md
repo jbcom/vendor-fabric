@@ -1,6 +1,6 @@
 # Connector Examples
 
-This directory contains working examples for `cloud_connectors` and the
+This directory contains working examples for `vendor_fabric` and the
 registered integrations that hang off `ConnectorFabric`.
 
 Connector examples assume the major-version `extended-data` contract: external
@@ -13,24 +13,24 @@ framework factory helpers return plain framework tool objects.
 
 ## Quick Start
 
-Install cloud-connectors with the extras you need:
+Install vendor-fabric with the extras you need:
 
 ```bash
 # Install with all connectors
-pip install "cloud-connectors[all]"
+pip install "vendor-fabric[all]"
 
 # Or install specific connectors
-pip install "cloud-connectors[aws,google,meshy]"
+pip install "vendor-fabric[aws,google,meshy]"
 
 # For AI framework integration
-pip install "cloud-connectors[langchain]"
+pip install "vendor-fabric[langchain]"
 
-# CrewAI adapters require a user-managed CrewAI install. cloud-connectors does not
+# CrewAI adapters require a user-managed CrewAI install. vendor-fabric does not
 # currently publish a CrewAI extra because current CrewAI releases pull
 # vulnerable chromadb versions transitively.
 
 # For the Meshy MCP server
-pip install "cloud-connectors[meshy,mcp]"
+pip install "vendor-fabric[meshy,mcp]"
 ```
 
 ## Examples
@@ -38,7 +38,7 @@ pip install "cloud-connectors[meshy,mcp]"
 ### Basic Connectors
 
 - [`basic_aws.py`](basic_aws.py) - AWS connector with Organizations and S3
-- [`basic_google.py`](basic_google.py) - Google Cloud connector with Workspace and Billing
+- [`basic_google.py`](basic_google.py) - Google Vendor fabric with Workspace and Billing
 - [`basic_meshy.py`](basic_meshy.py) - Meshy AI 3D generation
 
 ### AI Agent Integration
@@ -75,5 +75,7 @@ uv run python examples/connectors/basic_meshy.py
 LOGLEVEL=DEBUG uv run python examples/connectors/basic_meshy.py
 ```
 
-SecretSync examples live in `jbcom/secrets-sync` for bridge/runtime usage and
-`jbcom/agent-orchestration` for agent framework tools.
+SecretSync and agentic examples live in this repository because those surfaces
+compose vendor capabilities. Install `vendor-fabric[secrets-sync]` for vendor
+secret sync and `vendor-fabric[ai]` or a narrower framework extra for agent
+workflows.

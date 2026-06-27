@@ -6,7 +6,7 @@ server for Meshy AI, enabling integration with Claude Desktop and
 other MCP-compatible clients.
 
 Requirements:
-    pip install cloud-connectors[meshy,mcp]
+    pip install vendor-fabric[meshy,mcp]
 
 Environment Variables:
     MESHY_API_KEY: Your Meshy API key
@@ -36,8 +36,8 @@ from __future__ import annotations
 import os
 import sys
 
-from cloud_connectors import ConnectorFabric
-from cloud_connectors._optional import require_extra
+from vendor_fabric import ConnectorFabric
+from vendor_fabric._optional import require_extra
 
 
 def main() -> int:
@@ -54,10 +54,10 @@ def main() -> int:
 
     try:
         require_extra("mcp", "mcp")
-        from cloud_connectors.meshy.mcp import run_server
+        from vendor_fabric.meshy.mcp import run_server
     except ImportError as exc:
         print(f"Error: {exc}")
-        print("Install with: pip install cloud-connectors[meshy,mcp]")
+        print("Install with: pip install vendor-fabric[meshy,mcp]")
         return 1
 
     print("Starting Meshy MCP server...")

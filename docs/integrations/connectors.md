@@ -1,10 +1,10 @@
 # Connectors
 
 Vendor connectors are not a separate product in this major version. They are
-first-class Tier 3 data integrations under `cloud_connectors`.
+first-class Tier 3 data integrations under `vendor_fabric`.
 
 ```python
-from cloud_connectors import ConnectorFabric, GitHubConnector, SlackConnector
+from vendor_fabric import ConnectorFabric, GitHubConnector, SlackConnector
 
 fabric = ConnectorFabric()
 print(fabric.list_connector_categories())

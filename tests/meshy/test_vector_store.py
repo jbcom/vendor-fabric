@@ -9,8 +9,8 @@ from unittest.mock import patch
 
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString
 
-from cloud_connectors.meshy.persistence import vector_store as vector_store_module
-from cloud_connectors.meshy.persistence.vector_store import VectorStore, get_embedding
+from vendor_fabric.meshy.persistence import vector_store as vector_store_module
+from vendor_fabric.meshy.persistence.vector_store import VectorStore, get_embedding
 
 
 def test_record_generation_returns_extended_payload(temp_dir) -> None:
@@ -95,7 +95,7 @@ def test_record_metadata_encodes_through_export_boundary(temp_dir) -> None:
     """Persisted metadata should use the shared JSON export boundary on writes."""
     with VectorStore(temp_dir / "assets.db") as store:
         with patch(
-            "cloud_connectors.meshy.persistence.vector_store.wrap_raw_data_for_export",
+            "vendor_fabric.meshy.persistence.vector_store.wrap_raw_data_for_export",
             wraps=vector_store_module.wrap_raw_data_for_export,
         ) as mock_wrap_for_export:
             store.record_generation(

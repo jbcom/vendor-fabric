@@ -6,8 +6,8 @@ from unittest.mock import patch
 
 from ruamel.yaml import YAML
 
-from cloud_connectors import github as github_module
-from cloud_connectors.github import build_github_actions_workflow
+from vendor_fabric import github as github_module
+from vendor_fabric.github import build_github_actions_workflow
 
 
 def test_build_github_actions_workflow_generates_yaml():
@@ -22,7 +22,7 @@ def test_build_github_actions_workflow_generates_yaml():
     }
 
     with patch(
-        "cloud_connectors.github.wrap_raw_data_for_export",
+        "vendor_fabric.github.wrap_raw_data_for_export",
         wraps=github_module.wrap_raw_data_for_export,
     ) as mock_wrap_for_export:
         workflow_yaml = build_github_actions_workflow(

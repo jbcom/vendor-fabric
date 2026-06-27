@@ -9,8 +9,8 @@ import pytest
 
 from extended_data.containers import ExtendedDict, ExtendedString
 
-from cloud_connectors.meshy import base
-from cloud_connectors.meshy.models import Text3DResult
+from vendor_fabric.meshy import base
+from vendor_fabric.meshy.models import Text3DResult
 
 
 @pytest.fixture(autouse=True)

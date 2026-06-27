@@ -83,7 +83,7 @@ class BaseRunner(ABC):
         Returns:
             GenerationResult with paths and metadata
         """
-        from cloud_connectors.meshy import base
+        from vendor_fabric.meshy import base
 
         # Get tools in native format and create agent
         tools = self.get_native_tools()
@@ -163,7 +163,7 @@ class LangChainRunner(BaseRunner):
 
     def get_native_tools(self) -> list:
         """Get tools as LangChain StructuredTools."""
-        from cloud_connectors.meshy.tools import get_langchain_tools
+        from vendor_fabric.meshy.tools import get_langchain_tools
 
         return get_langchain_tools()
 
@@ -212,7 +212,7 @@ class CrewAIRunner(BaseRunner):
 
     def get_native_tools(self) -> list:
         """Get tools as native CrewAI tools."""
-        from cloud_connectors.meshy.tools import get_crewai_tools
+        from vendor_fabric.meshy.tools import get_crewai_tools
 
         return get_crewai_tools()
 
@@ -254,7 +254,7 @@ class StrandsRunner(BaseRunner):
 
     def get_native_tools(self) -> list:
         """Get tools as plain Python functions for Strands."""
-        from cloud_connectors.meshy.tools import get_strands_tools
+        from vendor_fabric.meshy.tools import get_strands_tools
 
         return get_strands_tools()
 

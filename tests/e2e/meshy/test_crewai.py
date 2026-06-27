@@ -81,7 +81,7 @@ class TestCrewAIE2E:
         """Test CrewAI agent listing animations."""
         from crewai import Agent, Crew, Task
 
-        from cloud_connectors.meshy.tools import get_crewai_tools
+        from vendor_fabric.meshy.tools import get_crewai_tools
 
         # Get native CrewAI tools directly
         crewai_tools = get_crewai_tools()

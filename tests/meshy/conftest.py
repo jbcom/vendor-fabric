@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 import httpx
 import pytest
 
-from cloud_connectors.meshy.persistence.repository import TaskRepository
+from vendor_fabric.meshy.persistence.repository import TaskRepository
 
 
 @pytest.fixture

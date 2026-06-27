@@ -11,9 +11,9 @@ import pytest
 
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString
 
-from cloud_connectors.meshy.persistence import repository as repository_module
-from cloud_connectors.meshy.persistence.repository import TaskRepository
-from cloud_connectors.meshy.persistence.schemas import (
+from vendor_fabric.meshy.persistence import repository as repository_module
+from vendor_fabric.meshy.persistence.repository import TaskRepository
+from vendor_fabric.meshy.persistence.schemas import (
     ArtifactRecord,
     AssetManifest,
     ProjectManifest,
@@ -89,7 +89,7 @@ class TestProjectManifest:
         )
 
         with patch(
-            "cloud_connectors.meshy.persistence.repository.DataFile.read",
+            "vendor_fabric.meshy.persistence.repository.DataFile.read",
             wraps=repository_module.DataFile.read,
         ) as mock_read:
             manifest = task_repository.load_project_manifest("project2")
@@ -123,7 +123,7 @@ class TestProjectManifest:
         manifest = ProjectManifest(project="project1")
 
         with patch(
-            "cloud_connectors.meshy.persistence.repository.wrap_raw_data_for_export",
+            "vendor_fabric.meshy.persistence.repository.wrap_raw_data_for_export",
             wraps=repository_module.wrap_raw_data_for_export,
         ) as mock_wrap_for_export:
             task_repository.save_project_manifest(manifest)

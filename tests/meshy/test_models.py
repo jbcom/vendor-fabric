@@ -6,7 +6,7 @@ import pytest
 
 from pydantic import ValidationError
 
-from cloud_connectors.meshy.models import (
+from vendor_fabric.meshy.models import (
     AnimationRequest,
     AnimationResult,
     ArtStyle,

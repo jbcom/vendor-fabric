@@ -1,9 +1,9 @@
-"""Sphinx configuration for cloud-connectors."""
+"""Sphinx configuration for vendor-fabric."""
 
 from __future__ import annotations
 
 
-project = "Cloud Connectors"
+project = "Vendor Fabric"
 author = "Jon Bogaty"
 copyright = "2026, Jon Bogaty"  # noqa: A001
 
@@ -22,7 +22,7 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_theme = "furo"
 html_static_path = ["_static"]
-html_css_files = ["cloud-connectors.css"]
+html_css_files = ["vendor-fabric.css"]
 
 myst_enable_extensions = [
     "colon_fence",
@@ -34,8 +34,8 @@ myst_heading_anchors = 3
 
 autodoc2_packages = [
     {
-        "path": "../src/cloud_connectors",
-        "module": "cloud_connectors",
+        "path": "../src/vendor_fabric",
+        "module": "vendor_fabric",
     }
 ]
 autodoc2_output_dir = "apidocs"

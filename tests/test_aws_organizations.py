@@ -15,7 +15,7 @@ pytest.importorskip("botocore")
 from botocore.exceptions import ClientError
 
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString, extend_data
-from cloud_connectors.aws.organizations import AWSOrganizationsMixin
+from vendor_fabric.aws.organizations import AWSOrganizationsMixin
 
 
 class _StubLogger:

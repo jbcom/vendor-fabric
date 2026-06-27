@@ -1,21 +1,23 @@
-# Cloud Connectors
+# Vendor Fabric
 
-`cloud-connectors` is the optional vendor integration layer for the
+`vendor-fabric` is the optional vendor integration layer for the
 Extended Data Python stack. It depends on `extended-data` for primitives,
-containers, file IO, inputs, logging, and workflow utilities, then adds
-adapter-registered API clients for external systems.
+containers, local file sync, inputs, logging, and workflow utilities, then adds
+adapter-registered API clients, vendor-backed sync capabilities, and agentic
+workflow adapters.
 
 ```bash
-pip install cloud-connectors
-pip install "cloud-connectors[github,slack]"
-pip install "cloud-connectors[aws,google,vault]"
+pip install vendor-fabric
+pip install "vendor-fabric[github,slack]"
+pip install "vendor-fabric[aws,google,vault,secrets-sync]"
+pip install "vendor-fabric[crewai]"
 ```
 
 The base install keeps vendor SDKs out of the environment. Connector metadata
 is available even when an optional SDK is absent:
 
 ```python
-from cloud_connectors import get_connector_info, list_connector_info
+from vendor_fabric import get_connector_info, list_connector_info
 
 print(get_connector_info("github")["available"])
 print(list_connector_info(include_unavailable=True))
@@ -24,7 +26,7 @@ print(list_connector_info(include_unavailable=True))
 Construct connectors through the registry or `ConnectorFabric`:
 
 ```python
-from cloud_connectors import ConnectorFabric
+from vendor_fabric import ConnectorFabric
 
 fabric = ConnectorFabric(inputs={"GITHUB_TOKEN": "..."})
 github = fabric.get_connector("github")
@@ -32,3 +34,14 @@ github = fabric.get_connector("github")
 
 Unavailable features report install guidance instead of requiring callers to
 wrap their own imports.
+
+Native SecretSync support is part of `vendor-fabric`:
+
+```python
+from vendor_fabric.secrets_sync import SecretSyncPipeline, SyncOptions
+
+pipeline = SecretSyncPipeline.from_file("pipeline.yaml")
+result = pipeline.run_extended(SyncOptions(dry_run=True))
+
+print(result["success"])
+```

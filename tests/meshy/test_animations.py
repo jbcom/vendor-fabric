@@ -6,7 +6,7 @@ import pytest
 
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString
 
-from cloud_connectors.meshy.animations import (
+from vendor_fabric.meshy.animations import (
     ANIMATIONS,
     AnimationCategory,
     AnimationSubcategory,

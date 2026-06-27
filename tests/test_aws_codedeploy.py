@@ -12,7 +12,7 @@ pytest.importorskip("botocore")
 from botocore.exceptions import ClientError, WaiterError
 
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString
-from cloud_connectors.aws.codedeploy import (
+from vendor_fabric.aws.codedeploy import (
     create_codedeploy_deployment,
     get_aws_codedeploy_deployments,
 )

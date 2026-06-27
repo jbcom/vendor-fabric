@@ -5,7 +5,7 @@ This example demonstrates how to use the Meshy connector for AI-powered
 3D asset generation.
 
 Requirements:
-    pip install cloud-connectors[meshy]
+    pip install vendor-fabric[meshy]
 
 Environment Variables:
     MESHY_API_KEY: Your Meshy API key (get one at https://meshy.ai)
@@ -27,7 +27,7 @@ def main() -> int:
         return 1
 
     # Import Meshy modules
-    from cloud_connectors.meshy import text3d
+    from vendor_fabric.meshy import text3d
 
     # Generate a simple 3D model
     prompt = "a medieval sword with ornate handle"

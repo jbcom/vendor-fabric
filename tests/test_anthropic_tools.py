@@ -9,9 +9,9 @@ from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString,
 
 def test_anthropic_list_models():
     """Test list_models tool."""
-    from cloud_connectors.anthropic.tools import anthropic_list_models
+    from vendor_fabric.anthropic.tools import anthropic_list_models
 
-    with patch("cloud_connectors.anthropic.AnthropicConnector") as mock_connector_class:
+    with patch("vendor_fabric.anthropic.AnthropicConnector") as mock_connector_class:
         mock_connector = MagicMock()
         mock_connector.list_models.return_value = extend_data(
             [{"id": "claude-3-opus", "display_name": "Claude 3 Opus"}]
@@ -28,9 +28,9 @@ def test_anthropic_list_models():
 
 def test_anthropic_create_message():
     """Test create_message tool."""
-    from cloud_connectors.anthropic.tools import anthropic_create_message
+    from vendor_fabric.anthropic.tools import anthropic_create_message
 
-    with patch("cloud_connectors.anthropic.AnthropicConnector") as mock_connector_class:
+    with patch("vendor_fabric.anthropic.AnthropicConnector") as mock_connector_class:
         mock_connector = MagicMock()
         mock_connector.create_message.return_value = extend_data(
             {

@@ -1,7 +1,7 @@
 API Reference
 =============
 
-This section is generated from ``src/cloud_connectors`` with
+This section is generated from ``src/vendor_fabric`` with
 ``sphinx-autodoc2``.
 
 .. toctree::

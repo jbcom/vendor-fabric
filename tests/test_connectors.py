@@ -8,9 +8,9 @@ import pytest
 
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString
 
-from cloud_connectors import registry
-from cloud_connectors.base import ConnectorBase
-from cloud_connectors.connectors import ConnectorFabric
+from vendor_fabric import registry
+from vendor_fabric.base import ConnectorBase
+from vendor_fabric.connectors import ConnectorFabric
 
 
 # Helper to check if optional dependencies are available
@@ -91,7 +91,7 @@ class TestConnectorFabric:
         cached = vc._get_cached_client("test_type", param="different")
         assert cached is None
 
-    @patch("cloud_connectors.connectors.get_connector_class")
+    @patch("vendor_fabric.connectors.get_connector_class")
     def test_get_connector_uses_registry_with_shared_context(self, mock_get_connector_class):
         """Generic connector lookup injects shared fabric inputs and logging."""
 
@@ -112,7 +112,7 @@ class TestConnectorFabric:
         assert connector.token == "direct-token"
         mock_get_connector_class.assert_called_once_with("dummy")
 
-    @patch("cloud_connectors.connectors.get_connector_class")
+    @patch("vendor_fabric.connectors.get_connector_class")
     def test_get_connector_preserves_explicit_context_overrides(self, mock_get_connector_class):
         """Generic connector lookup lets callers override injected fabric context."""
 
@@ -131,7 +131,7 @@ class TestConnectorFabric:
         assert connector.logger is custom_logger
         assert connector.inputs is custom_inputs
 
-    @patch("cloud_connectors.connectors.get_connector_class")
+    @patch("vendor_fabric.connectors.get_connector_class")
     def test_get_connector_caches_by_name_and_kwargs(self, mock_get_connector_class):
         """Generic connectors are cached independently by name and constructor args."""
 
@@ -150,7 +150,7 @@ class TestConnectorFabric:
         assert third is not first
         assert mock_get_connector_class.call_count == 2
 
-    @patch("cloud_connectors.connectors.get_connector_class")
+    @patch("vendor_fabric.connectors.get_connector_class")
     def test_get_connector_cache_does_not_store_raw_sensitive_kwargs(self, mock_get_connector_class):
         """Generic connector caching hashes secret-like constructor arguments."""
 
@@ -189,7 +189,7 @@ class TestConnectorFabric:
         github_info = vc.get_connector_info(" github ")
         categories = vc.list_connector_categories()
         capabilities = vc.list_connector_capabilities()
-        cloud_connectors = vc.list_connectors_by_category("cloud")
+        vendor_fabric = vc.list_connectors_by_category("cloud")
         repository_connectors = vc.list_connectors_by_capability("repositories")
         connector_names = vc.list_connectors()
         available_connector_names = vc.list_available_connectors()
@@ -206,9 +206,9 @@ class TestConnectorFabric:
         assert isinstance(capabilities, ExtendedList)
         assert isinstance(capabilities[0], ExtendedString)
         assert "repositories" in capabilities
-        assert isinstance(cloud_connectors, ExtendedList)
-        assert all(isinstance(connector, ExtendedDict) for connector in cloud_connectors)
-        assert {"aws", "google"} <= {connector["name"] for connector in cloud_connectors}
+        assert isinstance(vendor_fabric, ExtendedList)
+        assert all(isinstance(connector, ExtendedDict) for connector in vendor_fabric)
+        assert {"aws", "google"} <= {connector["name"] for connector in vendor_fabric}
         assert isinstance(repository_connectors, ExtendedList)
         assert "github" in {connector["name"] for connector in repository_connectors}
         assert isinstance(connector_names, ExtendedList)
@@ -245,7 +245,7 @@ class TestConnectorFabric:
         assert sql_connectors[0]["name"] == "custom"
 
     @requires_boto3
-    @patch("cloud_connectors.aws.AWSConnector")
+    @patch("vendor_fabric.aws.AWSConnector")
     def test_get_aws_connector(self, mock_aws):
         """Test getting AWS connector."""
         vc = ConnectorFabric()
@@ -258,7 +258,7 @@ class TestConnectorFabric:
         mock_aws.assert_called_once()
 
     @requires_boto3
-    @patch("cloud_connectors.aws.AWSConnector")
+    @patch("vendor_fabric.aws.AWSConnector")
     def test_get_aws_connector_caching(self, mock_aws):
         """Test AWS connector caching."""
         vc = ConnectorFabric()
@@ -275,7 +275,7 @@ class TestConnectorFabric:
         mock_aws.assert_called_once()
 
     @requires_boto3
-    @patch("cloud_connectors.aws.AWSConnector")
+    @patch("vendor_fabric.aws.AWSConnector")
     def test_get_aws_client(self, mock_aws):
         """Test getting AWS client."""
         vc = ConnectorFabric()
@@ -290,7 +290,7 @@ class TestConnectorFabric:
         mock_connector.get_aws_client.assert_called_once()
 
     @requires_boto3
-    @patch("cloud_connectors.aws.AWSConnector")
+    @patch("vendor_fabric.aws.AWSConnector")
     def test_get_aws_resource(self, mock_aws):
         """Test getting AWS resource."""
         vc = ConnectorFabric()
@@ -305,7 +305,7 @@ class TestConnectorFabric:
         mock_connector.get_aws_resource.assert_called_once()
 
     @requires_google
-    @patch("cloud_connectors.google.GoogleConnector")
+    @patch("vendor_fabric.google.GoogleConnector")
     def test_get_google_client(self, mock_google):
         """Test getting Google client."""
         vc = ConnectorFabric(
@@ -321,7 +321,7 @@ class TestConnectorFabric:
         assert result == mock_connector
 
     @requires_google
-    @patch("cloud_connectors.google.GoogleConnector")
+    @patch("vendor_fabric.google.GoogleConnector")
     def test_get_google_client_cache_separates_scopes(self, mock_google):
         """Google connector cache keys include requested OAuth scopes."""
         vc = ConnectorFabric(
@@ -342,7 +342,7 @@ class TestConnectorFabric:
         assert mock_google.call_count == 2
 
     @requires_github
-    @patch("cloud_connectors.github.GitHubConnector")
+    @patch("vendor_fabric.github.GitHubConnector")
     def test_get_github_client(self, mock_github):
         """Test getting GitHub client."""
         vc = ConnectorFabric(inputs={"GITHUB_OWNER": "test-org", "GITHUB_TOKEN": "ghp_test123"})
@@ -354,7 +354,7 @@ class TestConnectorFabric:
         assert result == mock_connector
 
     @requires_slack
-    @patch("cloud_connectors.slack.SlackConnector")
+    @patch("vendor_fabric.slack.SlackConnector")
     def test_get_slack_client(self, mock_slack):
         """Test getting Slack client."""
         vc = ConnectorFabric(inputs={"SLACK_TOKEN": "xoxp-test123", "SLACK_BOT_TOKEN": "xoxb-test123"})
@@ -366,7 +366,7 @@ class TestConnectorFabric:
         assert result == mock_connector
 
     @requires_vault
-    @patch("cloud_connectors.vault.VaultConnector")
+    @patch("vendor_fabric.vault.VaultConnector")
     def test_get_vault_connector(self, mock_vault):
         """Test getting Vault connector."""
         vc = ConnectorFabric()
@@ -377,7 +377,7 @@ class TestConnectorFabric:
 
         assert result == mock_connector
 
-    @patch("cloud_connectors.connectors.ZoomConnector")
+    @patch("vendor_fabric.connectors.ZoomConnector")
     def test_get_zoom_client(self, mock_zoom):
         """Test getting Zoom client."""
         vc = ConnectorFabric(
@@ -395,7 +395,7 @@ class TestConnectorFabric:
         assert result == mock_connector
 
     @requires_vault
-    @patch("cloud_connectors.vault.VaultConnector")
+    @patch("vendor_fabric.vault.VaultConnector")
     def test_get_vault_client(self, mock_vault):
         """Test getting Vault client."""
         vc = ConnectorFabric()
@@ -413,8 +413,8 @@ class TestConnectorFabric:
     def test_multiple_connector_types_cached_separately(self):
         """Test that different connector types are cached separately."""
         with (
-            patch("cloud_connectors.aws.AWSConnector") as mock_aws,
-            patch("cloud_connectors.slack.SlackConnector") as mock_slack,
+            patch("vendor_fabric.aws.AWSConnector") as mock_aws,
+            patch("vendor_fabric.slack.SlackConnector") as mock_slack,
         ):
             vc = ConnectorFabric(inputs={"SLACK_TOKEN": "xoxp-test123", "SLACK_BOT_TOKEN": "xoxb-test123"})
             mock_aws_connector = MagicMock()
@@ -458,7 +458,7 @@ class TestConnectorFabric:
             lambda name: ExtendedList(["github"]) if name == "github" else ExtendedList(),
         )
 
-        with pytest.raises(ImportError, match=r"cloud-connectors\[github\]") as exc_info:
+        with pytest.raises(ImportError, match=r"vendor-fabric\[github\]") as exc_info:
             registry.get_connector_class(" github ")
 
         message = str(exc_info.value)
@@ -485,7 +485,7 @@ class TestConnectorFabric:
         assert info["name"] == "github"
         assert info["available"] is False
         assert info["extra"] == "github"
-        assert info["install"] == "pip install cloud-connectors[github]"
+        assert info["install"] == "pip install vendor-fabric[github]"
         assert info["class"] == "GitHubConnector"
         assert info["missing"] == ["github"]
         assert "hunter2" not in info["error"]
@@ -547,7 +547,7 @@ class TestConnectorFabric:
             assert info["available"] is False
             assert info["missing"] == ["boto3"]
 
-            with pytest.raises(ImportError, match=r"cloud-connectors\[aws\]"):
+            with pytest.raises(ImportError, match=r"vendor-fabric\[aws\]"):
                 registry.get_connector_class("aws")
 
     def test_available_only_catalog_filters_missing_builtins(self):

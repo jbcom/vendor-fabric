@@ -15,8 +15,8 @@ pytest.importorskip("botocore")
 
 from botocore.exceptions import ClientError
 
-from cloud_connectors.aws import AWSConnector
-from cloud_connectors.aws import s3 as s3_module
+from vendor_fabric.aws import AWSConnector
+from vendor_fabric.aws import s3 as s3_module
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString, extend_data
 
 
@@ -28,7 +28,7 @@ def _logged_text(logger: MagicMock) -> str:
 @pytest.fixture
 def aws_connector():
     """Create AWS connector with mocked clients."""
-    with patch("cloud_connectors.aws.boto3"):
+    with patch("vendor_fabric.aws.boto3"):
         connector = AWSConnector()
         connector.logger = MagicMock()
         return connector
@@ -238,7 +238,7 @@ class TestS3ObjectOperations:
         mock_s3.get_object.return_value = {"Body": mock_body}
         aws_connector.get_aws_client = MagicMock(return_value=mock_s3)
 
-        with patch("cloud_connectors.aws.s3.decode_file", wraps=s3_module.decode_file) as mock_decode_file:
+        with patch("vendor_fabric.aws.s3.decode_file", wraps=s3_module.decode_file) as mock_decode_file:
             result = aws_connector.get_json_object("bucket", "data.json")
 
         assert isinstance(result, ExtendedDict)
@@ -334,7 +334,7 @@ class TestS3ObjectOperations:
 
         data = extend_data({"key": "value", "number": 123})
         with patch(
-            "cloud_connectors.aws.s3.wrap_raw_data_for_export",
+            "vendor_fabric.aws.s3.wrap_raw_data_for_export",
             wraps=s3_module.wrap_raw_data_for_export,
         ) as mock_wrap_for_export:
             result = aws_connector.put_json_object("bucket", "data.json", data)

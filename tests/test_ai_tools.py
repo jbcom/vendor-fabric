@@ -1,4 +1,4 @@
-"""Tests for cloud_connectors.ai_tools module."""
+"""Tests for vendor_fabric.ai_tools module."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ class TestGetPydanticSchema:
 
     def test_basic_schema_generation(self):
         """Test that a simple Pydantic model is converted correctly."""
-        from cloud_connectors.ai_tools import get_pydantic_schema
+        from vendor_fabric.ai_tools import get_pydantic_schema
 
         class MyTool(BaseModel):
             """A test tool."""
@@ -36,7 +36,7 @@ class TestGetPydanticSchema:
 
     def test_schema_with_optional_fields(self):
         """Test that optional fields are handled correctly."""
-        from cloud_connectors.ai_tools import get_pydantic_schema
+        from vendor_fabric.ai_tools import get_pydantic_schema
 
         class MyTool(BaseModel):
             """A test tool with optional fields."""
@@ -62,7 +62,7 @@ class TestGetPydanticSchema:
 
     def test_schema_with_nested_anyof(self):
         """Test that nested anyOf schemas are handled correctly."""
-        from cloud_connectors.ai_tools import get_pydantic_schema
+        from vendor_fabric.ai_tools import get_pydantic_schema
 
         class NestedModel(BaseModel):
             """A nested model."""

@@ -13,7 +13,7 @@ pytest.importorskip("hvac")
 from hvac.exceptions import VaultError
 
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString, extend_data
-from cloud_connectors.vault import VaultConnector
+from vendor_fabric.vault import VaultConnector
 
 
 def _logged_text(logger: MagicMock) -> str:
@@ -38,7 +38,7 @@ class TestVaultConnector:
         assert connector.vault_token == "test-token"
         assert connector._vault_client is None
 
-    @patch("cloud_connectors.vault.hvac.Client")
+    @patch("vendor_fabric.vault.hvac.Client")
     def test_vault_client_with_token(self, mock_hvac_class, base_connector_kwargs):
         """Test getting vault client with token authentication."""
         mock_client = MagicMock()
@@ -54,7 +54,7 @@ class TestVaultConnector:
         assert client == mock_client
         mock_hvac_class.assert_called()
 
-    @patch("cloud_connectors.vault.hvac.Client")
+    @patch("vendor_fabric.vault.hvac.Client")
     def test_vault_client_token_failure_redacts_without_traceback(self, mock_hvac_class, base_connector_kwargs):
         """Token client initialization failures should avoid traceback diagnostics."""
         mock_hvac_class.side_effect = VaultError("token failure test-token Authorization: Bearer raw_token")
@@ -72,7 +72,7 @@ class TestVaultConnector:
         connector.logger.exception.assert_not_called()
         assert all("exc_info" not in logged_call.kwargs for logged_call in connector.logger.method_calls)
 
-    @patch("cloud_connectors.vault.hvac.Client")
+    @patch("vendor_fabric.vault.hvac.Client")
     def test_vault_client_approle_failure_redacts_without_raw_cause(self, mock_hvac_class, base_connector_kwargs):
         """AppRole authentication failures should raise a redacted RuntimeError."""
         mock_client = MagicMock()
@@ -123,7 +123,7 @@ class TestVaultConnector:
         connector._vault_token_expiration = datetime(2020, 1, 1, 0, 0, 0, tzinfo=UTC)
         assert connector._is_token_valid() is False
 
-    @patch("cloud_connectors.vault.hvac.Client")
+    @patch("vendor_fabric.vault.hvac.Client")
     def test_get_vault_client_classmethod(self, mock_hvac_class, base_connector_kwargs):
         """Test class method for getting vault client."""
         mock_client = MagicMock()

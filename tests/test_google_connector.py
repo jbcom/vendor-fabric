@@ -11,7 +11,7 @@ pytest.importorskip("google.oauth2.service_account")
 pytest.importorskip("googleapiclient")
 
 from extended_data.containers import ExtendedDict, ExtendedString
-from cloud_connectors.google import GoogleConnector
+from vendor_fabric.google import GoogleConnector
 
 
 def _logged_text(logger: MagicMock) -> str:
@@ -90,7 +90,7 @@ class TestGoogleConnector:
         assert connector.service_account_info == service_account
         assert connector._credentials is None
 
-    @patch("cloud_connectors.google.decode_file")
+    @patch("vendor_fabric.google.decode_file")
     def test_init_decodes_service_account_string_through_data_boundary(self, mock_decode_file, base_connector_kwargs):
         """Service-account JSON strings should use the shared data decoder."""
         service_account = _service_account()
@@ -122,7 +122,7 @@ class TestGoogleConnector:
             "exc_info" not in logged_call.kwargs for logged_call in base_connector_kwargs["logger"].logger.method_calls
         )
 
-    @patch("cloud_connectors.google.decode_file")
+    @patch("vendor_fabric.google.decode_file")
     def test_sequence_option_input_decodes_json_through_data_boundary(self, mock_decode_file, base_connector_kwargs):
         """List-like Google input values should use the shared data decoder."""
         mock_decode_file.return_value = ["/Engineering", "/Platform"]
@@ -137,7 +137,7 @@ class TestGoogleConnector:
         assert result == ["/Engineering", "/Platform"]
         mock_decode_file.assert_called_once_with('["/Engineering", "/Platform"]', suffix="json", as_extended=False)
 
-    @patch("cloud_connectors.google.service_account.Credentials.from_service_account_info")
+    @patch("vendor_fabric.google.service_account.Credentials.from_service_account_info")
     def test_credentials_property(self, mock_from_sa, base_connector_kwargs):
         """Test credentials property creates credentials."""
         service_account = _service_account()
@@ -154,8 +154,8 @@ class TestGoogleConnector:
         assert creds == mock_credentials
         mock_from_sa.assert_called_once()
 
-    @patch("cloud_connectors.google.service_account.Credentials.from_service_account_info")
-    @patch("cloud_connectors.google.build")
+    @patch("vendor_fabric.google.service_account.Credentials.from_service_account_info")
+    @patch("vendor_fabric.google.build")
     def test_get_service(self, mock_build, mock_from_sa, base_connector_kwargs):
         """Test getting a Google service."""
         service_account = _service_account()
@@ -174,8 +174,8 @@ class TestGoogleConnector:
         assert service == mock_service
         mock_build.assert_called_once_with("admin", "directory_v1", credentials=mock_credentials)
 
-    @patch("cloud_connectors.google.service_account.Credentials.from_service_account_info")
-    @patch("cloud_connectors.google.build")
+    @patch("vendor_fabric.google.service_account.Credentials.from_service_account_info")
+    @patch("vendor_fabric.google.build")
     def test_get_service_caching(self, mock_build, mock_from_sa, base_connector_kwargs):
         """Test that services are cached."""
         service_account = _service_account()
@@ -299,7 +299,7 @@ class TestGoogleConnector:
 
     def test_specialized_google_connector_aliases_are_not_preserved(self):
         """Clean major-version surface should keep Google operations on GoogleConnector."""
-        import cloud_connectors.google as google_module
+        import vendor_fabric.google as google_module
 
         assert not hasattr(google_module, "GoogleCloudConnector")
         assert not hasattr(google_module, "GoogleWorkspaceConnector")

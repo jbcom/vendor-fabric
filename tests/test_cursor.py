@@ -11,7 +11,7 @@ import pytest
 
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString, extend_data
 
-from cloud_connectors.cursor import (
+from vendor_fabric.cursor import (
     Agent,
     AgentState,
     Conversation,
@@ -224,7 +224,7 @@ class TestModels:
 class TestTransport:
     """Tests for Cursor HTTP transport integration with Extended Data."""
 
-    @patch("cloud_connectors.cursor.httpx.Client")
+    @patch("vendor_fabric.cursor.httpx.Client")
     def test_request_api_decodes_response_through_extended_data_boundary(self, mock_client_class):
         """Private transport should decode JSON bytes into ExtendedDict payloads."""
         mock_client = MagicMock()
@@ -259,7 +259,7 @@ class TestCursorConnector:
 
     def test_init_with_api_key(self):
         """Initialization with API key should succeed."""
-        with patch("cloud_connectors.cursor.httpx.Client"):
+        with patch("vendor_fabric.cursor.httpx.Client"):
             connector = CursorConnector(api_key="test-key")
             assert connector.api_key == "test-key"
 
@@ -273,7 +273,7 @@ class TestCursorConnector:
         with patch.dict(os.environ, {}, clear=True):
             assert CursorConnector.is_available() is False
 
-    @patch("cloud_connectors.cursor.httpx.Client")
+    @patch("vendor_fabric.cursor.httpx.Client")
     def test_list_agents(self, mock_client_class):
         """list_agents should return parsed agents."""
         mock_client = MagicMock()
@@ -298,7 +298,7 @@ class TestCursorConnector:
         assert agents[0]["id"] == "agent-1"
         assert agents[0]["state"] == "running"
 
-    @patch("cloud_connectors.cursor.httpx.Client")
+    @patch("vendor_fabric.cursor.httpx.Client")
     def test_get_agent_status_returns_extended_dict(self, mock_client_class):
         """get_agent_status should return an extended agent payload."""
         mock_client = MagicMock()
@@ -324,7 +324,7 @@ class TestCursorConnector:
         assert isinstance(agent["state"], ExtendedString)
         assert agent["pr_url"] == "https://github.com/org/repo/pull/1"
 
-    @patch("cloud_connectors.cursor.httpx.Client")
+    @patch("vendor_fabric.cursor.httpx.Client")
     def test_get_agent_status_empty_response_redacts_agent_id(self, mock_client_class):
         """Empty status responses should not leak the raw agent ID in logs or errors."""
         mock_client = MagicMock()
@@ -350,7 +350,7 @@ class TestCursorConnector:
         assert "secret-agent" not in logs
         assert "[REDACTED]" in logs
 
-    @patch("cloud_connectors.cursor.httpx.Client")
+    @patch("vendor_fabric.cursor.httpx.Client")
     def test_get_agent_conversation_returns_extended_dict(self, mock_client_class):
         """get_agent_conversation should return an extended conversation payload."""
         mock_client = MagicMock()
@@ -373,7 +373,7 @@ class TestCursorConnector:
         assert isinstance(conversation["messages"][0], ExtendedDict)
         assert conversation["messages"][0]["content"] == "hello"
 
-    @patch("cloud_connectors.cursor.httpx.Client")
+    @patch("vendor_fabric.cursor.httpx.Client")
     def test_launch_agent(self, mock_client_class):
         """launch_agent should send correct request and return agent."""
         mock_client = MagicMock()
@@ -409,7 +409,7 @@ class TestCursorConnector:
         assert isinstance(call_args.kwargs["json"]["prompt"]["images"], list)
         assert isinstance(call_args.kwargs["json"]["prompt"]["images"][0], dict)
 
-    @patch("cloud_connectors.cursor.httpx.Client")
+    @patch("vendor_fabric.cursor.httpx.Client")
     def test_launch_agent_redacts_repository_diagnostics_but_preserves_payload(self, mock_client_class):
         """Agent launches should send raw repository data while redacting logs."""
         mock_client = MagicMock()
@@ -434,7 +434,7 @@ class TestCursorConnector:
         assert "secret-org/private-repo" not in logs
         assert "[REDACTED]" in logs
 
-    @patch("cloud_connectors.cursor.httpx.Client")
+    @patch("vendor_fabric.cursor.httpx.Client")
     def test_launch_agent_validation(self, mock_client_class):
         """launch_agent should validate inputs."""
         mock_client_class.return_value = MagicMock()
@@ -447,7 +447,7 @@ class TestCursorConnector:
         with pytest.raises(CursorValidationError, match="format"):
             connector.launch_agent(prompt_text="Hello", repository="invalid")
 
-    @patch("cloud_connectors.cursor.httpx.Client")
+    @patch("vendor_fabric.cursor.httpx.Client")
     def test_list_repositories_returns_extended_list(self, mock_client_class):
         """list_repositories should return extended repository payloads."""
         mock_client = MagicMock()
@@ -469,7 +469,7 @@ class TestCursorConnector:
         assert isinstance(repositories[0], ExtendedDict)
         assert repositories[0]["name"] == "org/repo"
 
-    @patch("cloud_connectors.cursor.httpx.Client")
+    @patch("vendor_fabric.cursor.httpx.Client")
     def test_list_models_returns_extended_list(self, mock_client_class):
         """list_models should expose model names as an extended container."""
         mock_client = MagicMock()
@@ -491,7 +491,7 @@ class TestCursorConnector:
         assert isinstance(models[0], ExtendedString)
         assert models[0].to_snake_case() == "cursor_small"
 
-    @patch("cloud_connectors.cursor.httpx.Client")
+    @patch("vendor_fabric.cursor.httpx.Client")
     def test_list_models_empty_response_returns_extended_list(self, mock_client_class):
         """list_models should extend the empty response path too."""
         mock_client = MagicMock()
@@ -556,7 +556,7 @@ class TestCursorConnector:
             ),
         ],
     )
-    @patch("cloud_connectors.cursor.httpx.Client")
+    @patch("vendor_fabric.cursor.httpx.Client")
     def test_success_response_validation_errors_are_redacted(
         self,
         mock_client_class,

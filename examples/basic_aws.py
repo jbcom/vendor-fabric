@@ -5,7 +5,7 @@ This example demonstrates how to use the AWS connector to interact with
 AWS Organizations and S3.
 
 Requirements:
-    pip install cloud-connectors[aws]
+    pip install vendor-fabric[aws]
 
 Environment Variables:
     AWS_ACCESS_KEY_ID: AWS access key
@@ -18,7 +18,7 @@ from __future__ import annotations
 import os
 import sys
 
-from cloud_connectors import ConnectorFabric
+from vendor_fabric import ConnectorFabric
 
 
 def main() -> int:

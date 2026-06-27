@@ -9,7 +9,7 @@ import pytest
 
 from extended_data.containers import ExtendedList, extend_data
 
-from cloud_connectors.google.services import GoogleServicesMixin
+from vendor_fabric.google.services import GoogleServicesMixin
 
 
 class DummyGoogleServices(GoogleServicesMixin):

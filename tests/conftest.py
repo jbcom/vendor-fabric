@@ -1,6 +1,6 @@
-"""Pytest configuration and fixtures for cloud_connectors tests.
+"""Pytest configuration and fixtures for vendor_fabric tests.
 
-This module configures pytest for the cloud-connectors test suite:
+This module configures pytest for the vendor-fabric test suite:
 - Unit tests run by default
 - E2E tests require the --e2e flag
 - Framework-specific E2E tests can be selected with --framework

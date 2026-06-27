@@ -81,7 +81,7 @@ class TestStrandsE2E:
         """Test Strands agent listing animations."""
         from strands import Agent
 
-        from cloud_connectors.meshy.tools import list_animations
+        from vendor_fabric.meshy.tools import list_animations
 
         agent = Agent(
             system_prompt="You help users find animations. Use list_animations to search the catalog.",
@@ -119,7 +119,7 @@ class TestStrandsWithBedrock:
         from strands import Agent
         from strands.models import BedrockModel
 
-        from cloud_connectors.meshy.tools import text3d_generate
+        from vendor_fabric.meshy.tools import text3d_generate
 
         # Use Claude via Bedrock
         model = BedrockModel(model_id="anthropic.claude-3-haiku-20240307-v1:0")

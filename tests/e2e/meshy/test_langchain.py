@@ -83,7 +83,7 @@ class TestLangChainE2E:
         from langchain_anthropic import ChatAnthropic
         from langgraph.prebuilt import create_react_agent
 
-        from cloud_connectors.meshy.tools import get_langchain_tools
+        from vendor_fabric.meshy.tools import get_langchain_tools
 
         llm = ChatAnthropic(model="claude-haiku-4-5-20251001")
         tools = get_langchain_tools()

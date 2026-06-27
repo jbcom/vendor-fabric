@@ -11,7 +11,7 @@ import requests
 
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString
 
-from cloud_connectors.zoom import ZoomConnector
+from vendor_fabric.zoom import ZoomConnector
 
 
 def _logged_text(logger: MagicMock) -> str:
@@ -60,7 +60,7 @@ class TestZoomConnector:
         assert connector.client_secret == "test-client-secret"
         assert connector.account_id == "test-account-id"
 
-    @patch("cloud_connectors.zoom.requests.post")
+    @patch("vendor_fabric.zoom.requests.post")
     def test_get_access_token_success(self, mock_post, base_connector_kwargs):
         """Test successful access token retrieval."""
         mock_response = _json_response({"access_token": "test-access-token"})
@@ -77,7 +77,7 @@ class TestZoomConnector:
         assert token == "test-access-token"
         mock_post.assert_called_once()
 
-    @patch("cloud_connectors.zoom.requests.post")
+    @patch("vendor_fabric.zoom.requests.post")
     def test_get_access_token_failure(self, mock_post, base_connector_kwargs):
         """Test failed access token retrieval."""
         mock_post.side_effect = requests.exceptions.RequestException(
@@ -101,7 +101,7 @@ class TestZoomConnector:
         assert "[REDACTED]" in message
         assert exc_info.value.__cause__ is None
 
-    @patch("cloud_connectors.zoom.requests.post")
+    @patch("vendor_fabric.zoom.requests.post")
     def test_get_access_token_malformed_response_is_redacted(self, mock_post, base_connector_kwargs):
         """Missing token responses should fail loudly without exposing OAuth credentials."""
         mock_response = _json_response(
@@ -128,8 +128,8 @@ class TestZoomConnector:
             assert raw_value not in message
         assert "[REDACTED]" in message
 
-    @patch("cloud_connectors.zoom.requests.get")
-    @patch("cloud_connectors.zoom.requests.post")
+    @patch("vendor_fabric.zoom.requests.get")
+    @patch("vendor_fabric.zoom.requests.post")
     def test_list_users_redacts_request_failure_details(self, mock_post, mock_get, base_connector_kwargs):
         """Zoom list failures should not expose raw secret-bearing exception text."""
         mock_post.return_value = _token_response()
@@ -153,8 +153,8 @@ class TestZoomConnector:
         assert "[REDACTED]" in message
         assert exc_info.value.__cause__ is None
 
-    @patch("cloud_connectors.zoom.requests.get")
-    @patch("cloud_connectors.zoom.requests.post")
+    @patch("vendor_fabric.zoom.requests.get")
+    @patch("vendor_fabric.zoom.requests.post")
     def test_list_users_malformed_response_is_redacted(self, mock_post, mock_get, base_connector_kwargs):
         """Malformed user list responses should not return partial or raw payloads."""
         mock_post.return_value = _token_response()
@@ -176,8 +176,8 @@ class TestZoomConnector:
         assert "raw_token" not in message
         assert "[REDACTED]" in message
 
-    @patch("cloud_connectors.zoom.requests.get")
-    @patch("cloud_connectors.zoom.requests.post")
+    @patch("vendor_fabric.zoom.requests.get")
+    @patch("vendor_fabric.zoom.requests.post")
     def test_list_users(self, mock_post, mock_get, base_connector_kwargs):
         """Test listing Zoom users."""
         mock_post.return_value = _token_response()
@@ -219,7 +219,7 @@ class TestZoomConnector:
 
         assert not hasattr(connector, "get_zoom_users")
 
-    @patch("cloud_connectors.zoom.requests.post")
+    @patch("vendor_fabric.zoom.requests.post")
     def test_create_zoom_user(self, mock_post, base_connector_kwargs):
         """Test creating a Zoom user."""
         mock_token_response = _token_response()
@@ -240,8 +240,8 @@ class TestZoomConnector:
         assert result is True
         assert mock_post.call_count == 2
 
-    @patch("cloud_connectors.zoom.requests.delete")
-    @patch("cloud_connectors.zoom.requests.post")
+    @patch("vendor_fabric.zoom.requests.delete")
+    @patch("vendor_fabric.zoom.requests.post")
     def test_remove_zoom_user_redacts_error_state_and_logs(self, mock_post, mock_delete, base_connector_kwargs):
         """Zoom mutation failures should redact user IDs and exception secrets."""
         mock_post.return_value = _token_response()
@@ -265,7 +265,7 @@ class TestZoomConnector:
         connector.logger.exception.assert_not_called()
         assert all("exc_info" not in logged_call.kwargs for logged_call in connector.logger.method_calls)
 
-    @patch("cloud_connectors.zoom.requests.post")
+    @patch("vendor_fabric.zoom.requests.post")
     def test_create_zoom_user_redacts_error_state_and_logs(self, mock_post, base_connector_kwargs):
         """Zoom create failures should redact user PII and avoid traceback logs."""
         mock_token_response = _token_response()
@@ -292,8 +292,8 @@ class TestZoomConnector:
         connector.logger.exception.assert_not_called()
         assert all("exc_info" not in logged_call.kwargs for logged_call in connector.logger.method_calls)
 
-    @patch("cloud_connectors.zoom.requests.get")
-    @patch("cloud_connectors.zoom.requests.post")
+    @patch("vendor_fabric.zoom.requests.get")
+    @patch("vendor_fabric.zoom.requests.post")
     def test_get_user(self, mock_post, mock_get, base_connector_kwargs):
         """Test getting a specific user."""
         mock_post.return_value = _token_response()
@@ -321,8 +321,8 @@ class TestZoomConnector:
         assert user["email"] == "user1@example.com"
         assert user["id"] == "123"
 
-    @patch("cloud_connectors.zoom.requests.get")
-    @patch("cloud_connectors.zoom.requests.post")
+    @patch("vendor_fabric.zoom.requests.get")
+    @patch("vendor_fabric.zoom.requests.post")
     def test_get_user_redacts_identifier_and_secret_details(self, mock_post, mock_get, base_connector_kwargs):
         """Zoom lookup failures should not echo user identifiers or secrets."""
         mock_post.return_value = _token_response()
@@ -347,8 +347,8 @@ class TestZoomConnector:
         assert "[REDACTED]" in message
         assert exc_info.value.__cause__ is None
 
-    @patch("cloud_connectors.zoom.requests.get")
-    @patch("cloud_connectors.zoom.requests.post")
+    @patch("vendor_fabric.zoom.requests.get")
+    @patch("vendor_fabric.zoom.requests.post")
     def test_get_user_malformed_response_is_redacted(self, mock_post, mock_get, base_connector_kwargs):
         """Zoom user lookups should reject non-object payloads without leaking identifiers."""
         mock_post.return_value = _token_response()
@@ -370,8 +370,8 @@ class TestZoomConnector:
         assert "hunter2" not in message
         assert "[REDACTED]" in message
 
-    @patch("cloud_connectors.zoom.requests.get")
-    @patch("cloud_connectors.zoom.requests.post")
+    @patch("vendor_fabric.zoom.requests.get")
+    @patch("vendor_fabric.zoom.requests.post")
     def test_list_meetings(self, mock_post, mock_get, base_connector_kwargs):
         """Test listing meetings for a user."""
         mock_post.return_value = _token_response()
@@ -399,8 +399,8 @@ class TestZoomConnector:
         assert len(meetings) == 2
         assert meetings[0]["id"] == "111"
 
-    @patch("cloud_connectors.zoom.requests.get")
-    @patch("cloud_connectors.zoom.requests.post")
+    @patch("vendor_fabric.zoom.requests.get")
+    @patch("vendor_fabric.zoom.requests.post")
     def test_list_meetings_redacts_identifier_and_secret_details(self, mock_post, mock_get, base_connector_kwargs):
         """Zoom meeting list failures should not chain raw user identifiers."""
         mock_post.return_value = _token_response()
@@ -424,8 +424,8 @@ class TestZoomConnector:
         assert "[REDACTED]" in message
         assert exc_info.value.__cause__ is None
 
-    @patch("cloud_connectors.zoom.requests.get")
-    @patch("cloud_connectors.zoom.requests.post")
+    @patch("vendor_fabric.zoom.requests.get")
+    @patch("vendor_fabric.zoom.requests.post")
     def test_list_meetings_malformed_response_is_redacted(self, mock_post, mock_get, base_connector_kwargs):
         """Zoom meeting list responses should preserve the ExtendedList contract."""
         mock_post.return_value = _token_response()
@@ -450,8 +450,8 @@ class TestZoomConnector:
         assert "raw_token" not in message
         assert "[REDACTED]" in message
 
-    @patch("cloud_connectors.zoom.requests.get")
-    @patch("cloud_connectors.zoom.requests.post")
+    @patch("vendor_fabric.zoom.requests.get")
+    @patch("vendor_fabric.zoom.requests.post")
     def test_get_meeting(self, mock_post, mock_get, base_connector_kwargs):
         """Test getting a specific meeting."""
         mock_post.return_value = _token_response()
@@ -478,8 +478,8 @@ class TestZoomConnector:
         assert meeting["id"] == "111"
         assert meeting["topic"] == "Team Meeting"
 
-    @patch("cloud_connectors.zoom.requests.get")
-    @patch("cloud_connectors.zoom.requests.post")
+    @patch("vendor_fabric.zoom.requests.get")
+    @patch("vendor_fabric.zoom.requests.post")
     def test_get_meeting_redacts_identifier_and_secret_details(self, mock_post, mock_get, base_connector_kwargs):
         """Zoom meeting lookup failures should not chain raw meeting identifiers."""
         mock_post.return_value = _token_response()
@@ -501,8 +501,8 @@ class TestZoomConnector:
         assert "[REDACTED]" in message
         assert exc_info.value.__cause__ is None
 
-    @patch("cloud_connectors.zoom.requests.get")
-    @patch("cloud_connectors.zoom.requests.post")
+    @patch("vendor_fabric.zoom.requests.get")
+    @patch("vendor_fabric.zoom.requests.post")
     def test_get_meeting_json_parse_error_is_redacted(self, mock_post, mock_get, base_connector_kwargs):
         """Zoom JSON parse failures should not expose raw meeting IDs or parser text."""
         mock_post.return_value = _token_response()

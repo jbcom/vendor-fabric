@@ -12,7 +12,7 @@ from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString,
 
 
 # Patch target for VaultConnector - must patch where it's used (in tools.py), not where it's defined
-VAULT_CONNECTOR_PATCH = "cloud_connectors.vault.VaultConnector"
+VAULT_CONNECTOR_PATCH = "vendor_fabric.vault.VaultConnector"
 
 
 def test_vault_connector_requires_hvac_when_constructed_without_extra() -> None:
@@ -20,9 +20,9 @@ def test_vault_connector_requires_hvac_when_constructed_without_extra() -> None:
     if importlib.util.find_spec("hvac") is not None:
         pytest.skip("hvac is installed")
 
-    from cloud_connectors.vault import VaultConnector
+    from vendor_fabric.vault import VaultConnector
 
-    with pytest.raises(ImportError, match=r"cloud-connectors\[vault\]"):
+    with pytest.raises(ImportError, match=r"vendor-fabric\[vault\]"):
         VaultConnector(from_environment=False)
 
 
@@ -31,13 +31,13 @@ class TestVaultToolDefinitions:
 
     def test_tool_definitions_exist(self):
         """Test that TOOL_DEFINITIONS is populated."""
-        from cloud_connectors.vault.tools import TOOL_DEFINITIONS
+        from vendor_fabric.vault.tools import TOOL_DEFINITIONS
 
         assert len(TOOL_DEFINITIONS) > 0
 
     def test_all_tools_have_required_fields(self):
         """Test that all tools have name, description, and func."""
-        from cloud_connectors.vault.tools import TOOL_DEFINITIONS
+        from vendor_fabric.vault.tools import TOOL_DEFINITIONS
 
         for defn in TOOL_DEFINITIONS:
             assert "name" in defn, f"Tool missing 'name': {defn}"
@@ -47,7 +47,7 @@ class TestVaultToolDefinitions:
 
     def test_tool_names_prefixed(self):
         """Test that all tool names are prefixed with 'vault_'."""
-        from cloud_connectors.vault.tools import TOOL_DEFINITIONS
+        from vendor_fabric.vault.tools import TOOL_DEFINITIONS
 
         for defn in TOOL_DEFINITIONS:
             assert defn["name"].startswith("vault_"), f"Tool name not prefixed: {defn['name']}"
@@ -59,7 +59,7 @@ class TestListSecrets:
     @patch(VAULT_CONNECTOR_PATCH)
     def test_list_secrets_basic(self, mock_connector_class):
         """Test basic list_secrets functionality."""
-        from cloud_connectors.vault.tools import list_secrets
+        from vendor_fabric.vault.tools import list_secrets
 
         mock_connector = MagicMock()
         mock_connector.list_secrets.return_value = extend_data(
@@ -87,7 +87,7 @@ class TestListSecrets:
     @patch(VAULT_CONNECTOR_PATCH)
     def test_list_secrets_with_custom_path(self, mock_connector_class):
         """Test list_secrets with custom root path."""
-        from cloud_connectors.vault.tools import list_secrets
+        from vendor_fabric.vault.tools import list_secrets
 
         mock_connector = MagicMock()
         mock_connector.list_secrets.return_value = {
@@ -109,7 +109,7 @@ class TestListSecrets:
     @patch(VAULT_CONNECTOR_PATCH)
     def test_list_secrets_empty(self, mock_connector_class):
         """Test list_secrets with no secrets found."""
-        from cloud_connectors.vault.tools import list_secrets
+        from vendor_fabric.vault.tools import list_secrets
 
         mock_connector = MagicMock()
         mock_connector.list_secrets.return_value = {}
@@ -122,7 +122,7 @@ class TestListSecrets:
     @patch(VAULT_CONNECTOR_PATCH)
     def test_list_secrets_with_max_depth(self, mock_connector_class):
         """Test list_secrets with max_depth parameter."""
-        from cloud_connectors.vault.tools import list_secrets
+        from vendor_fabric.vault.tools import list_secrets
 
         mock_connector = MagicMock()
         mock_connector.list_secrets.return_value = {}
@@ -143,7 +143,7 @@ class TestReadSecret:
     @patch(VAULT_CONNECTOR_PATCH)
     def test_read_secret_found(self, mock_connector_class):
         """Test read_secret when secret exists."""
-        from cloud_connectors.vault.tools import read_secret
+        from vendor_fabric.vault.tools import read_secret
 
         mock_connector = MagicMock()
         mock_connector.read_secret.return_value = {
@@ -166,7 +166,7 @@ class TestReadSecret:
     @patch(VAULT_CONNECTOR_PATCH)
     def test_read_secret_not_found(self, mock_connector_class):
         """Test read_secret when secret does not exist."""
-        from cloud_connectors.vault.tools import read_secret
+        from vendor_fabric.vault.tools import read_secret
 
         mock_connector = MagicMock()
         mock_connector.read_secret.return_value = None
@@ -184,7 +184,7 @@ class TestReadSecret:
     @patch(VAULT_CONNECTOR_PATCH)
     def test_read_secret_custom_mount(self, mock_connector_class):
         """Test read_secret with custom mount point."""
-        from cloud_connectors.vault.tools import read_secret
+        from vendor_fabric.vault.tools import read_secret
 
         mock_connector = MagicMock()
         mock_connector.read_secret.return_value = {"key": "value"}
@@ -204,7 +204,7 @@ class TestGetTools:
 
     def test_get_strands_tools(self):
         """Test get_strands_tools returns plain functions."""
-        from cloud_connectors.vault.tools import get_strands_tools
+        from vendor_fabric.vault.tools import get_strands_tools
 
         tools = get_strands_tools()
 
@@ -213,7 +213,7 @@ class TestGetTools:
 
     def test_get_tools_strands(self):
         """Test get_tools with strands framework."""
-        from cloud_connectors.vault.tools import get_tools
+        from vendor_fabric.vault.tools import get_tools
 
         tools = get_tools(framework="strands")
 
@@ -222,22 +222,22 @@ class TestGetTools:
 
     def test_get_tools_rejects_functions_alias(self):
         """Plain-function tools should use the canonical strands framework name."""
-        from cloud_connectors.vault.tools import get_tools
+        from vendor_fabric.vault.tools import get_tools
 
         with pytest.raises(ValueError, match="Unknown framework"):
             get_tools(framework="functions")
 
     def test_get_tools_invalid_framework(self):
         """Test get_tools with invalid framework raises ValueError."""
-        from cloud_connectors.vault.tools import get_tools
+        from vendor_fabric.vault.tools import get_tools
 
         with pytest.raises(ValueError, match="Unknown framework"):
             get_tools(framework="invalid")
 
-    @patch("cloud_connectors._optional.is_available")
+    @patch("vendor_fabric._optional.is_available")
     def test_get_tools_auto_no_frameworks(self, mock_is_available):
         """Test get_tools with auto detection when no frameworks installed."""
-        from cloud_connectors.vault.tools import get_tools
+        from vendor_fabric.vault.tools import get_tools
 
         # Mock is_available to return False for all AI frameworks
         mock_is_available.return_value = False
@@ -254,7 +254,7 @@ class TestLangChainIntegration:
 
     def test_get_langchain_tools_without_langchain(self):
         """Test that get_langchain_tools raises ImportError when langchain-core not installed."""
-        from cloud_connectors.vault.tools import get_langchain_tools
+        from vendor_fabric.vault.tools import get_langchain_tools
 
         # This should raise ImportError if langchain-core is not installed
         try:
@@ -270,7 +270,7 @@ class TestCrewAIIntegration:
 
     def test_get_crewai_tools_without_crewai(self):
         """Test that get_crewai_tools raises ImportError when crewai not installed."""
-        from cloud_connectors.vault.tools import get_crewai_tools
+        from vendor_fabric.vault.tools import get_crewai_tools
 
         # This should raise ImportError if crewai is not installed
         try:

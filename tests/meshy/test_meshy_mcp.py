@@ -10,8 +10,8 @@ import pytest
 
 from extended_data.containers import ExtendedDict, ExtendedSet
 
-from cloud_connectors.meshy import mcp as meshy_mcp_module
-from cloud_connectors.meshy.mcp import (
+from vendor_fabric.meshy import mcp as meshy_mcp_module
+from vendor_fabric.meshy.mcp import (
     _jsonable_tool_result,
     _tool_error_payload,
     _tool_result_text,
@@ -41,7 +41,7 @@ def test_meshy_mcp_result_text_uses_shared_export_boundary() -> None:
     payload = ExtendedDict({"service": {"name": "meshy"}})
 
     with patch(
-        "cloud_connectors.meshy.mcp.wrap_raw_data_for_export",
+        "vendor_fabric.meshy.mcp.wrap_raw_data_for_export",
         wraps=meshy_mcp_module.wrap_raw_data_for_export,
     ) as mock_wrap_for_export:
         text = _tool_result_text(payload)
@@ -117,7 +117,7 @@ async def test_create_server_registered_call_handler_redacts_payloads() -> None:
         },
     )
 
-    with patch("cloud_connectors.meshy.mcp._create_mcp_tools", return_value=[(tool, fake_tool)]):
+    with patch("vendor_fabric.meshy.mcp._create_mcp_tools", return_value=[(tool, fake_tool)]):
         server = create_server()
         await server.request_handlers[mcp_types.ListToolsRequest](mcp_types.ListToolsRequest())
         result = await server.request_handlers[mcp_types.CallToolRequest](
@@ -150,7 +150,7 @@ async def test_create_server_registered_call_handler_redacts_error_argument_valu
         },
     )
 
-    with patch("cloud_connectors.meshy.mcp._create_mcp_tools", return_value=[(tool, fake_tool)]):
+    with patch("vendor_fabric.meshy.mcp._create_mcp_tools", return_value=[(tool, fake_tool)]):
         server = create_server()
         await server.request_handlers[mcp_types.ListToolsRequest](mcp_types.ListToolsRequest())
         result = await server.request_handlers[mcp_types.CallToolRequest](
@@ -182,7 +182,7 @@ async def test_create_server_registered_call_handler_accepts_missing_arguments()
         inputSchema={"type": "object", "properties": {}, "required": []},
     )
 
-    with patch("cloud_connectors.meshy.mcp._create_mcp_tools", return_value=[(tool, fake_tool)]):
+    with patch("vendor_fabric.meshy.mcp._create_mcp_tools", return_value=[(tool, fake_tool)]):
         server = create_server()
         await server.request_handlers[mcp_types.ListToolsRequest](mcp_types.ListToolsRequest())
         result = await server.request_handlers[mcp_types.CallToolRequest](

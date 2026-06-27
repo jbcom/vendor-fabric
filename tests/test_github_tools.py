@@ -12,7 +12,7 @@ from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString
 
 
 # Patch target for GitHubConnector - patch at source since tools.py imports lazily inside functions
-GITHUB_CONNECTOR_PATCH = "cloud_connectors.github.GitHubConnector"
+GITHUB_CONNECTOR_PATCH = "vendor_fabric.github.GitHubConnector"
 
 
 def test_github_connector_requires_pygithub_when_constructed_without_extra() -> None:
@@ -20,9 +20,9 @@ def test_github_connector_requires_pygithub_when_constructed_without_extra() -> 
     if importlib.util.find_spec("github") is not None:
         pytest.skip("github is installed")
 
-    from cloud_connectors.github import GitHubConnector
+    from vendor_fabric.github import GitHubConnector
 
-    with pytest.raises(ImportError, match=r"cloud-connectors\[github\]"):
+    with pytest.raises(ImportError, match=r"vendor-fabric\[github\]"):
         GitHubConnector(github_owner="jbcom", github_token="token", from_environment=False)
 
 
@@ -31,13 +31,13 @@ class TestGitHubToolDefinitions:
 
     def test_tool_definitions_exist(self):
         """Test that TOOL_DEFINITIONS is populated."""
-        from cloud_connectors.github.tools import TOOL_DEFINITIONS
+        from vendor_fabric.github.tools import TOOL_DEFINITIONS
 
         assert len(TOOL_DEFINITIONS) > 0
 
     def test_all_tools_have_required_fields(self):
         """Test that all tools have name, description, and func."""
-        from cloud_connectors.github.tools import TOOL_DEFINITIONS
+        from vendor_fabric.github.tools import TOOL_DEFINITIONS
 
         for defn in TOOL_DEFINITIONS:
             assert "name" in defn, f"Tool missing 'name': {defn}"
@@ -47,7 +47,7 @@ class TestGitHubToolDefinitions:
 
     def test_tool_names_prefixed(self):
         """Test that all tool names are prefixed with 'github_'."""
-        from cloud_connectors.github.tools import TOOL_DEFINITIONS
+        from vendor_fabric.github.tools import TOOL_DEFINITIONS
 
         for defn in TOOL_DEFINITIONS:
             assert defn["name"].startswith("github_"), f"Tool name not prefixed: {defn['name']}"
@@ -59,7 +59,7 @@ class TestListRepositories:
     @patch(GITHUB_CONNECTOR_PATCH)
     def test_list_repositories_basic(self, mock_connector_class):
         """Test basic list_repositories functionality."""
-        from cloud_connectors.github.tools import list_repositories
+        from vendor_fabric.github.tools import list_repositories
 
         mock_connector = MagicMock()
         mock_connector.list_repositories.return_value = {
@@ -99,7 +99,7 @@ class TestListRepositories:
     @patch(GITHUB_CONNECTOR_PATCH)
     def test_list_repositories_with_filter(self, mock_connector_class):
         """Test list_repositories with type filter."""
-        from cloud_connectors.github.tools import list_repositories
+        from vendor_fabric.github.tools import list_repositories
 
         mock_connector = MagicMock()
         mock_connector.list_repositories.return_value = {}
@@ -116,7 +116,7 @@ class TestGetRepository:
     @patch(GITHUB_CONNECTOR_PATCH)
     def test_get_repository_basic(self, mock_connector_class):
         """Test basic get_repository functionality."""
-        from cloud_connectors.github.tools import get_repository
+        from vendor_fabric.github.tools import get_repository
 
         mock_connector = MagicMock()
         mock_connector.get_repository.return_value = {
@@ -138,7 +138,7 @@ class TestGetRepository:
     @patch(GITHUB_CONNECTOR_PATCH)
     def test_get_repository_not_found(self, mock_connector_class):
         """Test get_repository when repository not found."""
-        from cloud_connectors.github.tools import get_repository
+        from vendor_fabric.github.tools import get_repository
 
         mock_connector = MagicMock()
         mock_connector.get_repository.return_value = None
@@ -157,7 +157,7 @@ class TestListTeams:
     @patch(GITHUB_CONNECTOR_PATCH)
     def test_list_teams_basic(self, mock_connector_class):
         """Test basic list_teams functionality."""
-        from cloud_connectors.github.tools import list_teams
+        from vendor_fabric.github.tools import list_teams
 
         mock_connector = MagicMock()
         mock_connector.list_teams.return_value = {
@@ -196,7 +196,7 @@ class TestListTeams:
     @patch(GITHUB_CONNECTOR_PATCH)
     def test_list_teams_with_members(self, mock_connector_class):
         """Test list_teams with include_members option."""
-        from cloud_connectors.github.tools import list_teams
+        from vendor_fabric.github.tools import list_teams
 
         mock_connector = MagicMock()
         mock_connector.list_teams.return_value = {}
@@ -213,7 +213,7 @@ class TestGetTeam:
     @patch(GITHUB_CONNECTOR_PATCH)
     def test_get_team_basic(self, mock_connector_class):
         """Test basic get_team functionality."""
-        from cloud_connectors.github.tools import get_team
+        from vendor_fabric.github.tools import get_team
 
         mock_connector = MagicMock()
         mock_connector.get_team.return_value = {
@@ -235,7 +235,7 @@ class TestGetTeam:
     @patch(GITHUB_CONNECTOR_PATCH)
     def test_get_team_not_found(self, mock_connector_class):
         """Test get_team when team not found."""
-        from cloud_connectors.github.tools import get_team
+        from vendor_fabric.github.tools import get_team
 
         mock_connector = MagicMock()
         mock_connector.get_team.return_value = None
@@ -254,7 +254,7 @@ class TestListOrgMembers:
     @patch(GITHUB_CONNECTOR_PATCH)
     def test_list_org_members_basic(self, mock_connector_class):
         """Test basic list_org_members functionality."""
-        from cloud_connectors.github.tools import list_org_members
+        from vendor_fabric.github.tools import list_org_members
 
         mock_connector = MagicMock()
         mock_connector.list_org_members.return_value = {
@@ -292,7 +292,7 @@ class TestListOrgMembers:
     @patch(GITHUB_CONNECTOR_PATCH)
     def test_list_org_members_with_role_filter(self, mock_connector_class):
         """Test list_org_members with role filter."""
-        from cloud_connectors.github.tools import list_org_members
+        from vendor_fabric.github.tools import list_org_members
 
         mock_connector = MagicMock()
         mock_connector.list_org_members.return_value = {}
@@ -309,7 +309,7 @@ class TestGetRepositoryFile:
     @patch(GITHUB_CONNECTOR_PATCH)
     def test_get_repository_file_basic(self, mock_connector_class):
         """Test basic get_repository_file functionality."""
-        from cloud_connectors.github.tools import get_repository_file
+        from vendor_fabric.github.tools import get_repository_file
 
         mock_connector = MagicMock()
         mock_connector.get_repository_file.return_value = ('{"test": "content"}', "abc123", "test.json")
@@ -331,7 +331,7 @@ class TestGetRepositoryFile:
     @patch(GITHUB_CONNECTOR_PATCH)
     def test_get_repository_file_with_branch(self, mock_connector_class):
         """Test get_repository_file with custom branch."""
-        from cloud_connectors.github.tools import get_repository_file
+        from vendor_fabric.github.tools import get_repository_file
 
         mock_connector = MagicMock()
         mock_connector.get_repository_file.return_value = ("content", "sha", "file.txt")
@@ -353,7 +353,7 @@ class TestGetRepositoryFile:
     @patch(GITHUB_CONNECTOR_PATCH)
     def test_get_repository_file_empty(self, mock_connector_class):
         """Test get_repository_file when file is empty."""
-        from cloud_connectors.github.tools import get_repository_file
+        from vendor_fabric.github.tools import get_repository_file
 
         mock_connector = MagicMock()
         mock_connector.get_repository_file.return_value = (None, "sha", "empty.txt")
@@ -372,7 +372,7 @@ class TestGetRepositoryFile:
     @patch(GITHUB_CONNECTOR_PATCH)
     def test_get_repository_file_single_payload(self, mock_connector_class):
         """Test get_repository_file when the connector returns content without SHA metadata."""
-        from cloud_connectors.github.tools import get_repository_file
+        from vendor_fabric.github.tools import get_repository_file
 
         mock_connector = MagicMock()
         mock_connector.get_repository_file.return_value = "plain content"
@@ -396,7 +396,7 @@ class TestGetTools:
 
     def test_get_strands_tools(self):
         """Test get_strands_tools returns callable functions."""
-        from cloud_connectors.github.tools import get_strands_tools
+        from vendor_fabric.github.tools import get_strands_tools
 
         tools = get_strands_tools()
 
@@ -405,22 +405,22 @@ class TestGetTools:
 
     def test_get_tools_invalid_framework(self):
         """Test get_tools with invalid framework raises ValueError."""
-        from cloud_connectors.github.tools import get_tools
+        from vendor_fabric.github.tools import get_tools
 
         with pytest.raises(ValueError, match="Unknown framework"):
             get_tools(framework="invalid")
 
     def test_get_tools_rejects_functions_alias(self):
         """Plain-function tools should use the canonical strands framework name."""
-        from cloud_connectors.github.tools import get_tools
+        from vendor_fabric.github.tools import get_tools
 
         with pytest.raises(ValueError, match="Unknown framework"):
             get_tools(framework="functions")
 
     def test_get_langchain_tools_delegates_shared_builder(self, monkeypatch: pytest.MonkeyPatch):
         """LangChain tool factory should pass the GitHub definitions to the shared builder."""
-        from cloud_connectors import ai_tools
-        from cloud_connectors.github import tools as github_tools
+        from vendor_fabric import ai_tools
+        from vendor_fabric.github import tools as github_tools
 
         expected = [object()]
         build_langchain_tools = MagicMock(return_value=expected)
@@ -431,8 +431,8 @@ class TestGetTools:
 
     def test_get_crewai_tools_wraps_definitions(self, monkeypatch: pytest.MonkeyPatch):
         """CrewAI tool factory should attach descriptions and schemas to wrapped functions."""
-        from cloud_connectors import _optional
-        from cloud_connectors.github import tools as github_tools
+        from vendor_fabric import _optional
+        from vendor_fabric.github import tools as github_tools
 
         def fake_tool(name):
             def decorate(func):
@@ -452,8 +452,8 @@ class TestGetTools:
 
     def test_get_crewai_tools_allows_schema_less_definitions(self, monkeypatch: pytest.MonkeyPatch):
         """CrewAI tool factory should tolerate definitions without schema metadata."""
-        from cloud_connectors import _optional
-        from cloud_connectors.github import tools as github_tools
+        from vendor_fabric import _optional
+        from vendor_fabric.github import tools as github_tools
 
         class WrappedTool:
             pass
@@ -482,8 +482,8 @@ class TestGetTools:
 
     def test_get_tools_auto_prefers_crewai_when_available(self, monkeypatch: pytest.MonkeyPatch):
         """Auto-detection should prefer CrewAI tools when CrewAI is importable."""
-        from cloud_connectors import _optional
-        from cloud_connectors.github import tools as github_tools
+        from vendor_fabric import _optional
+        from vendor_fabric.github import tools as github_tools
 
         expected = [object()]
         monkeypatch.setattr(_optional, "is_available", lambda package: package == "crewai")
@@ -493,8 +493,8 @@ class TestGetTools:
 
     def test_get_tools_auto_falls_back_to_langchain_then_strands(self, monkeypatch: pytest.MonkeyPatch):
         """Auto-detection should use LangChain before plain Strands functions."""
-        from cloud_connectors import _optional
-        from cloud_connectors.github import tools as github_tools
+        from vendor_fabric import _optional
+        from vendor_fabric.github import tools as github_tools
 
         langchain_tools = [object()]
         strands_tools = [object()]
@@ -510,7 +510,7 @@ class TestGetTools:
 
     def test_get_tools_explicit_frameworks(self, monkeypatch: pytest.MonkeyPatch):
         """Explicit framework names should dispatch to their matching factories."""
-        from cloud_connectors.github import tools as github_tools
+        from vendor_fabric.github import tools as github_tools
 
         langchain_tools = [object()]
         crewai_tools = [object()]
@@ -529,7 +529,7 @@ class TestExports:
 
     def test_all_exports_available(self):
         """Test that __all__ contains expected exports."""
-        from cloud_connectors.github import tools
+        from vendor_fabric.github import tools
 
         expected_exports = [
             "get_tools",

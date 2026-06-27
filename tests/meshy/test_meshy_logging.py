@@ -6,7 +6,7 @@ import logging
 
 from extended_data.logging import Logging
 
-from cloud_connectors.meshy import MESHY_LOGGER_NAME, MESHY_STORAGE_MARKER, create_meshy_logger
+from vendor_fabric.meshy import MESHY_LOGGER_NAME, MESHY_STORAGE_MARKER, create_meshy_logger
 
 
 def test_create_meshy_logger_returns_extended_data_logger() -> None:

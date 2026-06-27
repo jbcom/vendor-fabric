@@ -11,7 +11,7 @@ import tomlkit
 
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString
 
-from cloud_connectors import _optional, registry
+from vendor_fabric import _optional, registry
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -54,7 +54,7 @@ def test_builtin_adapter_reports_unavailable_metadata_without_raising(monkeypatc
     assert info["name"] == "aws"
     assert info["available"] is False
     assert info["extra"] == "aws"
-    assert info["install"] == "pip install cloud-connectors[aws]"
+    assert info["install"] == "pip install vendor-fabric[aws]"
     assert info["missing"] == ["boto3"]
 
 
@@ -66,7 +66,7 @@ def test_unavailable_adapter_raises_central_install_error_when_constructed(monke
         lambda name: ExtendedList(["boto3"]) if name == "aws" else ExtendedList(),
     )
 
-    with pytest.raises(ImportError, match=r"cloud-connectors\[aws\]") as exc_info:
+    with pytest.raises(ImportError, match=r"vendor-fabric\[aws\]") as exc_info:
         registry.get_connector_adapter("aws", include_unavailable=False)
 
     assert "Missing packages: boto3" in str(exc_info.value)
@@ -95,12 +95,12 @@ def test_connector_optional_metadata_returns_extended_values(monkeypatch) -> Non
     assert missing == ["missing"]
     assert isinstance(missing[0], ExtendedString)
     assert isinstance(install, ExtendedString)
-    assert install == "pip install cloud-connectors[custom-extra]"
+    assert install == "pip install vendor-fabric[custom-extra]"
 
 
 def test_builtin_connectors_are_registered_as_entry_points() -> None:
     """Every built-in connector should be published through the connector entry point group."""
-    entry_points = _pyproject()["project"]["entry-points"]["cloud_connectors.connectors"]
+    entry_points = _pyproject()["project"]["entry-points"]["vendor_fabric.connectors"]
 
     assert set(entry_points) == set(registry.BUILTIN_CONNECTORS)
 
@@ -116,18 +116,20 @@ def test_connector_extras_exist_in_pyproject() -> None:
         assert extra in extras, f"{name} uses missing extra {extra}"
 
 
-def test_secretsync_surface_is_not_a_vendor_connector() -> None:
-    """SecretSync lives in secrets-sync and agentic-crew, not cloud-connectors."""
+def test_secretsync_surface_is_first_class_but_not_a_connector() -> None:
+    """SecretSync is a vendor-fabric capability, not a connector entry point."""
     pyproject = _pyproject()
     extras = pyproject["project"]["optional-dependencies"]
-    entry_points = pyproject["project"]["entry-points"]["cloud_connectors.connectors"]
+    entry_points = pyproject["project"]["entry-points"]["vendor_fabric.connectors"]
 
     assert "secrets" not in registry.BUILTIN_CONNECTORS
     assert "secrets" not in _optional.CONNECTOR_EXTRAS
     assert "secrets" not in _optional.CONNECTOR_REQUIREMENTS
     assert "secrets" not in extras
+    assert "secrets-sync" in extras
     assert "secrets" not in entry_points
-    assert util.find_spec("cloud_connectors.secrets") is None
+    assert util.find_spec("vendor_fabric.secrets") is None
+    assert util.find_spec("vendor_fabric.secrets_sync") is not None
 
 
 def test_ownership_map_documents_current_package_boundaries() -> None:
@@ -138,9 +140,8 @@ def test_ownership_map_documents_current_package_boundaries() -> None:
         "jbcom/extended-data",
         "extended-data",
         "jbcom/secrets-sync",
-        "secrets-sync-bridge",
-        "jbcom/agent-orchestration",
-        "agentic-crew[...]",
+        "vendor_fabric.secrets_sync",
+        "vendor_fabric.agentic",
     ):
         assert expected_text in ownership_map
 
@@ -154,8 +155,8 @@ def test_connector_requirement_packages_map_to_connector_extras() -> None:
             assert _optional.PACKAGE_TO_EXTRA[requirement] == extra
 
 
-def test_get_crewai_tool_decorator_explains_user_managed_install(monkeypatch) -> None:
-    """Missing CrewAI reports the deliberate no-extra install policy."""
+def test_get_crewai_tool_decorator_explains_crewai_extra(monkeypatch) -> None:
+    """Missing CrewAI reports the vendor-fabric CrewAI extra."""
 
     def fake_import_module(name: str) -> object:
         if name == "crewai.tools":
@@ -169,9 +170,7 @@ def test_get_crewai_tool_decorator_explains_user_managed_install(monkeypatch) ->
 
     message = str(exc_info.value)
     assert "crewai is required for CrewAI tools" in message
-    assert "cloud-connectors does not publish a CrewAI extra" in message
-    assert "chromadb" in message
-    assert "cloud-connectors[crewai]" not in message
+    assert "vendor-fabric[crewai]" in message
 
 
 def test_sentence_transformers_explains_user_managed_install(monkeypatch) -> None:
@@ -190,7 +189,7 @@ def test_sentence_transformers_explains_user_managed_install(monkeypatch) -> Non
     message = str(exc_info.value)
     assert "sentence-transformers separately" in message
     assert "torch" in message
-    assert "cloud-connectors[vector]" not in message
+    assert "vendor-fabric[vector]" not in message
     assert _optional.get_extra_for_package("sentence_transformers") is None
 
 

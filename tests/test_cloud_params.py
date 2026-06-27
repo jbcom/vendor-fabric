@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from extended_data.containers import ExtendedDict, ExtendedString
 
-from cloud_connectors.cloud_params import (
+from vendor_fabric.cloud_params import (
     get_aws_call_params,
     get_cloud_call_params,
     get_google_call_params,

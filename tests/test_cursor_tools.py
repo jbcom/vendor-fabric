@@ -6,14 +6,14 @@ from unittest.mock import MagicMock, patch
 
 from extended_data.containers import ExtendedDict, ExtendedString, extend_data
 
-from cloud_connectors.cursor import AgentState
+from vendor_fabric.cursor import AgentState
 
 
 def test_cursor_launch_agent():
     """Test launch_agent tool."""
-    from cloud_connectors.cursor.tools import cursor_launch_agent
+    from vendor_fabric.cursor.tools import cursor_launch_agent
 
-    with patch("cloud_connectors.cursor.CursorConnector") as mock_connector_class:
+    with patch("vendor_fabric.cursor.CursorConnector") as mock_connector_class:
         mock_connector = MagicMock()
         mock_agent = extend_data(
             {
@@ -35,9 +35,9 @@ def test_cursor_launch_agent():
 
 def test_cursor_get_agent_status():
     """Test get_agent_status tool."""
-    from cloud_connectors.cursor.tools import cursor_get_agent_status
+    from vendor_fabric.cursor.tools import cursor_get_agent_status
 
-    with patch("cloud_connectors.cursor.CursorConnector") as mock_connector_class:
+    with patch("vendor_fabric.cursor.CursorConnector") as mock_connector_class:
         mock_connector = MagicMock()
         mock_agent = extend_data(
             {
@@ -60,9 +60,9 @@ def test_cursor_get_agent_status():
 
 def test_cursor_get_agent_status_redacts_error():
     """Cursor status tool should not expose secret-bearing agent errors."""
-    from cloud_connectors.cursor.tools import cursor_get_agent_status
+    from vendor_fabric.cursor.tools import cursor_get_agent_status
 
-    with patch("cloud_connectors.cursor.CursorConnector") as mock_connector_class:
+    with patch("vendor_fabric.cursor.CursorConnector") as mock_connector_class:
         mock_connector = MagicMock()
         mock_agent = extend_data(
             {

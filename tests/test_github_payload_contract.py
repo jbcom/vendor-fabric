@@ -9,9 +9,9 @@ import pytest
 
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString, ExtendedTuple
 
-import cloud_connectors.github as github_module
+import vendor_fabric.github as github_module
 
-from cloud_connectors.github import GitHubConnector, GitHubFallbackError, build_github_actions_workflow
+from vendor_fabric.github import GitHubConnector, GitHubFallbackError, build_github_actions_workflow
 
 
 def _connector() -> GitHubConnector:

@@ -11,7 +11,7 @@ import pytest
 
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString, extend_data
 
-from cloud_connectors.anthropic import (
+from vendor_fabric.anthropic import (
     CLAUDE_MODELS,
     AnthropicAPIError,
     AnthropicAuthError,

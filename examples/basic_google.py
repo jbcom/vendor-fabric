@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Example: Basic Google Cloud Connector usage.
 
-This example demonstrates how to use the Google Cloud connector to interact
+This example demonstrates how to use the Google Vendor fabric to interact
 with Google Workspace and Cloud Platform.
 
 Requirements:
-    pip install cloud-connectors[google]
+    pip install vendor-fabric[google]
 
 Environment Variables:
     GOOGLE_SERVICE_ACCOUNT: JSON service account credentials
@@ -17,7 +17,7 @@ from __future__ import annotations
 import os
 import sys
 
-from cloud_connectors import ConnectorFabric
+from vendor_fabric import ConnectorFabric
 
 
 def main() -> int:

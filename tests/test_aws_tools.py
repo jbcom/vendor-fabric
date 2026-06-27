@@ -12,7 +12,7 @@ from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString,
 
 
 # Patch where the tool functions instantiate the first-class connector.
-AWS_CONNECTOR_PATCH = "cloud_connectors.aws.AWSConnector"
+AWS_CONNECTOR_PATCH = "vendor_fabric.aws.AWSConnector"
 
 
 def test_aws_connector_requires_boto3_when_constructed_without_extra() -> None:
@@ -20,9 +20,9 @@ def test_aws_connector_requires_boto3_when_constructed_without_extra() -> None:
     if importlib.util.find_spec("boto3") is not None:
         pytest.skip("boto3 is installed")
 
-    from cloud_connectors.aws import AWSConnector
+    from vendor_fabric.aws import AWSConnector
 
-    with pytest.raises(ImportError, match=r"cloud-connectors\[aws\]"):
+    with pytest.raises(ImportError, match=r"vendor-fabric\[aws\]"):
         AWSConnector(from_environment=False)
 
 
@@ -31,13 +31,13 @@ class TestAWSToolDefinitions:
 
     def test_tool_definitions_exist(self):
         """Test that TOOL_DEFINITIONS is populated."""
-        from cloud_connectors.aws.tools import TOOL_DEFINITIONS
+        from vendor_fabric.aws.tools import TOOL_DEFINITIONS
 
         assert len(TOOL_DEFINITIONS) > 0
 
     def test_all_tools_have_required_fields(self):
         """Test that all tools have name, description, and func."""
-        from cloud_connectors.aws.tools import TOOL_DEFINITIONS
+        from vendor_fabric.aws.tools import TOOL_DEFINITIONS
 
         for defn in TOOL_DEFINITIONS:
             assert "name" in defn, f"Tool missing 'name': {defn}"
@@ -47,7 +47,7 @@ class TestAWSToolDefinitions:
 
     def test_tool_names_prefixed(self):
         """Test that all tool names are prefixed with 'aws_'."""
-        from cloud_connectors.aws.tools import TOOL_DEFINITIONS
+        from vendor_fabric.aws.tools import TOOL_DEFINITIONS
 
         for defn in TOOL_DEFINITIONS:
             assert defn["name"].startswith("aws_"), f"Tool name not prefixed: {defn['name']}"
@@ -59,7 +59,7 @@ class TestGetCallerAccountId:
     @patch(AWS_CONNECTOR_PATCH)
     def test_get_caller_account_id(self, mock_connector_class):
         """Test account ID lookup."""
-        from cloud_connectors.aws.tools import get_caller_account_id
+        from vendor_fabric.aws.tools import get_caller_account_id
 
         mock_connector = MagicMock()
         mock_connector.get_caller_account_id.return_value = "123456789012"
@@ -78,7 +78,7 @@ class TestListSecrets:
     @patch(AWS_CONNECTOR_PATCH)
     def test_list_secrets_basic(self, mock_connector_class):
         """Test basic list_secrets functionality."""
-        from cloud_connectors.aws.tools import list_secrets
+        from vendor_fabric.aws.tools import list_secrets
 
         mock_connector = MagicMock()
         mock_connector.list_secrets.return_value = extend_data(
@@ -110,7 +110,7 @@ class TestListSecrets:
     @patch(AWS_CONNECTOR_PATCH)
     def test_list_secrets_with_prefix(self, mock_connector_class):
         """Test list_secrets with prefix filter."""
-        from cloud_connectors.aws.tools import list_secrets
+        from vendor_fabric.aws.tools import list_secrets
 
         mock_connector = MagicMock()
         mock_connector.list_secrets.return_value = {}
@@ -127,7 +127,7 @@ class TestGetSecret:
     @patch(AWS_CONNECTOR_PATCH)
     def test_get_secret_basic(self, mock_connector_class):
         """Test basic get_secret functionality."""
-        from cloud_connectors.aws.tools import get_secret
+        from vendor_fabric.aws.tools import get_secret
 
         mock_connector = MagicMock()
         mock_connector.get_secret.return_value = "super-secret-value"
@@ -148,7 +148,7 @@ class TestListS3Buckets:
     @patch(AWS_CONNECTOR_PATCH)
     def test_list_s3_buckets_basic(self, mock_connector_class):
         """Test basic list_s3_buckets functionality."""
-        from cloud_connectors.aws.tools import list_s3_buckets
+        from vendor_fabric.aws.tools import list_s3_buckets
 
         mock_connector = MagicMock()
         mock_connector.list_s3_buckets.return_value = extend_data(
@@ -177,7 +177,7 @@ class TestListS3Objects:
     @patch(AWS_CONNECTOR_PATCH)
     def test_list_s3_objects_basic(self, mock_connector_class):
         """Test basic list_s3_objects functionality."""
-        from cloud_connectors.aws.tools import list_s3_objects
+        from vendor_fabric.aws.tools import list_s3_objects
 
         mock_connector = MagicMock()
         mock_connector.list_objects.return_value = extend_data(
@@ -207,7 +207,7 @@ class TestListAccounts:
     @patch(AWS_CONNECTOR_PATCH)
     def test_list_accounts_basic(self, mock_connector_class):
         """Test basic list_accounts functionality."""
-        from cloud_connectors.aws.tools import list_accounts
+        from vendor_fabric.aws.tools import list_accounts
 
         mock_connector = MagicMock()
         mock_connector.get_accounts.return_value = extend_data(
@@ -237,7 +237,7 @@ class TestListSSOUsers:
     @patch(AWS_CONNECTOR_PATCH)
     def test_list_sso_users_basic(self, mock_connector_class):
         """Test basic list_sso_users functionality."""
-        from cloud_connectors.aws.tools import list_sso_users
+        from vendor_fabric.aws.tools import list_sso_users
 
         mock_connector = MagicMock()
         mock_connector.list_sso_users.return_value = extend_data(
@@ -267,7 +267,7 @@ class TestListSSOGroups:
     @patch(AWS_CONNECTOR_PATCH)
     def test_list_sso_groups_basic(self, mock_connector_class):
         """Test basic list_sso_groups functionality."""
-        from cloud_connectors.aws.tools import list_sso_groups
+        from vendor_fabric.aws.tools import list_sso_groups
 
         mock_connector = MagicMock()
         mock_connector.list_sso_groups.return_value = extend_data(
@@ -297,16 +297,16 @@ class TestGetTools:
 
     def test_get_strands_tools(self):
         """Test getting tools as plain functions."""
-        from cloud_connectors.aws.tools import get_strands_tools
+        from vendor_fabric.aws.tools import get_strands_tools
 
         tools = get_strands_tools()
         assert len(tools) > 0
         assert all(callable(t) for t in tools)
 
-    @patch("cloud_connectors._optional.is_available")
+    @patch("vendor_fabric._optional.is_available")
     def test_get_tools_auto_fallback(self, mock_is_available):
         """Test auto-detection falls back to strands/functions."""
-        from cloud_connectors.aws.tools import get_tools
+        from vendor_fabric.aws.tools import get_tools
 
         mock_is_available.return_value = False
 
@@ -317,7 +317,7 @@ class TestGetTools:
 
     def test_get_tools_invalid_framework(self):
         """Test invalid framework raises error."""
-        from cloud_connectors.aws.tools import get_tools
+        from vendor_fabric.aws.tools import get_tools
 
         with pytest.raises(ValueError, match="Unknown framework"):
             get_tools(framework="invalid")

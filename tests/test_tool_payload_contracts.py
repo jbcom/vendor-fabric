@@ -11,15 +11,15 @@ from extended_data.containers import ExtendedDict, ExtendedList
 
 
 TOOL_MODULES = (
-    "cloud_connectors.anthropic.tools",
-    "cloud_connectors.aws.tools",
-    "cloud_connectors.cursor.tools",
-    "cloud_connectors.github.tools",
-    "cloud_connectors.google.tools",
-    "cloud_connectors.meshy.tools",
-    "cloud_connectors.slack.tools",
-    "cloud_connectors.vault.tools",
-    "cloud_connectors.zoom.tools",
+    "vendor_fabric.anthropic.tools",
+    "vendor_fabric.aws.tools",
+    "vendor_fabric.cursor.tools",
+    "vendor_fabric.github.tools",
+    "vendor_fabric.google.tools",
+    "vendor_fabric.meshy.tools",
+    "vendor_fabric.slack.tools",
+    "vendor_fabric.vault.tools",
+    "vendor_fabric.zoom.tools",
 )
 
 

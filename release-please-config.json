@@ -2,8 +2,8 @@
   "release-type": "python",
   "packages": {
     ".": {
-      "package-name": "cloud-connectors",
-      "component": "cloud-connectors",
+      "package-name": "vendor-fabric",
+      "component": "vendor-fabric",
       "include-component-in-tag": true
     }
   }

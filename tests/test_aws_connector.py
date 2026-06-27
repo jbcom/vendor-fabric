@@ -13,7 +13,7 @@ pytest.importorskip("botocore")
 from botocore.exceptions import ClientError
 
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString, extend_data
-from cloud_connectors.aws import AWSConnector
+from vendor_fabric.aws import AWSConnector
 
 
 def _logged_text(logger: MagicMock) -> str:
@@ -37,7 +37,7 @@ class TestAWSConnector:
         connector = AWSConnector(execution_role_arn=role_arn, **base_connector_kwargs)
         assert connector.execution_role_arn == role_arn
 
-    @patch("cloud_connectors.aws.boto3.Session")
+    @patch("vendor_fabric.aws.boto3.Session")
     def test_assume_role_success(self, mock_session_class, base_connector_kwargs):
         """Test successful role assumption."""
         mock_sts_client = MagicMock()
@@ -62,7 +62,7 @@ class TestAWSConnector:
 
         mock_sts_client.assume_role.assert_called_once_with(RoleArn=role_arn, RoleSessionName="test-session")
 
-    @patch("cloud_connectors.aws.boto3.Session")
+    @patch("vendor_fabric.aws.boto3.Session")
     def test_assume_role_failure(self, mock_session_class, base_connector_kwargs):
         """Test failed role assumption."""
         role_arn = "arn:aws:iam::123456789012:role/TestRole"
@@ -101,7 +101,7 @@ class TestAWSConnector:
         assert config.retries["max_attempts"] == 5
         assert config.retries["mode"] == "standard"
 
-    @patch("cloud_connectors.aws.boto3.Session")
+    @patch("vendor_fabric.aws.boto3.Session")
     def test_get_aws_client(self, mock_session_class, base_connector_kwargs):
         """Test getting AWS client."""
         mock_session = MagicMock()
@@ -117,7 +117,7 @@ class TestAWSConnector:
         assert client == mock_client
         mock_session.client.assert_called_once()
 
-    @patch("cloud_connectors.aws.boto3.Session")
+    @patch("vendor_fabric.aws.boto3.Session")
     def test_get_aws_resource(self, mock_session_class, base_connector_kwargs):
         """Test getting AWS resource."""
         mock_session = MagicMock()
@@ -133,7 +133,7 @@ class TestAWSConnector:
         assert resource == mock_resource
         mock_session.resource.assert_called_once()
 
-    @patch("cloud_connectors.aws.boto3.Session")
+    @patch("vendor_fabric.aws.boto3.Session")
     def test_get_aws_resource_failure_redacts_exception_context(self, mock_session_class, base_connector_kwargs):
         """Resource creation failures should not chain raw provider exceptions into diagnostics."""
         mock_session = MagicMock()
@@ -212,7 +212,7 @@ class TestAWSConnector:
 
         with (
             patch.object(AWSConnector, "get_secret", side_effect=["value-a", None, "value-c"]) as mock_get_secret,
-            patch("cloud_connectors.aws.is_nothing", side_effect=lambda value: value in (None, "", {})),
+            patch("vendor_fabric.aws.is_nothing", side_effect=lambda value: value in (None, "", {})),
         ):
             secrets = connector.list_secrets(
                 get_secret_values=True,

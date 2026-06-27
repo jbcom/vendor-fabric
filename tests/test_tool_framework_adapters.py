@@ -10,15 +10,15 @@ import pytest
 
 
 TOOL_MODULES = (
-    "cloud_connectors.anthropic.tools",
-    "cloud_connectors.aws.tools",
-    "cloud_connectors.cursor.tools",
-    "cloud_connectors.github.tools",
-    "cloud_connectors.google.tools",
-    "cloud_connectors.meshy.tools",
-    "cloud_connectors.slack.tools",
-    "cloud_connectors.vault.tools",
-    "cloud_connectors.zoom.tools",
+    "vendor_fabric.anthropic.tools",
+    "vendor_fabric.aws.tools",
+    "vendor_fabric.cursor.tools",
+    "vendor_fabric.github.tools",
+    "vendor_fabric.google.tools",
+    "vendor_fabric.meshy.tools",
+    "vendor_fabric.slack.tools",
+    "vendor_fabric.vault.tools",
+    "vendor_fabric.zoom.tools",
 )
 
 
@@ -34,7 +34,7 @@ def _fake_crewai_tool(name: str):
 @pytest.mark.parametrize("module_name", TOOL_MODULES)
 def test_langchain_tools_delegate_to_shared_builder(module_name: str, monkeypatch: pytest.MonkeyPatch) -> None:
     """LangChain factories should pass connector definitions through the shared builder."""
-    from cloud_connectors import ai_tools
+    from vendor_fabric import ai_tools
 
     module = import_module(module_name)
     expected = [object()]
@@ -48,7 +48,7 @@ def test_langchain_tools_delegate_to_shared_builder(module_name: str, monkeypatc
 @pytest.mark.parametrize("module_name", TOOL_MODULES)
 def test_crewai_tools_attach_description_and_schema(module_name: str, monkeypatch: pytest.MonkeyPatch) -> None:
     """CrewAI factories should attach connector metadata to wrapped functions."""
-    from cloud_connectors import _optional
+    from vendor_fabric import _optional
 
     module = import_module(module_name)
     monkeypatch.setattr(_optional, "get_crewai_tool_decorator", lambda: _fake_crewai_tool)
@@ -65,7 +65,7 @@ def test_crewai_tools_attach_description_and_schema(module_name: str, monkeypatc
 @pytest.mark.parametrize("module_name", TOOL_MODULES)
 def test_crewai_tools_allow_schema_less_definitions(module_name: str, monkeypatch: pytest.MonkeyPatch) -> None:
     """CrewAI factories should tolerate simple function definitions without schemas."""
-    from cloud_connectors import _optional
+    from vendor_fabric import _optional
 
     class WrappedTool:
         pass
@@ -105,7 +105,7 @@ def test_strands_tools_return_plain_definition_functions(module_name: str) -> No
 @pytest.mark.parametrize("module_name", TOOL_MODULES)
 def test_get_tools_auto_prefers_crewai(module_name: str, monkeypatch: pytest.MonkeyPatch) -> None:
     """Auto-detection should prefer CrewAI when it is importable."""
-    from cloud_connectors import _optional
+    from vendor_fabric import _optional
 
     module = import_module(module_name)
     expected = [object()]
@@ -121,7 +121,7 @@ def test_get_tools_auto_falls_back_to_langchain_then_strands(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Auto-detection should use LangChain before plain Strands functions."""
-    from cloud_connectors import _optional
+    from vendor_fabric import _optional
 
     module = import_module(module_name)
     langchain_tools = [object()]

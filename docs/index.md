@@ -1,29 +1,31 @@
-# Cloud Connectors
+# Vendor Fabric
 
-`cloud-connectors` is the optional vendor integration package for the
-Extended Data stack. It depends on `extended-data` for base data primitives,
-inputs, logging, and workflow helpers, then adds API clients for external
-systems through a central adapter registry.
+`vendor-fabric` is the optional vendor integration package for the
+Extended Data stack. It depends on `extended-data` for primitives,
+containers, file sync, inputs, logging, and workflow helpers, then adds API
+clients, native vendor sync capabilities, and agentic workflow adapters.
 
 ```bash
-pip install cloud-connectors
-pip install "cloud-connectors[github,slack]"
-pip install "cloud-connectors[aws,google,vault]"
+pip install vendor-fabric
+pip install "vendor-fabric[github,slack]"
+pip install "vendor-fabric[aws,google,vault,secrets-sync]"
+pip install "vendor-fabric[crewai]"
 ```
 
-The base install exposes the connector catalog without requiring every vendor
-SDK. Optional connectors report availability and install guidance through the
-registry.
+The base install exposes the connector and agentic catalogs without requiring
+every vendor SDK. Optional connectors report availability and install guidance
+through the registry.
 
-SecretSync is owned by the standalone
-[`jbcom/secrets-sync`](https://github.com/jbcom/secrets-sync) repository. Use
-`secrets-sync-bridge` for Python bridge runtime access, and use
-`agentic-crew[secrets-sync]` for agent framework tools.
+Native SecretSync capabilities live in `vendor_fabric.secrets_sync`. They use
+Extended Data merge, redaction, export, and sync primitives while delegating
+provider IO to Vault, AWS, S3, and future vendor stores.
 
 ```{toctree}
 :maxdepth: 2
 
 integrations/connectors
+secrets-sync/index
+agentic/index
 ownership-map
 api/index
 ```

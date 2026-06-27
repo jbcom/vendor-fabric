@@ -12,7 +12,7 @@ from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString,
 
 
 # Patch where the tool functions instantiate the first-class connector.
-GOOGLE_CONNECTOR_PATCH = "cloud_connectors.google.GoogleConnector"
+GOOGLE_CONNECTOR_PATCH = "vendor_fabric.google.GoogleConnector"
 
 
 def test_google_connector_requires_google_sdk_when_constructed_without_extra() -> None:
@@ -20,9 +20,9 @@ def test_google_connector_requires_google_sdk_when_constructed_without_extra() -
     if importlib.util.find_spec("googleapiclient") is not None:
         pytest.skip("google-api-python-client is installed")
 
-    from cloud_connectors.google import GoogleConnector
+    from vendor_fabric.google import GoogleConnector
 
-    with pytest.raises(ImportError, match=r"cloud-connectors\[google\]"):
+    with pytest.raises(ImportError, match=r"vendor-fabric\[google\]"):
         GoogleConnector(service_account_info={"type": "service_account"}, from_environment=False)
 
 
@@ -31,13 +31,13 @@ class TestGoogleToolDefinitions:
 
     def test_tool_definitions_exist(self):
         """Test that TOOL_DEFINITIONS is populated."""
-        from cloud_connectors.google.tools import TOOL_DEFINITIONS
+        from vendor_fabric.google.tools import TOOL_DEFINITIONS
 
         assert len(TOOL_DEFINITIONS) > 0
 
     def test_all_tools_have_required_fields(self):
         """Test that all tools have name, description, and func."""
-        from cloud_connectors.google.tools import TOOL_DEFINITIONS
+        from vendor_fabric.google.tools import TOOL_DEFINITIONS
 
         for defn in TOOL_DEFINITIONS:
             assert "name" in defn, f"Tool missing 'name': {defn}"
@@ -47,14 +47,14 @@ class TestGoogleToolDefinitions:
 
     def test_tool_names_prefixed(self):
         """Test that all tool names are prefixed with 'google_'."""
-        from cloud_connectors.google.tools import TOOL_DEFINITIONS
+        from vendor_fabric.google.tools import TOOL_DEFINITIONS
 
         for defn in TOOL_DEFINITIONS:
             assert defn["name"].startswith("google_"), f"Tool name not prefixed: {defn['name']}"
 
     def test_tool_count(self):
         """Test that we have exactly 6 tools as specified."""
-        from cloud_connectors.google.tools import TOOL_DEFINITIONS
+        from vendor_fabric.google.tools import TOOL_DEFINITIONS
 
         assert len(TOOL_DEFINITIONS) == 6
 
@@ -65,7 +65,7 @@ class TestListProjects:
     @patch(GOOGLE_CONNECTOR_PATCH)
     def test_list_projects_basic(self, mock_connector_class):
         """Test basic list_projects functionality."""
-        from cloud_connectors.google.tools import list_projects
+        from vendor_fabric.google.tools import list_projects
 
         mock_connector = MagicMock()
         mock_connector.list_projects.return_value = extend_data(
@@ -100,7 +100,7 @@ class TestListProjects:
     @patch(GOOGLE_CONNECTOR_PATCH)
     def test_list_projects_with_parent(self, mock_connector_class):
         """Test list_projects with parent filter."""
-        from cloud_connectors.google.tools import list_projects
+        from vendor_fabric.google.tools import list_projects
 
         mock_connector = MagicMock()
         mock_connector.list_projects.return_value = []
@@ -113,7 +113,7 @@ class TestListProjects:
     @patch(GOOGLE_CONNECTOR_PATCH)
     def test_list_projects_max_results(self, mock_connector_class):
         """Test list_projects respects max_results."""
-        from cloud_connectors.google.tools import list_projects
+        from vendor_fabric.google.tools import list_projects
 
         mock_connector = MagicMock()
         # Return more projects than max_results
@@ -133,7 +133,7 @@ class TestListFolders:
     @patch(GOOGLE_CONNECTOR_PATCH)
     def test_list_folders_basic(self, mock_connector_class):
         """Test basic list_folders functionality."""
-        from cloud_connectors.google.tools import list_folders
+        from vendor_fabric.google.tools import list_folders
 
         mock_connector = MagicMock()
         mock_connector.list_folders.return_value = extend_data(
@@ -163,7 +163,7 @@ class TestListEnabledServices:
     @patch(GOOGLE_CONNECTOR_PATCH)
     def test_list_enabled_services_basic(self, mock_connector_class):
         """Test basic list_enabled_services functionality."""
-        from cloud_connectors.google.tools import list_enabled_services
+        from vendor_fabric.google.tools import list_enabled_services
 
         mock_connector = MagicMock()
         mock_connector.list_enabled_services.return_value = extend_data(
@@ -195,7 +195,7 @@ class TestListEnabledServices:
     @patch(GOOGLE_CONNECTOR_PATCH)
     def test_list_enabled_services_with_project(self, mock_connector_class):
         """Test list_enabled_services passes project_id correctly."""
-        from cloud_connectors.google.tools import list_enabled_services
+        from vendor_fabric.google.tools import list_enabled_services
 
         mock_connector = MagicMock()
         mock_connector.list_enabled_services.return_value = []
@@ -212,7 +212,7 @@ class TestListBillingAccounts:
     @patch(GOOGLE_CONNECTOR_PATCH)
     def test_list_billing_accounts_basic(self, mock_connector_class):
         """Test basic list_billing_accounts functionality."""
-        from cloud_connectors.google.tools import list_billing_accounts
+        from vendor_fabric.google.tools import list_billing_accounts
 
         mock_connector = MagicMock()
         mock_connector.list_billing_accounts.return_value = extend_data(
@@ -247,7 +247,7 @@ class TestListBillingAccounts:
     @patch(GOOGLE_CONNECTOR_PATCH)
     def test_list_billing_accounts_empty(self, mock_connector_class):
         """Test list_billing_accounts with no accounts."""
-        from cloud_connectors.google.tools import list_billing_accounts
+        from vendor_fabric.google.tools import list_billing_accounts
 
         mock_connector = MagicMock()
         mock_connector.list_billing_accounts.return_value = []
@@ -264,7 +264,7 @@ class TestListWorkspaceUsers:
     @patch(GOOGLE_CONNECTOR_PATCH)
     def test_list_workspace_users_basic(self, mock_connector_class):
         """Test basic list_workspace_users functionality."""
-        from cloud_connectors.google.tools import list_workspace_users
+        from vendor_fabric.google.tools import list_workspace_users
 
         mock_connector = MagicMock()
         mock_connector.list_users.return_value = extend_data(
@@ -301,7 +301,7 @@ class TestListWorkspaceUsers:
     @patch(GOOGLE_CONNECTOR_PATCH)
     def test_list_workspace_users_with_domain(self, mock_connector_class):
         """Test list_workspace_users with domain parameter."""
-        from cloud_connectors.google.tools import list_workspace_users
+        from vendor_fabric.google.tools import list_workspace_users
 
         mock_connector = MagicMock()
         mock_connector.list_users.return_value = []
@@ -319,7 +319,7 @@ class TestListWorkspaceUsers:
     @patch(GOOGLE_CONNECTOR_PATCH)
     def test_list_workspace_users_suspended(self, mock_connector_class):
         """Test list_workspace_users handles suspended users."""
-        from cloud_connectors.google.tools import list_workspace_users
+        from vendor_fabric.google.tools import list_workspace_users
 
         mock_connector = MagicMock()
         mock_connector.list_users.return_value = [
@@ -347,7 +347,7 @@ class TestListWorkspaceGroups:
     @patch(GOOGLE_CONNECTOR_PATCH)
     def test_list_workspace_groups_basic(self, mock_connector_class):
         """Test basic list_workspace_groups functionality."""
-        from cloud_connectors.google.tools import list_workspace_groups
+        from vendor_fabric.google.tools import list_workspace_groups
 
         mock_connector = MagicMock()
         mock_connector.list_groups.return_value = extend_data(
@@ -383,7 +383,7 @@ class TestListWorkspaceGroups:
     @patch(GOOGLE_CONNECTOR_PATCH)
     def test_list_workspace_groups_with_domain(self, mock_connector_class):
         """Test list_workspace_groups with domain parameter."""
-        from cloud_connectors.google.tools import list_workspace_groups
+        from vendor_fabric.google.tools import list_workspace_groups
 
         mock_connector = MagicMock()
         mock_connector.list_groups.return_value = []
@@ -400,7 +400,7 @@ class TestListWorkspaceGroups:
     @patch(GOOGLE_CONNECTOR_PATCH)
     def test_list_workspace_groups_empty_description(self, mock_connector_class):
         """Test list_workspace_groups handles missing description."""
-        from cloud_connectors.google.tools import list_workspace_groups
+        from vendor_fabric.google.tools import list_workspace_groups
 
         mock_connector = MagicMock()
         mock_connector.list_groups.return_value = [
@@ -426,16 +426,16 @@ class TestGetTools:
 
     def test_get_strands_tools(self):
         """Test getting tools as plain functions."""
-        from cloud_connectors.google.tools import get_strands_tools
+        from vendor_fabric.google.tools import get_strands_tools
 
         tools = get_strands_tools()
         assert len(tools) == 6
         assert all(callable(t) for t in tools)
 
-    @patch("cloud_connectors._optional.is_available")
+    @patch("vendor_fabric._optional.is_available")
     def test_get_tools_auto_fallback(self, mock_is_available):
         """Test auto-detection falls back to strands/functions."""
-        from cloud_connectors.google.tools import get_tools
+        from vendor_fabric.google.tools import get_tools
 
         mock_is_available.return_value = False
 
@@ -446,21 +446,21 @@ class TestGetTools:
 
     def test_get_tools_invalid_framework(self):
         """Test invalid framework raises error."""
-        from cloud_connectors.google.tools import get_tools
+        from vendor_fabric.google.tools import get_tools
 
         with pytest.raises(ValueError, match="Unknown framework"):
             get_tools(framework="invalid")
 
     def test_get_tools_rejects_functions_alias(self):
         """Plain-function tools should use the canonical strands framework name."""
-        from cloud_connectors.google.tools import get_tools
+        from vendor_fabric.google.tools import get_tools
 
         with pytest.raises(ValueError, match="Unknown framework"):
             get_tools(framework="functions")
 
     def test_all_exports_exist(self):
         """Test that all expected exports are available."""
-        from cloud_connectors.google import tools
+        from vendor_fabric.google import tools
 
         expected_exports = [
             "get_tools",

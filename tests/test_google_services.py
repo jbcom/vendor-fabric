@@ -11,7 +11,7 @@ pytest.importorskip("google.oauth2.service_account")
 pytest.importorskip("googleapiclient")
 
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString, extend_data
-from cloud_connectors.google import GoogleConnector
+from vendor_fabric.google import GoogleConnector
 
 
 def _logged_text(logger: MagicMock) -> str:

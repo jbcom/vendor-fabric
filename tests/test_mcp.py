@@ -10,8 +10,8 @@ import pytest
 
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedSet
 
-from cloud_connectors import mcp as mcp_module
-from cloud_connectors.mcp import (
+from vendor_fabric import mcp as mcp_module
+from vendor_fabric.mcp import (
     _catalog_tool_definitions,
     _get_public_methods,
     _jsonable_tool_result,
@@ -20,7 +20,7 @@ from cloud_connectors.mcp import (
     _unknown_tool_text,
     create_server,
 )
-from cloud_connectors.meshy.connector import MeshyConnector
+from vendor_fabric.meshy.connector import MeshyConnector
 
 
 class ExampleMCPConnector:
@@ -35,7 +35,7 @@ def test_create_server() -> None:
     """Test that the MCP server can be created and has tools."""
     pytest.importorskip("mcp")
     server = create_server()
-    assert server.name == "cloud-connectors"
+    assert server.name == "vendor-fabric"
     # Basic check that server was initialized
     assert server is not None
 
@@ -59,31 +59,31 @@ def test_catalog_tools_expose_connector_discovery_without_credentials() -> None:
     tools = _catalog_tool_definitions()
 
     expected = {
-        "cloud_connectors_list_connectors",
-        "cloud_connectors_list_available_connectors",
-        "cloud_connectors_list_connector_info",
-        "cloud_connectors_get_connector_info",
-        "cloud_connectors_list_connector_categories",
-        "cloud_connectors_list_connector_capabilities",
-        "cloud_connectors_list_connectors_by_category",
-        "cloud_connectors_list_connectors_by_capability",
+        "vendor_fabric_list_connectors",
+        "vendor_fabric_list_available_connectors",
+        "vendor_fabric_list_connector_info",
+        "vendor_fabric_get_connector_info",
+        "vendor_fabric_list_connector_categories",
+        "vendor_fabric_list_connector_capabilities",
+        "vendor_fabric_list_connectors_by_category",
+        "vendor_fabric_list_connectors_by_capability",
     }
 
     assert expected <= set(tools)
-    assert tools["cloud_connectors_get_connector_info"]["parameters"]["required"] == ["name"]
-    assert tools["cloud_connectors_list_connectors_by_category"]["parameters"]["required"] == ["category"]
-    assert tools["cloud_connectors_list_connectors_by_capability"]["parameters"]["required"] == ["capability"]
+    assert tools["vendor_fabric_get_connector_info"]["parameters"]["required"] == ["name"]
+    assert tools["vendor_fabric_list_connectors_by_category"]["parameters"]["required"] == ["category"]
+    assert tools["vendor_fabric_list_connectors_by_capability"]["parameters"]["required"] == ["capability"]
 
 
 def test_catalog_tool_handlers_return_tier2_catalog_payloads() -> None:
     """Catalog MCP handlers should reuse the registry's Tier 2 payload surface."""
     tools = _catalog_tool_definitions()
 
-    names = tools["cloud_connectors_list_connectors"]["handler"]()
-    available_names = tools["cloud_connectors_list_available_connectors"]["handler"]()
-    github = tools["cloud_connectors_get_connector_info"]["handler"](name="github")
-    categories = tools["cloud_connectors_list_connector_categories"]["handler"]()
-    repositories = tools["cloud_connectors_list_connectors_by_capability"]["handler"](capability="repositories")
+    names = tools["vendor_fabric_list_connectors"]["handler"]()
+    available_names = tools["vendor_fabric_list_available_connectors"]["handler"]()
+    github = tools["vendor_fabric_get_connector_info"]["handler"](name="github")
+    categories = tools["vendor_fabric_list_connector_categories"]["handler"]()
+    repositories = tools["vendor_fabric_list_connectors_by_capability"]["handler"](capability="repositories")
 
     assert isinstance(names, ExtendedList)
     assert "github" in names
@@ -102,7 +102,7 @@ def test_catalog_tool_handlers_return_tier2_catalog_payloads() -> None:
 def test_catalog_tool_result_text_uses_shared_export_boundary() -> None:
     """Catalog MCP tool output should serialize like connector method output."""
     tools = _catalog_tool_definitions()
-    payload = tools["cloud_connectors_get_connector_info"]["handler"](name="github")
+    payload = tools["vendor_fabric_get_connector_info"]["handler"](name="github")
 
     text = _tool_result_text(payload)
 
@@ -123,7 +123,7 @@ def test_tool_result_text_uses_shared_export_boundary() -> None:
     payload = ExtendedDict({"service": {"name": "api"}})
 
     with patch(
-        "cloud_connectors.mcp.wrap_raw_data_for_export",
+        "vendor_fabric.mcp.wrap_raw_data_for_export",
         wraps=mcp_module.wrap_raw_data_for_export,
     ) as mock_wrap_for_export:
         text = _tool_result_text(payload)
@@ -213,14 +213,14 @@ async def test_create_server_registered_list_tools_handler_exposes_catalog_and_m
     """The registered MCP list-tools handler should expose catalog and connector tools."""
     mcp_types = pytest.importorskip("mcp.types")
 
-    with patch("cloud_connectors.mcp._list_connector_classes", return_value={"example": ExampleMCPConnector}):
+    with patch("vendor_fabric.mcp._list_connector_classes", return_value={"example": ExampleMCPConnector}):
         server = create_server()
 
     result = await server.request_handlers[mcp_types.ListToolsRequest](mcp_types.ListToolsRequest())
     tools = {tool.name: tool for tool in result.root.tools}
 
-    assert "cloud_connectors_get_connector_info" in tools
-    assert tools["cloud_connectors_get_connector_info"].inputSchema["required"] == ["name"]
+    assert "vendor_fabric_get_connector_info" in tools
+    assert tools["vendor_fabric_get_connector_info"].inputSchema["required"] == ["name"]
     assert "example_fetch" in tools
     assert tools["example_fetch"].description == "Fetch example MCP data."
     assert tools["example_fetch"].inputSchema["properties"]["enabled"]["type"] == "boolean"
@@ -237,7 +237,7 @@ async def test_create_server_registered_catalog_call_handler_uses_shared_result_
     result = await server.request_handlers[mcp_types.CallToolRequest](
         mcp_types.CallToolRequest(
             params=mcp_types.CallToolRequestParams(
-                name="cloud_connectors_get_connector_info",
+                name="vendor_fabric_get_connector_info",
                 arguments={"name": "github"},
             )
         )
@@ -256,8 +256,8 @@ async def test_create_server_registered_connector_call_handler_redacts_payloads(
     connector = ExampleMCPConnector()
 
     with (
-        patch("cloud_connectors.mcp._list_connector_classes", return_value={"example": ExampleMCPConnector}),
-        patch("cloud_connectors.mcp.get_connector", return_value=connector) as mock_get_connector,
+        patch("vendor_fabric.mcp._list_connector_classes", return_value={"example": ExampleMCPConnector}),
+        patch("vendor_fabric.mcp.get_connector", return_value=connector) as mock_get_connector,
     ):
         server = create_server()
         await server.request_handlers[mcp_types.ListToolsRequest](mcp_types.ListToolsRequest())

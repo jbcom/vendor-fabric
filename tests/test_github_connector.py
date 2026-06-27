@@ -9,8 +9,8 @@ import pytest
 
 pytest.importorskip("github")
 
-from cloud_connectors import GitHubConnector as RootGitHubConnector
-from cloud_connectors.github import GitHubConnector
+from vendor_fabric import GitHubConnector as RootGitHubConnector
+from vendor_fabric.github import GitHubConnector
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString
 
 
@@ -21,7 +21,7 @@ class TestGitHubConnector:
         """The canonical root export and canonical class should resolve to the same class."""
         assert RootGitHubConnector is GitHubConnector
 
-    @patch("cloud_connectors.github.Github")
+    @patch("vendor_fabric.github.Github")
     def test_init_with_repo(self, mock_github_class, base_connector_kwargs):
         """Test initialization with repository."""
         mock_github = MagicMock()
@@ -42,7 +42,7 @@ class TestGitHubConnector:
         assert connector.repo is not None
         assert connector.GITHUB_BRANCH == "main"
 
-    @patch("cloud_connectors.github.Github")
+    @patch("vendor_fabric.github.Github")
     def test_init_without_repo(self, mock_github_class, base_connector_kwargs):
         """Test initialization without repository."""
         mock_github = MagicMock()
@@ -54,7 +54,7 @@ class TestGitHubConnector:
 
         assert connector.repo is None
 
-    @patch("cloud_connectors.github.Github")
+    @patch("vendor_fabric.github.Github")
     def test_get_repository_branch(self, mock_github_class, base_connector_kwargs):
         """Test getting repository branch."""
         mock_github = MagicMock()
@@ -75,7 +75,7 @@ class TestGitHubConnector:
         branch = connector.get_repository_branch("feature-branch")
         assert branch == mock_branch
 
-    @patch("cloud_connectors.github.Github")
+    @patch("vendor_fabric.github.Github")
     def test_get_repository_file(self, mock_github_class, base_connector_kwargs):
         """Test getting repository file."""
         mock_github = MagicMock()
@@ -101,7 +101,7 @@ class TestGitHubConnector:
         assert isinstance(content["test"], ExtendedString)
         assert content["test"].upper_first() == "Data"
 
-    @patch("cloud_connectors.github.Github")
+    @patch("vendor_fabric.github.Github")
     def test_get_repository_file_with_metadata_returns_extended_tuple(self, mock_github_class, base_connector_kwargs):
         """Repository file metadata tuples preserve shape while promoting decoded content."""
         mock_github = MagicMock()
@@ -129,7 +129,7 @@ class TestGitHubConnector:
         assert sha == "abc123"
         assert path == "test.json"
 
-    @patch("cloud_connectors.github.Github")
+    @patch("vendor_fabric.github.Github")
     def test_list_repositories_promotes_vendor_payloads(self, mock_github_class, base_connector_kwargs):
         """Vendor SDK list payloads should return extended containers."""
         mock_github = MagicMock()
@@ -165,7 +165,7 @@ class TestGitHubConnector:
         assert isinstance(repos["api-service"]["topics"], ExtendedList)
         assert repos["api-service"]["name"].to_snake_case() == "api_service"
 
-    @patch("cloud_connectors.github.Github")
+    @patch("vendor_fabric.github.Github")
     def test_build_workflow_helpers_return_extended_data(self, mock_github_class, base_connector_kwargs):
         """GitHub workflow builders should also produce first-class extended data."""
         mock_github = MagicMock()

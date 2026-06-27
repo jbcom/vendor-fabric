@@ -10,9 +10,9 @@ import pytest
 
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString
 
-import cloud_connectors.slack as slack_module
+import vendor_fabric.slack as slack_module
 
-from cloud_connectors.slack import (
+from vendor_fabric.slack import (
     SlackAPIError,
     SlackConnector,
     get_divider,
@@ -28,7 +28,7 @@ def test_slack_connector_requires_slack_sdk_when_constructed_without_extra():
     if importlib.util.find_spec("slack_sdk") is not None:
         pytest.skip("slack-sdk is installed")
 
-    with pytest.raises(ImportError, match=r"cloud-connectors\[slack\]"):
+    with pytest.raises(ImportError, match=r"vendor-fabric\[slack\]"):
         SlackConnector(token="xoxp-test", bot_token="xoxb-test", from_environment=False)
 
 
@@ -122,7 +122,7 @@ def test_slack_block_helpers_skip_empty_values_and_apply_styles() -> None:
 class TestSlackConnector:
     """Test suite for SlackConnector."""
 
-    @patch("cloud_connectors.slack.WebClient")
+    @patch("vendor_fabric.slack.WebClient")
     def test_init(self, mock_webclient_class, base_connector_kwargs):
         """Test initialization."""
         mock_client = MagicMock()
@@ -133,7 +133,7 @@ class TestSlackConnector:
         assert connector.web_client is not None
         assert connector.bot_web_client is not None
 
-    @patch("cloud_connectors.slack.WebClient")
+    @patch("vendor_fabric.slack.WebClient")
     def test_get_bot_channels(self, mock_webclient_class, base_connector_kwargs):
         """Test getting bot channels."""
         mock_bot_client = MagicMock()
@@ -153,7 +153,7 @@ class TestSlackConnector:
         assert "general" in channels
         assert channels["general"]["id"] == "C12345"
 
-    @patch("cloud_connectors.slack.WebClient")
+    @patch("vendor_fabric.slack.WebClient")
     def test_send_message(self, mock_webclient_class, base_connector_kwargs):
         """Test sending a message."""
         mock_bot_client = MagicMock()
@@ -171,7 +171,7 @@ class TestSlackConnector:
         assert ts == "1234567890.123456"
         mock_bot_client.chat_postMessage.assert_called_once()
 
-    @patch("cloud_connectors.slack.WebClient")
+    @patch("vendor_fabric.slack.WebClient")
     def test_send_message_includes_thread_id(self, mock_webclient_class, base_connector_kwargs):
         """Thread replies should pass Slack's thread_ts option through to the SDK."""
         mock_bot_client = MagicMock()
@@ -185,7 +185,7 @@ class TestSlackConnector:
 
         assert mock_bot_client.chat_postMessage.call_args.kwargs["thread_ts"] == "1234567890.000001"
 
-    @patch("cloud_connectors.slack.WebClient")
+    @patch("vendor_fabric.slack.WebClient")
     def test_send_message_converts_extended_blocks_for_sdk(self, mock_webclient_class, base_connector_kwargs):
         """Slack SDK calls should receive builtin payloads even when helpers are extended."""
         mock_bot_client = MagicMock()
@@ -206,7 +206,7 @@ class TestSlackConnector:
         assert not isinstance(kwargs["blocks"][0], ExtendedDict)
         assert isinstance(kwargs["channel"], str)
 
-    @patch("cloud_connectors.slack.WebClient")
+    @patch("vendor_fabric.slack.WebClient")
     def test_send_message_non_raising_api_error_returns_extended_payload(
         self,
         mock_webclient_class,
@@ -229,7 +229,7 @@ class TestSlackConnector:
 
         connector = SlackConnector(token="test-token", bot_token="bot-token", **base_connector_kwargs)
 
-        with patch("cloud_connectors.slack.SlackApiError", FakeSlackApiError):
+        with patch("vendor_fabric.slack.SlackApiError", FakeSlackApiError):
             result = connector.send_message(
                 channel_name="general",
                 text="Test message",
@@ -242,7 +242,7 @@ class TestSlackConnector:
         assert result["error"] == "channel_not_found"
         assert result["password"] == "[REDACTED]"
 
-    @patch("cloud_connectors.slack.WebClient")
+    @patch("vendor_fabric.slack.WebClient")
     def test_send_message_api_error_redacts_response_without_raw_cause(
         self,
         mock_webclient_class,
@@ -266,7 +266,7 @@ class TestSlackConnector:
         connector = SlackConnector(token="test-token", bot_token="bot-token", **base_connector_kwargs)
 
         with (
-            patch("cloud_connectors.slack.SlackApiError", FakeSlackApiError),
+            patch("vendor_fabric.slack.SlackApiError", FakeSlackApiError),
             pytest.raises(SlackAPIError) as exc_info,
         ):
             connector.send_message(channel_name="general", text="Test message", blocks=[])
@@ -277,7 +277,7 @@ class TestSlackConnector:
         assert "[REDACTED]" in diagnostics
         assert exc_info.value.__cause__ is None
 
-    @patch("cloud_connectors.slack.WebClient")
+    @patch("vendor_fabric.slack.WebClient")
     def test_send_message_redacts_missing_channel_name(self, mock_webclient_class, base_connector_kwargs):
         """Missing-channel errors should not echo caller-provided channel names."""
         mock_bot_client = MagicMock()
@@ -294,7 +294,7 @@ class TestSlackConnector:
         assert "private-channel" not in str(exc_info.value)
         assert "[REDACTED]" in str(exc_info.value)
 
-    @patch("cloud_connectors.slack.WebClient")
+    @patch("vendor_fabric.slack.WebClient")
     def test_send_message_redacts_missing_channel_id(self, mock_webclient_class, base_connector_kwargs):
         """Channels without IDs should fail without echoing caller-provided channel names."""
         mock_bot_client = MagicMock()
@@ -311,7 +311,7 @@ class TestSlackConnector:
         assert "private-channel" not in str(exc_info.value)
         assert "[REDACTED]" in str(exc_info.value)
 
-    @patch("cloud_connectors.slack.WebClient")
+    @patch("vendor_fabric.slack.WebClient")
     def test_get_bot_channels_api_error_redacts_response_without_raw_cause(
         self,
         mock_webclient_class,
@@ -334,7 +334,7 @@ class TestSlackConnector:
         connector = SlackConnector(token="test-token", bot_token="bot-token", **base_connector_kwargs)
 
         with (
-            patch("cloud_connectors.slack.SlackApiError", FakeSlackApiError),
+            patch("vendor_fabric.slack.SlackApiError", FakeSlackApiError),
             pytest.raises(SlackAPIError) as exc_info,
         ):
             connector.get_bot_channels()
@@ -344,7 +344,7 @@ class TestSlackConnector:
         assert "[REDACTED]" in diagnostics
         assert exc_info.value.__cause__ is None
 
-    @patch("cloud_connectors.slack.WebClient")
+    @patch("vendor_fabric.slack.WebClient")
     def test_call_api_redacts_grouping_failure_payload(self, mock_webclient_class, base_connector_kwargs):
         """Slack grouping failures should not dump raw secret-bearing response data."""
         mock_user_client = MagicMock()
@@ -364,7 +364,7 @@ class TestSlackConnector:
         assert "raw_token" not in message
         assert "[REDACTED]" in message
 
-    @patch("cloud_connectors.slack.WebClient")
+    @patch("vendor_fabric.slack.WebClient")
     def test_call_api_non_rate_error_redacts_response_without_raw_cause(
         self,
         mock_webclient_class,
@@ -385,7 +385,7 @@ class TestSlackConnector:
         connector = SlackConnector(token="test-token", bot_token="bot-token", **base_connector_kwargs)
 
         with (
-            patch("cloud_connectors.slack.SlackApiError", FakeSlackApiError),
+            patch("vendor_fabric.slack.SlackApiError", FakeSlackApiError),
             pytest.raises(SlackAPIError) as exc_info,
         ):
             connector._call_api("users_list")
@@ -395,7 +395,7 @@ class TestSlackConnector:
         assert "[REDACTED]" in diagnostics
         assert exc_info.value.__cause__ is None
 
-    @patch("cloud_connectors.slack.WebClient")
+    @patch("vendor_fabric.slack.WebClient")
     def test_call_api_retries_rate_limits_and_groups_success(self, mock_webclient_class, base_connector_kwargs):
         """Rate-limited Slack calls should sleep, retry, and group the successful response."""
 
@@ -416,8 +416,8 @@ class TestSlackConnector:
         connector = SlackConnector(token="test-token", bot_token="bot-token", **base_connector_kwargs)
 
         with (
-            patch("cloud_connectors.slack.SlackApiError", FakeSlackApiError),
-            patch("cloud_connectors.slack.sleep") as sleep,
+            patch("vendor_fabric.slack.SlackApiError", FakeSlackApiError),
+            patch("vendor_fabric.slack.sleep") as sleep,
         ):
             result = connector._call_api("users_list", group_by="members")
 
@@ -425,7 +425,7 @@ class TestSlackConnector:
         sleep.assert_called_once_with(2)
         assert mock_user_client.users_list.call_count == 2
 
-    @patch("cloud_connectors.slack.WebClient")
+    @patch("vendor_fabric.slack.WebClient")
     def test_call_api_rate_limit_timeout(self, mock_webclient_class, base_connector_kwargs):
         """Repeated rate limits should raise TimeoutError once the retry budget is exceeded."""
 
@@ -443,12 +443,12 @@ class TestSlackConnector:
         connector = SlackConnector(token="test-token", bot_token="bot-token", **base_connector_kwargs)
 
         with (
-            patch("cloud_connectors.slack.SlackApiError", FakeSlackApiError),
+            patch("vendor_fabric.slack.SlackApiError", FakeSlackApiError),
             pytest.raises(TimeoutError, match="timed out after 31 seconds"),
         ):
             connector._call_api("users_list")
 
-    @patch("cloud_connectors.slack.WebClient")
+    @patch("vendor_fabric.slack.WebClient")
     def test_call_api_rejects_unsupported_methods(self, mock_webclient_class, base_connector_kwargs):
         """Unsupported WebClient methods should fail explicitly."""
         mock_user_client = MagicMock(spec=[])
@@ -459,8 +459,8 @@ class TestSlackConnector:
         with pytest.raises(AttributeError, match="not supported"):
             connector._call_api("users_list")
 
-    @patch("cloud_connectors.slack.SlackConnector._call_api")
-    @patch("cloud_connectors.slack.WebClient")
+    @patch("vendor_fabric.slack.SlackConnector._call_api")
+    @patch("vendor_fabric.slack.WebClient")
     def test_list_users_filters_deleted(
         self,
         mock_webclient_class,
@@ -500,8 +500,8 @@ class TestSlackConnector:
             team_id="T123",
         )
 
-    @patch("cloud_connectors.slack.SlackConnector._call_api")
-    @patch("cloud_connectors.slack.WebClient")
+    @patch("vendor_fabric.slack.SlackConnector._call_api")
+    @patch("vendor_fabric.slack.WebClient")
     def test_list_users_can_include_all_special_accounts(
         self,
         mock_webclient_class,
@@ -530,8 +530,8 @@ class TestSlackConnector:
 
         assert users == mock_call_api.return_value
 
-    @patch("cloud_connectors.slack.SlackConnector._call_api")
-    @patch("cloud_connectors.slack.WebClient")
+    @patch("vendor_fabric.slack.SlackConnector._call_api")
+    @patch("vendor_fabric.slack.WebClient")
     def test_list_usergroups_filters_ids(
         self,
         mock_webclient_class,
@@ -570,8 +570,8 @@ class TestSlackConnector:
             team_id="T123",
         )
 
-    @patch("cloud_connectors.slack.SlackConnector._call_api")
-    @patch("cloud_connectors.slack.WebClient")
+    @patch("vendor_fabric.slack.SlackConnector._call_api")
+    @patch("vendor_fabric.slack.WebClient")
     def test_list_usergroups_returns_all_without_identifier_filter(
         self,
         mock_webclient_class,
@@ -594,8 +594,8 @@ class TestSlackConnector:
         assert SlackConnector._normalize_identifier_filter(["S1", " S2 ", "", "S1"]) == {"S1", "S2"}
         assert SlackConnector._normalize_identifier_filter("") is None
 
-    @patch("cloud_connectors.slack.SlackConnector._call_api")
-    @patch("cloud_connectors.slack.WebClient")
+    @patch("vendor_fabric.slack.SlackConnector._call_api")
+    @patch("vendor_fabric.slack.WebClient")
     def test_list_conversations_channels_only(
         self,
         mock_webclient_class,
@@ -636,8 +636,8 @@ class TestSlackConnector:
             cursor="cursor123",
         )
 
-    @patch("cloud_connectors.slack.SlackConnector._call_api")
-    @patch("cloud_connectors.slack.WebClient")
+    @patch("vendor_fabric.slack.SlackConnector._call_api")
+    @patch("vendor_fabric.slack.WebClient")
     def test_list_conversations_returns_all_when_not_channels_only(
         self,
         mock_webclient_class,

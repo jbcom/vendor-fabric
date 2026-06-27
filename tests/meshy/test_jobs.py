@@ -8,15 +8,15 @@ from unittest.mock import patch
 
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString, extend_data
 
-from cloud_connectors.meshy import jobs as jobs_module
-from cloud_connectors.meshy.jobs import (
+from vendor_fabric.meshy import jobs as jobs_module
+from vendor_fabric.meshy.jobs import (
     AssetGenerator,
     AssetManifest,
     example_character_spec,
     example_environment_spec,
     example_prop_spec,
 )
-from cloud_connectors.meshy.models import (
+from vendor_fabric.meshy.models import (
     ArtStyle,
     AssetIntent,
     AssetSpec,
@@ -120,7 +120,7 @@ class TestAssetGenerator:
 
     def test_generate_model_no_wait(self, temp_dir):
         """Test generating model without waiting."""
-        with patch("cloud_connectors.meshy.jobs.text3d") as mock_text3d:
+        with patch("vendor_fabric.meshy.jobs.text3d") as mock_text3d:
             mock_text3d.create.return_value = "task-12345"
 
             generator = AssetGenerator(output_root=str(temp_dir))
@@ -144,8 +144,8 @@ class TestAssetGenerator:
     def test_generate_model_with_wait(self, temp_dir):
         """Test generating model with polling."""
         with (
-            patch("cloud_connectors.meshy.jobs.text3d") as mock_text3d,
-            patch("cloud_connectors.meshy.jobs.base") as mock_base,
+            patch("vendor_fabric.meshy.jobs.text3d") as mock_text3d,
+            patch("vendor_fabric.meshy.jobs.base") as mock_base,
         ):
             mock_text3d.create.return_value = "task-12345"
             mock_text3d.poll.return_value = _extended_result(
@@ -181,8 +181,8 @@ class TestAssetGenerator:
     def test_generate_model_saves_manifest_json(self, temp_dir):
         """Test that manifest JSON is saved."""
         with (
-            patch("cloud_connectors.meshy.jobs.text3d") as mock_text3d,
-            patch("cloud_connectors.meshy.jobs.base") as mock_base,
+            patch("vendor_fabric.meshy.jobs.text3d") as mock_text3d,
+            patch("vendor_fabric.meshy.jobs.base") as mock_base,
         ):
             mock_text3d.create.return_value = "task-12345"
             mock_text3d.poll.return_value = _extended_result(
@@ -206,7 +206,7 @@ class TestAssetGenerator:
             )
 
             with patch(
-                "cloud_connectors.meshy.jobs.wrap_raw_data_for_export",
+                "vendor_fabric.meshy.jobs.wrap_raw_data_for_export",
                 wraps=jobs_module.wrap_raw_data_for_export,
             ) as mock_wrap_for_export:
                 generator.generate_model(spec, wait=True, poll_interval=0.01)
@@ -223,8 +223,8 @@ class TestAssetGenerator:
     def test_batch_generate(self, temp_dir):
         """Test batch generation of multiple assets."""
         with (
-            patch("cloud_connectors.meshy.jobs.text3d") as mock_text3d,
-            patch("cloud_connectors.meshy.jobs.base") as mock_base,
+            patch("vendor_fabric.meshy.jobs.text3d") as mock_text3d,
+            patch("vendor_fabric.meshy.jobs.base") as mock_base,
         ):
             mock_text3d.create.return_value = "task-12345"
             mock_text3d.poll.return_value = _extended_result(
@@ -266,8 +266,8 @@ class TestAssetGenerator:
     def test_batch_generate_continues_on_failure(self, temp_dir):
         """Test that batch generation continues if one fails."""
         with (
-            patch("cloud_connectors.meshy.jobs.text3d") as mock_text3d,
-            patch("cloud_connectors.meshy.jobs.base") as mock_base,
+            patch("vendor_fabric.meshy.jobs.text3d") as mock_text3d,
+            patch("vendor_fabric.meshy.jobs.base") as mock_base,
         ):
             call_count = [0]
 
