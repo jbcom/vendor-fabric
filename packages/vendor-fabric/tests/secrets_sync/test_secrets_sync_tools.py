@@ -192,12 +192,15 @@ def test_get_sources_tool_returns_extended_payload(mock_get_sources: MagicMock) 
 
 def test_tools_redact_errors_when_listing_targets_or_sources() -> None:
     """Target/source helper errors should be redacted in payloads."""
-    with patch(
-        "vendor_fabric.secrets_sync.tools.native_get_targets",
-        return_value={"targets": [], "count": 0, "error_message": "password=hunter2 Authorization: Bearer raw"},
-    ), patch(
-        "vendor_fabric.secrets_sync.tools.native_get_sources",
-        return_value={"sources": [], "count": 0, "error_message": "password=hunter2 Authorization: Bearer raw"},
+    with (
+        patch(
+            "vendor_fabric.secrets_sync.tools.native_get_targets",
+            return_value={"targets": [], "count": 0, "error_message": "password=hunter2 Authorization: Bearer raw"},
+        ),
+        patch(
+            "vendor_fabric.secrets_sync.tools.native_get_sources",
+            return_value={"sources": [], "count": 0, "error_message": "password=hunter2 Authorization: Bearer raw"},
+        ),
     ):
         targets = get_targets("config.yaml")
         sources = get_sources("config.yaml")

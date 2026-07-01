@@ -280,7 +280,9 @@ class VendorData(ExtendedData):
     def supports(self, provider_id: str, operation: str, *, require_available: bool = False) -> bool:
         """Return whether a provider supports a VendorData operation."""
         provider = _normalize_provider(provider_id)
-        route = self._provider_supports(provider).get(operation) or self._capability_index.get(operation, {}).get(provider)
+        route = self._provider_supports(provider).get(operation) or self._capability_index.get(operation, {}).get(
+            provider
+        )
         if route is None:
             return False
         return not require_available or self.is_provider_available(provider)

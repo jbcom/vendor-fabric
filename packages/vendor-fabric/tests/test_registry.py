@@ -186,10 +186,20 @@ class TestBuiltinConnectorAdapter:
     def test_as_dict_delegates_to_info(self):
         adapter = BuiltinConnectorAdapter(name="aws", spec=BUILTIN_CONNECTORS["aws"])
         sentinel = ConnectorInfo(
-            name="aws", available=True, source="builtin", extra="aws",
-            category="cloud", capabilities=(), install=None,
-            requirements=(), missing=(), class_name="AWSConnector",
-            module="vendor_fabric.aws", base_url=None, description=None, error=None,
+            name="aws",
+            available=True,
+            source="builtin",
+            extra="aws",
+            category="cloud",
+            capabilities=(),
+            install=None,
+            requirements=(),
+            missing=(),
+            class_name="AWSConnector",
+            module="vendor_fabric.aws",
+            base_url=None,
+            description=None,
+            error=None,
         )
         with patch("vendor_fabric.registry.get_missing_connector_requirements", return_value=[]):
             with patch.object(BuiltinConnectorAdapter, "info", return_value=sentinel) as info_mock:
@@ -331,9 +341,7 @@ class TestGetDescription:
 
     def test_returns_none_when_docstring_is_only_whitespace(self):
         class C(ConnectorBase):
-            """
-
-    """
+            """ """
 
         assert _get_description(C) is None
 
@@ -395,10 +403,20 @@ class TestAvailableAndMissingBuiltinInfo:
 
     def test_missing_builtin_connector_info_delegates_to_adapter(self):
         sentinel = ConnectorInfo(
-            name="aws", available=False, source="builtin", extra="aws",
-            category="cloud", capabilities=(), install=None,
-            requirements=(), missing=(), class_name=None, module=None,
-            base_url=None, description=None, error="boom",
+            name="aws",
+            available=False,
+            source="builtin",
+            extra="aws",
+            category="cloud",
+            capabilities=(),
+            install=None,
+            requirements=(),
+            missing=(),
+            class_name=None,
+            module=None,
+            base_url=None,
+            description=None,
+            error="boom",
         )
         with patch.object(BuiltinConnectorAdapter, "info", return_value=sentinel) as info_mock:
             result = _missing_builtin_connector_info("aws", None)
@@ -448,6 +466,7 @@ class TestDiscoveryAndCache:
     def test_discover_skips_missing_builtin_and_records_error(self):
         class FakeEP:
             name = "aws"
+
             def load(self):
                 raise ImportError("no boto3")
 
@@ -459,6 +478,7 @@ class TestDiscoveryAndCache:
     def test_discover_warns_on_unknown_entry_point_failure(self):
         class FakeEP:
             name = "unknown"
+
             def load(self):
                 raise ImportError("nope")
 
@@ -469,6 +489,7 @@ class TestDiscoveryAndCache:
     def test_discover_warns_on_non_import_error(self):
         class FakeEP:
             name = "unknown"
+
             def load(self):
                 raise RuntimeError("weird")
 

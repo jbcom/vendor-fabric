@@ -35,7 +35,9 @@ class SecretTreeStore(Protocol):
     def read_tree(self, root: str = "") -> SecretTree:
         """Read secrets under a root path keyed by relative secret path."""
 
-    def write_tree(self, secrets: Mapping[str, Mapping[str, Any]], root: str = "", *, dry_run: bool = False) -> WriteSummary:
+    def write_tree(
+        self, secrets: Mapping[str, Mapping[str, Any]], root: str = "", *, dry_run: bool = False
+    ) -> WriteSummary:
         """Write a tree of secrets under a root path."""
 
 
@@ -86,7 +88,9 @@ class InMemorySecretStore:
                 tree[rel_path] = normalize_secret_payload(payload)
         return tree
 
-    def write_tree(self, secrets: Mapping[str, Mapping[str, Any]], root: str = "", *, dry_run: bool = False) -> WriteSummary:
+    def write_tree(
+        self, secrets: Mapping[str, Mapping[str, Any]], root: str = "", *, dry_run: bool = False
+    ) -> WriteSummary:
         """Write secrets under a root path."""
         summary = WriteSummary()
         for rel_path, payload in secrets.items():
@@ -122,7 +126,9 @@ class VaultSecretStore:
                 tree[rel_path] = normalize_secret_payload(payload)
         return tree
 
-    def write_tree(self, secrets: Mapping[str, Mapping[str, Any]], root: str = "", *, dry_run: bool = False) -> WriteSummary:
+    def write_tree(
+        self, secrets: Mapping[str, Mapping[str, Any]], root: str = "", *, dry_run: bool = False
+    ) -> WriteSummary:
         """Write secrets to Vault under ``root``."""
         current = self.read_tree(root)
         summary = WriteSummary()
@@ -137,7 +143,9 @@ class VaultSecretStore:
             else:
                 summary.modified += 1
             if not dry_run and (existing is None or not deep_equal(existing, normalized)):
-                self.connector.write_secret(path=join_secret_path(root, rel_path), data=normalized, mount_point=self.mount)
+                self.connector.write_secret(
+                    path=join_secret_path(root, rel_path), data=normalized, mount_point=self.mount
+                )
         return summary
 
 
@@ -174,7 +182,9 @@ class AWSSecretsManagerStore:
                 tree[rel_path] = normalize_secret_payload(_decode_secret_payload(payload))
         return tree
 
-    def write_tree(self, secrets: Mapping[str, Mapping[str, Any]], root: str = "", *, dry_run: bool = False) -> WriteSummary:
+    def write_tree(
+        self, secrets: Mapping[str, Mapping[str, Any]], root: str = "", *, dry_run: bool = False
+    ) -> WriteSummary:
         """Write JSON secret payloads to AWS Secrets Manager."""
         current = self.read_tree(root)
         summary = WriteSummary()
@@ -235,7 +245,9 @@ class S3SecretStore:
             return {}
         return {str(key): normalize_secret_payload(value) for key, value in to_builtin(payload).items()}
 
-    def write_tree(self, secrets: Mapping[str, Mapping[str, Any]], root: str = "", *, dry_run: bool = False) -> WriteSummary:
+    def write_tree(
+        self, secrets: Mapping[str, Mapping[str, Any]], root: str = "", *, dry_run: bool = False
+    ) -> WriteSummary:
         """Write one JSON bundle object to S3."""
         current = self.read_tree(root)
         summary = WriteSummary(processed=len(secrets))

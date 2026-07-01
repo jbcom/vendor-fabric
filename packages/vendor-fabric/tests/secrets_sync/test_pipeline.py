@@ -131,11 +131,17 @@ def test_module_wrappers_delegate_to_binding_adapter(tmp_path: Path) -> None:
     config_path.write_text("targets:\n  prod:\n    imports: []\n", encoding="utf-8")
 
     with (
-        patch("vendor_fabric.secrets_sync.pipeline._binding.run_pipeline", return_value={"success": True}) as binding_run,
+        patch(
+            "vendor_fabric.secrets_sync.pipeline._binding.run_pipeline", return_value={"success": True}
+        ) as binding_run,
         patch("vendor_fabric.secrets_sync.pipeline._binding.merge", return_value={"success": True}) as binding_merge,
         patch("vendor_fabric.secrets_sync.pipeline._binding.sync", return_value={"success": True}) as binding_sync,
-        patch("vendor_fabric.secrets_sync.pipeline._binding.get_targets", return_value={"targets": ["prod"]}) as binding_targets,
-        patch("vendor_fabric.secrets_sync.pipeline._binding.get_sources", return_value={"sources": ["base"]}) as binding_sources,
+        patch(
+            "vendor_fabric.secrets_sync.pipeline._binding.get_targets", return_value={"targets": ["prod"]}
+        ) as binding_targets,
+        patch(
+            "vendor_fabric.secrets_sync.pipeline._binding.get_sources", return_value={"sources": ["base"]}
+        ) as binding_sources,
     ):
         assert run_pipeline(str(config_path)) == {"success": True}
         dry_merge = merge(str(config_path), dry_run=True)
@@ -161,8 +167,12 @@ def test_module_wrappers_delegate_provider_session_to_binding(tmp_path: Path) ->
     session = ProviderSession(vault_address="https://vault.example.test")
 
     with (
-        patch("vendor_fabric.secrets_sync.pipeline._binding.run_pipeline", return_value={"success": True}) as binding_run,
-        patch("vendor_fabric.secrets_sync.pipeline._binding.dry_run", return_value={"success": True}) as binding_dry_run,
+        patch(
+            "vendor_fabric.secrets_sync.pipeline._binding.run_pipeline", return_value={"success": True}
+        ) as binding_run,
+        patch(
+            "vendor_fabric.secrets_sync.pipeline._binding.dry_run", return_value={"success": True}
+        ) as binding_dry_run,
         patch("vendor_fabric.secrets_sync.pipeline._binding.merge", return_value={"success": True}) as binding_merge,
         patch("vendor_fabric.secrets_sync.pipeline._binding.sync", return_value={"success": True}) as binding_sync,
     ):

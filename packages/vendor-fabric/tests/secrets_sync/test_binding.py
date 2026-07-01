@@ -299,7 +299,9 @@ def test_binding_adapter_supports_snake_case_options_and_mapping_payloads(
 
 
 def test_binding_adapter_exposes_validate_and_config_info(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(_binding.importlib, "import_module", lambda name: FakeBinding() if name == "secrets_sync" else None)
+    monkeypatch.setattr(
+        _binding.importlib, "import_module", lambda name: FakeBinding() if name == "secrets_sync" else None
+    )
 
     validation = _binding.validate_config("pipeline.yaml")
     info = _binding.get_config_info("pipeline.yaml")
@@ -313,7 +315,9 @@ def test_binding_adapter_exposes_validate_and_config_info(monkeypatch: pytest.Mo
 
 
 def test_binding_adapter_phase_helpers(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(_binding.importlib, "import_module", lambda name: FakeBinding() if name == "secrets_sync" else None)
+    monkeypatch.setattr(
+        _binding.importlib, "import_module", lambda name: FakeBinding() if name == "secrets_sync" else None
+    )
 
     assert _binding.dry_run("pipeline.yaml")["success"] is True
     assert _binding.merge("pipeline.yaml", dry_run=True)["success"] is True
@@ -321,7 +325,9 @@ def test_binding_adapter_phase_helpers(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_binding_adapter_exposes_target_and_source_lists(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(_binding.importlib, "import_module", lambda name: FakeBinding() if name == "secrets_sync" else None)
+    monkeypatch.setattr(
+        _binding.importlib, "import_module", lambda name: FakeBinding() if name == "secrets_sync" else None
+    )
 
     targets = _binding.get_targets("pipeline.yaml")
     sources = _binding.get_sources("pipeline.yaml")
@@ -333,7 +339,9 @@ def test_binding_adapter_exposes_target_and_source_lists(monkeypatch: pytest.Mon
 
 
 def test_binding_adapter_redacts_target_source_errors(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(_binding.importlib, "import_module", lambda name: SnakeCaseBinding() if name == "secrets_sync" else None)
+    monkeypatch.setattr(
+        _binding.importlib, "import_module", lambda name: SnakeCaseBinding() if name == "secrets_sync" else None
+    )
 
     targets = _binding.get_targets("pipeline.yaml")
     sources = _binding.get_sources("pipeline.yaml")

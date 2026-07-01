@@ -62,7 +62,9 @@ class SecretSyncPipeline:
         self.config = config
         self.graph = Graph.from_config(config)
         self.stores = stores or StoreRegistry()
-        self.logger = logger or Logging(logger_name="vendor-fabric.secrets-sync", enable_console=False, enable_file=False)
+        self.logger = logger or Logging(
+            logger_name="vendor-fabric.secrets-sync", enable_console=False, enable_file=False
+        )
         self._default_merge_store = InMemorySecretStore()
         self._bundles: dict[str, SecretTree] = {}
         self._last_results: list[OperationResult] = []
@@ -241,7 +243,9 @@ class SecretSyncPipeline:
 
     def _read_import_tree(self, import_name: str) -> SecretTree:
         if import_name in self.config.targets:
-            return self._bundles.get(import_name) or self._merge_store().read_tree(self.bundle_path_for_target(import_name))
+            return self._bundles.get(import_name) or self._merge_store().read_tree(
+                self.bundle_path_for_target(import_name)
+            )
         source = self.config.sources.get(import_name)
         if source is None:
             msg = f"unknown source or target import: {import_name}"
