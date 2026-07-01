@@ -15,13 +15,30 @@ provider capability metadata for downstream consumers.
 
 .. code:: python
 
-   from vendor_fabric.secrets_sync import SyncOptions, get_targets, run_pipeline
+   from vendor_fabric.secrets_sync import ProviderSession, SyncOptions, get_targets, run_pipeline
 
    result = run_pipeline("pipeline.yaml", SyncOptions(dry_run=True, compute_diff=True))
    targets = get_targets("pipeline.yaml")
 
    assert "success" in result
    assert "targets" in targets
+
+When ``vendor-fabric`` owns the provider authentication handshake, pass the
+resulting material through ``ProviderSession``. The facade translates it to the
+``secrets_sync.ProviderSession`` type and calls the session-aware binding API:
+
+.. code:: python
+
+   session = ProviderSession(
+       vault_address="https://vault.example.com",
+       vault_namespace="admin",
+       vault_token=vault_token,
+       aws_region="us-east-1",
+       aws_access_key_id=aws_credentials.access_key,
+       aws_secret_access_key=aws_credentials.secret_key,
+       aws_session_token=aws_credentials.token,
+   )
+   result = run_pipeline("pipeline.yaml", SyncOptions(dry_run=True), provider_session=session)
 
 The same binding-backed facade powers non-agentic Python calls and the
 ``vendor-fabric-secrets-sync`` CLI. Provider-backed capability functions
@@ -42,8 +59,9 @@ capabilities.
 The upstream binding distribution is expected to install the
 ``secrets_sync`` import. If it is not yet available from PyPI, build and
 install it from ``jbcom/secrets-sync`` before running SecretSync execution
-paths. Local upstream references to ``secretssync`` are rename debt, not
-the contract consumed here.
+paths. The consumed contract is the ``secrets_sync`` module from
+``secrets-sync-python-binding``; do not depend on the legacy closed-up
+``secretssync`` spelling.
 
 Capability Boundary
 -------------------

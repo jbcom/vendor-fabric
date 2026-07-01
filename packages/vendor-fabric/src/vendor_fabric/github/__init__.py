@@ -236,7 +236,9 @@ class GitHubConnector(ConnectorBase):
 
         return self.extend_result(get_retval(decoded_data, file_sha, file_path_text))
 
-    @capability("put_file", kind="files", aliases=("write_file",), description="Create or update a GitHub repository file.")
+    @capability(
+        "put_file", kind="files", aliases=("write_file",), description="Create or update a GitHub repository file."
+    )
     def update_repository_file(
         self,
         file_path: FilePath,

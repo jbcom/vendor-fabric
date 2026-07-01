@@ -40,6 +40,22 @@ class OutputFormat(StrEnum):
 
 
 @dataclass(slots=True)
+class ProviderSession:
+    """Authenticated provider material passed through to the SecretSync binding."""
+
+    delegate_auth: bool = False
+    vault_address: str = ""
+    vault_namespace: str = ""
+    vault_token: str = ""
+    aws_region: str = ""
+    aws_access_key_id: str = ""
+    aws_secret_access_key: str = ""
+    aws_session_token: str = ""
+    aws_role_arn: str = ""
+    aws_endpoint_url: str = ""
+
+
+@dataclass(slots=True)
 class SyncOptions:
     """Options for pipeline execution."""
 

@@ -41,13 +41,23 @@ wrap their own imports.
 SecretSync access is exposed through a binding-backed facade:
 
 ```python
-from vendor_fabric.secrets_sync import SyncOptions, get_targets, run_pipeline
+from vendor_fabric.secrets_sync import ProviderSession, SyncOptions, get_targets, run_pipeline
 
 result = run_pipeline("pipeline.yaml", SyncOptions(dry_run=True))
 targets = get_targets("pipeline.yaml")
 
 print(result["success"])
 print(targets["targets"])
+
+session = ProviderSession(
+    vault_address="https://vault.example.com",
+    vault_token=vault_token,
+    aws_region="us-east-1",
+    aws_access_key_id=aws_credentials.access_key,
+    aws_secret_access_key=aws_credentials.secret_key,
+    aws_session_token=aws_credentials.token,
+)
+run_pipeline("pipeline.yaml", SyncOptions(dry_run=True), provider_session=session)
 ```
 
 `vendor-fabric` consumes the `secrets_sync` import from

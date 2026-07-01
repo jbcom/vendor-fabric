@@ -12,6 +12,7 @@ from vendor_fabric.secrets_sync.files import FileSyncResult, LocalFileStore, S3F
 from vendor_fabric.secrets_sync.models import (
     ConfigInfo,
     OutputFormat,
+    ProviderSession,
     SecretSyncConfig,
     SyncOperation,
     SyncOptions,
@@ -55,6 +56,7 @@ __all__ = [
     "InMemorySecretStore",
     "LocalFileStore",
     "OutputFormat",
+    "ProviderSession",
     "S3FileStore",
     "S3SecretStore",
     "SecretSyncConfig",

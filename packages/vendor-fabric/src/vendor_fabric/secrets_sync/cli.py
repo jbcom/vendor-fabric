@@ -67,7 +67,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     pipeline = subparsers.add_parser("pipeline", help="Run a merge/sync pipeline")
     pipeline.add_argument("--config", required=True)
-    pipeline.add_argument("--operation", choices=[item.value for item in SyncOperation], default=SyncOperation.PIPELINE.value)
+    pipeline.add_argument(
+        "--operation", choices=[item.value for item in SyncOperation], default=SyncOperation.PIPELINE.value
+    )
     pipeline.add_argument("--target", dest="targets", action="append", default=[])
     pipeline.add_argument("--dry-run", action="store_true")
     pipeline.add_argument("--diff", action="store_true")

@@ -372,6 +372,7 @@ class TestAnthropicConnector:
         assert "raw_token" not in message
         assert "[REDACTED]" in message
 
+
 class TestClaudeModels:
     """Tests for Claude model constants.
 

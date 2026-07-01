@@ -59,6 +59,7 @@ PACKAGE_INSTALL_HINTS: dict[str, str] = {
     ),
 }
 
+
 def is_available(package: str) -> bool:
     """Check if a package is available for import.
 
@@ -117,8 +118,7 @@ def require_extra(package: str, extra: str | None = None) -> Any:
             ) from e
         extra_name = str(extra or get_extra_for_package(package) or package)
         raise ImportError(
-            f"Package '{package}' is required but not installed.\n"
-            f"Install with: pip install vendor-fabric[{extra_name}]"
+            f"Package '{package}' is required but not installed.\nInstall with: pip install vendor-fabric[{extra_name}]"
         ) from e
 
 

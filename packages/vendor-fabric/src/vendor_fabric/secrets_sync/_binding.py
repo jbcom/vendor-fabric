@@ -11,13 +11,19 @@ from typing import Any
 from extended_data.containers import ExtendedDict, extend_data
 from extended_data.primitives.redaction import redact_sensitive_data, redact_sensitive_text
 
-from vendor_fabric.secrets_sync.models import ConfigInfo, SyncOperation, SyncOptions, SyncResult
+from vendor_fabric.secrets_sync.models import (
+    ConfigInfo,
+    ProviderSession,
+    SyncOperation,
+    SyncOptions,
+    SyncResult,
+)
 
 
 BINDING_MODULE = "secrets_sync"
 BINDING_INSTALL_GUIDANCE = (
     "SecretSync Python bindings are required for pipeline execution. "
-    "Install secrets-sync-python-binding or build them from jbcom/secrets-sync with `make python-install`."
+    "Install secrets-sync-python-binding or build a wheel from jbcom/secrets-sync with `just python-build`."
 )
 
 
@@ -41,11 +47,13 @@ def is_binding_available() -> bool:
 def validate_config(config_path: str) -> ExtendedDict:
     """Validate a SecretSync config through the binding."""
     binding = load_binding()
-    valid, message = binding.ValidateConfig(config_path)
+    result = binding.ValidateConfig(config_path)
+    valid, message = _validation_result(result)
     return extend_data(
         {
             "valid": bool(valid),
             "message": redact_sensitive_text(message),
+            "error_message": redact_sensitive_text(message if not valid else ""),
             "config_path": config_path,
         }
     )
@@ -57,15 +65,35 @@ def get_config_info(config_path: str) -> ExtendedDict:
     return _config_info_to_dict(binding.GetConfigInfo(config_path))
 
 
-def run_pipeline(config_path: str, options: SyncOptions | None = None) -> ExtendedDict:
+def run_pipeline(
+    config_path: str,
+    options: SyncOptions | None = None,
+    provider_session: ProviderSession | Mapping[str, Any] | None = None,
+) -> ExtendedDict:
     """Run the SecretSync pipeline through the binding."""
     binding = load_binding()
-    return _sync_result_to_dict(binding.RunPipeline(config_path, _to_binding_options(binding, options)))
+    binding_options = _to_binding_options(binding, options)
+    if provider_session is None:
+        return _sync_result_to_dict(binding.RunPipeline(config_path, binding_options))
+    return _sync_result_to_dict(
+        binding.RunPipelineWithSession(
+            config_path,
+            binding_options,
+            _to_binding_provider_session(binding, provider_session),
+        )
+    )
 
 
-def dry_run(config_path: str) -> ExtendedDict:
+def dry_run(
+    config_path: str,
+    provider_session: ProviderSession | Mapping[str, Any] | None = None,
+) -> ExtendedDict:
     """Run a SecretSync dry run through the binding."""
     binding = load_binding()
+    if provider_session is not None:
+        return _sync_result_to_dict(
+            binding.DryRunWithSession(config_path, _to_binding_provider_session(binding, provider_session))
+        )
     return _sync_result_to_dict(binding.DryRun(config_path))
 
 
@@ -81,15 +109,41 @@ def get_sources(config_path: str) -> ExtendedDict:
     return _name_list_to_dict(binding.GetSources(config_path), "sources", config_path)
 
 
-def merge(config_path: str, *, dry_run: bool = False) -> ExtendedDict:
+def merge(
+    config_path: str,
+    *,
+    dry_run: bool = False,
+    provider_session: ProviderSession | Mapping[str, Any] | None = None,
+) -> ExtendedDict:
     """Run the SecretSync merge phase through the binding."""
     binding = load_binding()
+    if provider_session is not None:
+        return _sync_result_to_dict(
+            binding.MergeWithSession(
+                config_path,
+                dry_run,
+                _to_binding_provider_session(binding, provider_session),
+            )
+        )
     return _sync_result_to_dict(binding.Merge(config_path, dry_run))
 
 
-def sync(config_path: str, *, dry_run: bool = False) -> ExtendedDict:
+def sync(
+    config_path: str,
+    *,
+    dry_run: bool = False,
+    provider_session: ProviderSession | Mapping[str, Any] | None = None,
+) -> ExtendedDict:
     """Run the SecretSync sync phase through the binding."""
     binding = load_binding()
+    if provider_session is not None:
+        return _sync_result_to_dict(
+            binding.SyncWithSession(
+                config_path,
+                dry_run,
+                _to_binding_provider_session(binding, provider_session),
+            )
+        )
     return _sync_result_to_dict(binding.Sync(config_path, dry_run))
 
 
@@ -119,6 +173,39 @@ def _set_binding_attr(value: Any, name: str, attr_value: Any) -> None:
     setattr(value, snake_name, attr_value)
 
 
+def _to_binding_provider_session(binding: Any, provider_session: ProviderSession | Mapping[str, Any]) -> Any:
+    """Convert local provider session material into the gopy ProviderSession type."""
+    binding_session = binding.NewProviderSession()
+    for binding_name, local_name in (
+        ("DelegateAuth", "delegate_auth"),
+        ("VaultAddress", "vault_address"),
+        ("VaultNamespace", "vault_namespace"),
+        ("VaultToken", "vault_token"),
+        ("AWSRegion", "aws_region"),
+        ("AWSAccessKeyID", "aws_access_key_id"),
+        ("AWSSecretAccessKey", "aws_secret_access_key"),
+        ("AWSSessionToken", "aws_session_token"),
+        ("AWSRoleARN", "aws_role_arn"),
+        ("AWSEndpointURL", "aws_endpoint_url"),
+    ):
+        _set_binding_attr(
+            binding_session,
+            binding_name,
+            _session_value(provider_session, local_name, binding_name),
+        )
+    return binding_session
+
+
+def _session_value(provider_session: ProviderSession | Mapping[str, Any], local_name: str, binding_name: str) -> Any:
+    """Read a provider-session field from a local model or mapping."""
+    value = _attr(provider_session, local_name, binding_name, default=None)
+    if value is None and binding_name.startswith("AWS"):
+        value = _attr(provider_session, binding_name.replace("AWS", "Aws", 1), default=None)
+    if value is None:
+        return False if local_name == "delegate_auth" else ""
+    return value
+
+
 def _operation_value(operation: SyncOperation | str) -> str:
     if isinstance(operation, SyncOperation):
         return operation.value
@@ -142,6 +229,24 @@ def _config_info_to_dict(info: Any) -> ExtendedDict:
             ).to_dict()
         )
     )
+
+
+def _validation_result(result: Any) -> tuple[bool, str]:
+    """Normalize the SecretSync binding ValidationResult payload."""
+    if isinstance(result, tuple) and len(result) == 2:
+        valid, message = result
+        return bool(valid), str(message or "")
+    valid = bool(_attr(result, "Valid", "valid", default=False))
+    if valid:
+        message = _attr(result, "Message", "message", default="")
+    else:
+        message = _attr(result, "ErrorMessage", "error_message", default="") or _attr(
+            result,
+            "Message",
+            "message",
+            default="",
+        )
+    return valid, str(message or "")
 
 
 def _sync_result_to_dict(result: Any) -> ExtendedDict:
@@ -182,14 +287,15 @@ def _name_list_to_dict(result: Any, key: str, config_path: str) -> ExtendedDict:
 
 
 def _name_list_result(result: Any, key: str) -> tuple[list[str], str]:
-    if isinstance(result, Mapping):
-        return (
-            _list_attr(result, key, key.capitalize()),
-            str(_attr(result, "ErrorMessage", "error_message", "Message", "message", default="") or ""),
-        )
     if isinstance(result, tuple) and len(result) == 2:
         names, message = result
         return _coerce_name_list(names), str(message or "")
+    message = str(_attr(result, "ErrorMessage", "error_message", "Message", "message", default="") or "")
+    names = _attr(result, key, key.capitalize(), "Values", "values", default=None)
+    if names is not None:
+        return (_coerce_name_list(names), message)
+    if message or _attr(result, "Success", "success", default=None) is not None:
+        return ([], message)
     return _coerce_name_list(result), ""
 
 
@@ -221,6 +327,7 @@ def _attr(value: Any, *names: str, default: Any = None) -> Any:
         for name in names:
             if name in value:
                 return value[name]
+        return default
     for name in names:
         if hasattr(value, name):
             return getattr(value, name)

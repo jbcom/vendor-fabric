@@ -20,6 +20,7 @@ from vendor_fabric.secrets_sync.models import (
     ConfigInfo,
     OperationResult,
     OutputFormat,
+    ProviderSession,
     ResultDetails,
     SecretSyncConfig,
     Source,
@@ -61,7 +62,9 @@ class SecretSyncPipeline:
         self.config = config
         self.graph = Graph.from_config(config)
         self.stores = stores or StoreRegistry()
-        self.logger = logger or Logging(logger_name="vendor-fabric.secrets-sync", enable_console=False, enable_file=False)
+        self.logger = logger or Logging(
+            logger_name="vendor-fabric.secrets-sync", enable_console=False, enable_file=False
+        )
         self._default_merge_store = InMemorySecretStore()
         self._bundles: dict[str, SecretTree] = {}
         self._last_results: list[OperationResult] = []
@@ -240,7 +243,9 @@ class SecretSyncPipeline:
 
     def _read_import_tree(self, import_name: str) -> SecretTree:
         if import_name in self.config.targets:
-            return self._bundles.get(import_name) or self._merge_store().read_tree(self.bundle_path_for_target(import_name))
+            return self._bundles.get(import_name) or self._merge_store().read_tree(
+                self.bundle_path_for_target(import_name)
+            )
         source = self.config.sources.get(import_name)
         if source is None:
             msg = f"unknown source or target import: {import_name}"
@@ -327,14 +332,21 @@ def get_config_info(config_path: str) -> ExtendedDict:
     return _binding.get_config_info(config_path)
 
 
-def run_pipeline(config_path: str, options: SyncOptions | None = None) -> ExtendedDict:
+def run_pipeline(
+    config_path: str,
+    options: SyncOptions | None = None,
+    provider_session: ProviderSession | Mapping[str, Any] | None = None,
+) -> ExtendedDict:
     """Run a SecretSync config file through the SecretSync binding."""
-    return _binding.run_pipeline(config_path, options)
+    return _binding.run_pipeline(config_path, options, provider_session)
 
 
-def dry_run(config_path: str) -> ExtendedDict:
+def dry_run(
+    config_path: str,
+    provider_session: ProviderSession | Mapping[str, Any] | None = None,
+) -> ExtendedDict:
     """Run a dry-run pipeline through the SecretSync binding."""
-    return _binding.dry_run(config_path)
+    return _binding.dry_run(config_path, provider_session)
 
 
 def get_targets(config_path: str) -> ExtendedDict:
@@ -347,14 +359,24 @@ def get_sources(config_path: str) -> ExtendedDict:
     return _binding.get_sources(config_path)
 
 
-def merge(config_path: str, *, dry_run: bool = False) -> ExtendedDict:
+def merge(
+    config_path: str,
+    *,
+    dry_run: bool = False,
+    provider_session: ProviderSession | Mapping[str, Any] | None = None,
+) -> ExtendedDict:
     """Run only the merge phase through the SecretSync binding."""
-    return _binding.merge(config_path, dry_run=dry_run)
+    return _binding.merge(config_path, dry_run=dry_run, provider_session=provider_session)
 
 
-def sync(config_path: str, *, dry_run: bool = False) -> ExtendedDict:
+def sync(
+    config_path: str,
+    *,
+    dry_run: bool = False,
+    provider_session: ProviderSession | Mapping[str, Any] | None = None,
+) -> ExtendedDict:
     """Run only the sync phase through the SecretSync binding."""
-    return _binding.sync(config_path, dry_run=dry_run)
+    return _binding.sync(config_path, dry_run=dry_run, provider_session=provider_session)
 
 
 def diff_trees(target: str, phase: str, before: Mapping[str, Any], after: Mapping[str, Any]) -> TargetDiff:

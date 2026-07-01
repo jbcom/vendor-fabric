@@ -58,7 +58,9 @@ class LocalFileStore:
         """Write a local file."""
         rendered = wrap_raw_data_for_export(data, allow_encoding=encoding or True)
         if dry_run:
-            return FileSyncResult(source="memory", destination=str(path), changed=True, dry_run=True, bytes_written=len(rendered))
+            return FileSyncResult(
+                source="memory", destination=str(path), changed=True, dry_run=True, bytes_written=len(rendered)
+            )
         Path(path).write_text(rendered, encoding="utf-8")
         return FileSyncResult(source="memory", destination=str(path), changed=True, bytes_written=len(rendered))
 
@@ -72,11 +74,15 @@ class S3FileStore:
 
     def read(self, bucket: str, key: str, *, suffix: str | None = None) -> DataFile:
         """Read an object from S3 into a DataFile."""
-        data = self.connector.get_object(bucket=bucket, key=key, decode=False, execution_role_arn=self.execution_role_arn)
+        data = self.connector.get_object(
+            bucket=bucket, key=key, decode=False, execution_role_arn=self.execution_role_arn
+        )
         if data is None:
             msg = f"S3 object not found: s3://{bucket}/{key}"
             raise FileNotFoundError(msg)
-        return DataFile.decode(str(data) if not isinstance(data, bytes) else data, file_path=f"s3://{bucket}/{key}", suffix=suffix)
+        return DataFile.decode(
+            str(data) if not isinstance(data, bytes) else data, file_path=f"s3://{bucket}/{key}", suffix=suffix
+        )
 
     def write(
         self,
@@ -91,7 +97,9 @@ class S3FileStore:
         rendered = wrap_raw_data_for_export(data, allow_encoding=encoding or True)
         destination = f"s3://{bucket}/{key}"
         if dry_run:
-            return FileSyncResult(source="memory", destination=destination, changed=True, dry_run=True, bytes_written=len(rendered))
+            return FileSyncResult(
+                source="memory", destination=destination, changed=True, dry_run=True, bytes_written=len(rendered)
+            )
         self.connector.put_object(
             bucket=bucket,
             key=key,

@@ -122,9 +122,7 @@ class Graph:
         lines.append("Inheritance:")
         for name in self.topological_order():
             target_deps = [
-                dep
-                for dep in self.nodes[name].deps
-                if dep in self.nodes and self.nodes[dep].type is NodeType.TARGET
+                dep for dep in self.nodes[name].deps if dep in self.nodes and self.nodes[dep].type is NodeType.TARGET
             ]
             if target_deps:
                 lines.append(f"  {name} <- {target_deps}")

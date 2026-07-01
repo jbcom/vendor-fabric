@@ -95,7 +95,9 @@ def test_config_validation_errors_are_explicit() -> None:
         SecretSyncConfig.from_mapping({}).validate()
 
     with pytest.raises(ValueError, match=r"merge_store\.s3\.bucket"):
-        SecretSyncConfig.from_mapping({"merge_store": {"s3": {"prefix": "bundles"}}, "targets": {"prod": ["base"]}}).validate()
+        SecretSyncConfig.from_mapping(
+            {"merge_store": {"s3": {"prefix": "bundles"}}, "targets": {"prod": ["base"]}}
+        ).validate()
 
     with pytest.raises(ValueError, match="invalid account_id"):
         SecretSyncConfig.from_mapping({"targets": {"prod": {"account_id": "not-an-account"}}}).validate()
