@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.3](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.1.2...vendor-fabric-v2.1.3) (2026-07-01)
+
+
+### Bug Fixes
+
+* align SecretSync binding session facade ([089ce7c](https://github.com/jbcom/vendor-fabric/commit/089ce7c3874a50f16ee7d84c75f8a84bda121f12))
+
 ## [2.1.2](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.1.1...vendor-fabric-v2.1.2) (2026-06-27)
 
 
