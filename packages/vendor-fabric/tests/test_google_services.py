@@ -536,6 +536,7 @@ class TestProjectResourceSummary:
 
         result = google_connector.find_inactive_projects(
             projects=projects,
+            check_resources=False,
             days_since_activity=30,
         )
 

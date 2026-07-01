@@ -23,10 +23,6 @@ html_theme = "furo"
 html_static_path = ["_static"]
 html_css_files = ["vendor-fabric.css"]
 
-# Autodoc2 can generate ambiguous Python refs for common dataclass field names
-# such as ``type`` when optional provider modules are importable on CI.
-suppress_warnings = ["ref.python"]
-
 autodoc2_packages = [
     {
         "path": "../packages/vendor-fabric/src/vendor_fabric",
