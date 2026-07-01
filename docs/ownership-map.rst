@@ -16,11 +16,27 @@ In This Package
 | Connector registry and adapter    | ``vendor_fabric.registry``        |
 | metadata                          |                                   |
 +-----------------------------------+-----------------------------------+
+| Optional-dependency machinery     | ``vendor_fabric._optional``       |
+| (extra lookups, install guidance, |                                   |
+| availability probes)              |                                   |
++-----------------------------------+-----------------------------------+
 | Shared connector base classes     | ``vendor_fabric.base``            |
++-----------------------------------+-----------------------------------+
+| Capability declaration mechanism  | ``vendor_fabric.capabilities``    |
+| (``@capability`` decorator,       |                                   |
+| ``CapabilityProviderMixin``)      |                                   |
 +-----------------------------------+-----------------------------------+
 | Connector fabric                  | ``vendor_fabric.connectors``      |
 +-----------------------------------+-----------------------------------+
+| VendorData facade with capability | ``vendor_fabric.vendor_data``     |
+| dispatch                          |                                   |
++-----------------------------------+-----------------------------------+
 | Vendor CLI                        | ``vendor_fabric.cli``             |
++-----------------------------------+-----------------------------------+
+| Cloud parameter adapters          | ``vendor_fabric.cloud_params``    |
++-----------------------------------+-----------------------------------+
+| Payload surface introspection     | ``vendor_fabric.surface``         |
+| for connector data methods        |                                   |
 +-----------------------------------+-----------------------------------+
 | AWS, Google, GitHub, Slack,       | ``vendor_fabric.*``               |
 | Vault, Zoom, Anthropic, Cursor,   |                                   |
