@@ -3270,7 +3270,7 @@ wheels = [
 
 [[package]]
 name = "vendor-fabric"
-version = "2.1.2"
+version = "2.1.3"
 source = { editable = "packages/vendor-fabric" }
 dependencies = [
     { name = "extended-data" },
