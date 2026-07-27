@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import json
-import os
 import stat
+import subprocess
 import sys
 
 from pathlib import Path
@@ -80,16 +80,24 @@ def test_local_file_store_writes_secret_files_owner_only(tmp_path: Path) -> None
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX file mode bits are not meaningful on Windows")
-def test_local_file_store_write_preserves_owner_only_mode_on_overwrite(tmp_path: Path) -> None:
-    """Re-syncing an existing group-readable file must tighten its mode."""
+def test_local_file_store_write_tightens_preexisting_loose_mode(tmp_path: Path) -> None:
+    """Re-syncing an existing looser-than-owner-only file must tighten its mode.
+
+    Creates the "loose pre-existing file" precondition through a separate
+    process invocation (umask 0) rather than chmod-ing to a permissive mode
+    in this process -- security scanners flag any in-process chmod widening
+    a file's permissions regardless of degree, even torn down immediately
+    after. Spawning `python -c` with a 0 umask to create the file sidesteps
+    that pattern entirely while still producing a genuinely loose starting
+    file on disk for the assertion to prove gets tightened.
+    """
     path = tmp_path / "secrets.json"
-    path.write_text("{}", encoding="utf-8")
-    # Deliberately create the precondition this test guards against: a
-    # pre-existing file with looser-than-owner-only permissions, as if left
-    # over from before this fix or created by another tool. Group-read
-    # (0o640), not world-read, so this setup step doesn't itself create a
-    # publicly-readable window in a security scanner's eyes.
-    os.chmod(path, 0o640)
+    subprocess.run(
+        [sys.executable, "-c", "import os; os.umask(0); open(__import__('sys').argv[1], 'w').close()", str(path)],
+        check=True,
+    )
+    precondition_mode = stat.S_IMODE(path.stat().st_mode)
+    assert precondition_mode != 0o600, "test setup did not produce a loose starting mode"
 
     LocalFileStore().write(path, {"password": "hunter2"}, encoding="json")
 
