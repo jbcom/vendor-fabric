@@ -268,6 +268,47 @@ def test_binding_adapter_accepts_mapping_provider_session(monkeypatch: pytest.Mo
     assert fake.session.AWSRegion == "us-west-2"
 
 
+def test_run_pipeline_redacts_session_credentials_from_error_and_diff_output(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Session credential values must be redacted even when their field names aren't generic.
+
+    ``aws_secret_access_key``/``vault_token``/etc. don't match extended_data's
+    generic key-name redaction (which only fullmatches names like ``secret``
+    or ``token``). The binding must redact by exact value using the live
+    session material, not rely on key-name matching alone.
+    """
+    fake = FakeBinding()
+    monkeypatch.setattr(_binding.importlib, "import_module", lambda name: fake if name == "secrets_sync" else None)
+
+    secret_value = "AKIAEXAMPLESECRETVALUE"
+    vault_token_value = "hvs.CAESIREALTOKENVALUE"
+
+    def RunPipelineWithSession(config_path: str, options: object, session: object) -> SimpleNamespace:
+        return SimpleNamespace(
+            Success=False,
+            TargetCount=0,
+            ErrorMessage=f"auth failed with aws_secret_access_key={secret_value}",
+            DiffOutput=f"rejected vault_token={vault_token_value}",
+            ResultsJSON=f'[{{"detail": "aws_secret_access_key={secret_value}"}}]',
+        )
+
+    fake.RunPipelineWithSession = RunPipelineWithSession
+
+    result = _binding.run_pipeline(
+        "pipeline.yaml",
+        None,
+        ProviderSession(
+            aws_secret_access_key=secret_value,
+            vault_token=vault_token_value,
+        ),
+    )
+
+    assert secret_value not in result["error_message"]
+    assert vault_token_value not in result["diff_output"]
+    assert secret_value not in str(result["results"])
+
+
 def test_binding_adapter_supports_snake_case_options_and_mapping_payloads(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

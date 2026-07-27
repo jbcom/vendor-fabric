@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -13,6 +15,26 @@ from extended_data.primitives.redaction import redact_sensitive_text
 from extended_data.workflows import sync_value_to_file
 
 from vendor_fabric.aws import AWSConnector
+
+
+def _write_text_private(path: Path, content: str) -> None:
+    """Write text to ``path`` with owner-only (0600) permissions.
+
+    Synced secret bundles land here; ``Path.write_text`` would create the
+    file at the process umask's default (typically world-readable 0644) on
+    a fresh path. Opening with an explicit mode only sets it on creation --
+    a pre-existing file (left from before this fix, or created by another
+    tool) keeps its old mode -- so an explicit ``chmod`` follows to
+    guarantee owner-only permissions regardless of prior file state.
+    """
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    try:
+        os.fchmod(fd, 0o600)
+    except BaseException:
+        os.close(fd)
+        raise
+    with os.fdopen(fd, "w", encoding="utf-8") as handle:
+        handle.write(content)
 
 
 @dataclass(slots=True)
@@ -61,7 +83,7 @@ class LocalFileStore:
             return FileSyncResult(
                 source="memory", destination=str(path), changed=True, dry_run=True, bytes_written=len(rendered)
             )
-        Path(path).write_text(rendered, encoding="utf-8")
+        _write_text_private(Path(path), rendered)
         return FileSyncResult(source="memory", destination=str(path), changed=True, bytes_written=len(rendered))
 
 
