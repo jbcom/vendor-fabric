@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.4](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.1.3...vendor-fabric-v2.1.4) (2026-07-27)
+
+
+### Bug Fixes
+
+* pin ruff floor to 0.16 and resolve resulting lint fallout ([#22](https://github.com/jbcom/vendor-fabric/issues/22)) ([8a5e3c9](https://github.com/jbcom/vendor-fabric/commit/8a5e3c9606aa35ef8a5edbcba0ea7e491fe0fcfa))
+
 ## [2.1.3](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.1.2...vendor-fabric-v2.1.3) (2026-07-01)
 
 
