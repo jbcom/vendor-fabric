@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.5](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.1.4...vendor-fabric-v2.1.5) (2026-07-27)
+
+
+### Bug Fixes
+
+* redact secrets_sync credentials by value, tighten synced file perms ([#24](https://github.com/jbcom/vendor-fabric/issues/24)) ([9416f48](https://github.com/jbcom/vendor-fabric/commit/9416f48c615058ccc85bbb9662eabb962b4339fc))
+
 ## [2.1.4](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.1.3...vendor-fabric-v2.1.4) (2026-07-27)
 
 
