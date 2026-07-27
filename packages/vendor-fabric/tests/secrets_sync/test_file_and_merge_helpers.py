@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+import os
+import stat
+import sys
 
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -61,6 +64,32 @@ def test_local_file_store_writes_and_reads_json(tmp_path: Path) -> None:
     assert write_result.bytes_written == len(path.read_text(encoding="utf-8"))
     assert json.loads(path.read_text(encoding="utf-8")) == {"service": "api"}
     assert data_file.data == {"service": "api"}
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX file mode bits are not meaningful on Windows")
+def test_local_file_store_writes_secret_files_owner_only(tmp_path: Path) -> None:
+    """Synced secret bundles must not be created world- or group-readable."""
+    path = tmp_path / "secrets.json"
+    store = LocalFileStore()
+
+    store.write(path, {"password": "hunter2"}, encoding="json")
+
+    mode = stat.S_IMODE(path.stat().st_mode)
+    assert mode == 0o600
+    assert not mode & (stat.S_IRWXG | stat.S_IRWXO)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX file mode bits are not meaningful on Windows")
+def test_local_file_store_write_preserves_owner_only_mode_on_overwrite(tmp_path: Path) -> None:
+    """Re-syncing an existing world-readable file must tighten its mode."""
+    path = tmp_path / "secrets.json"
+    path.write_text("{}", encoding="utf-8")
+    os.chmod(path, 0o644)
+
+    LocalFileStore().write(path, {"password": "hunter2"}, encoding="json")
+
+    mode = stat.S_IMODE(path.stat().st_mode)
+    assert mode == 0o600
 
 
 def test_local_file_store_dry_run_does_not_write(tmp_path: Path) -> None:

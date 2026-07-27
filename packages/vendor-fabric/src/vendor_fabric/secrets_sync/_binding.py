@@ -80,7 +80,8 @@ def run_pipeline(
             config_path,
             binding_options,
             _to_binding_provider_session(binding, provider_session),
-        )
+        ),
+        provider_session,
     )
 
 
@@ -92,7 +93,8 @@ def dry_run(
     binding = load_binding()
     if provider_session is not None:
         return _sync_result_to_dict(
-            binding.DryRunWithSession(config_path, _to_binding_provider_session(binding, provider_session))
+            binding.DryRunWithSession(config_path, _to_binding_provider_session(binding, provider_session)),
+            provider_session,
         )
     return _sync_result_to_dict(binding.DryRun(config_path))
 
@@ -123,7 +125,8 @@ def merge(
                 config_path,
                 dry_run,
                 _to_binding_provider_session(binding, provider_session),
-            )
+            ),
+            provider_session,
         )
     return _sync_result_to_dict(binding.Merge(config_path, dry_run))
 
@@ -142,7 +145,8 @@ def sync(
                 config_path,
                 dry_run,
                 _to_binding_provider_session(binding, provider_session),
-            )
+            ),
+            provider_session,
         )
     return _sync_result_to_dict(binding.Sync(config_path, dry_run))
 
@@ -249,8 +253,32 @@ def _validation_result(result: Any) -> tuple[bool, str]:
     return valid, str(message or "")
 
 
-def _sync_result_to_dict(result: Any) -> ExtendedDict:
+def _session_secret_values(provider_session: ProviderSession | Mapping[str, Any] | None) -> tuple[str, ...]:
+    """Return the actual secret material carried by a provider session.
+
+    ``extended_data``'s key-name-based redaction only matches generic field
+    names (``token``, ``secret``, ...) and misses this repo's prefixed
+    field names (``aws_secret_access_key``, ``vault_token``, ...). Passing
+    the live values here redacts by exact content instead, which is
+    unaffected by what the field happens to be called.
+    """
+    if provider_session is None:
+        return ()
+    values = (
+        _attr(provider_session, "vault_token", default=""),
+        _attr(provider_session, "aws_access_key_id", default=""),
+        _attr(provider_session, "aws_secret_access_key", default=""),
+        _attr(provider_session, "aws_session_token", default=""),
+    )
+    return tuple(value for value in values if value)
+
+
+def _sync_result_to_dict(
+    result: Any,
+    provider_session: ProviderSession | Mapping[str, Any] | None = None,
+) -> ExtendedDict:
     """Convert a binding SyncResult value into the local payload contract."""
+    secret_values = _session_secret_values(provider_session)
     payload = SyncResult(
         success=bool(_attr(result, "Success", "success", default=False)),
         target_count=int(_attr(result, "TargetCount", "target_count", default=0) or 0),
@@ -260,13 +288,17 @@ def _sync_result_to_dict(result: Any) -> ExtendedDict:
         secrets_removed=int(_attr(result, "SecretsRemoved", "secrets_removed", default=0) or 0),
         secrets_unchanged=int(_attr(result, "SecretsUnchanged", "secrets_unchanged", default=0) or 0),
         duration_ms=int(_attr(result, "DurationMs", "duration_ms", default=0) or 0),
-        error_message=redact_sensitive_text(_attr(result, "ErrorMessage", "error_message", default="")),
-        diff_output=redact_sensitive_text(_attr(result, "DiffOutput", "diff_output", default="")),
+        error_message=redact_sensitive_text(
+            _attr(result, "ErrorMessage", "error_message", default=""), values=secret_values
+        ),
+        diff_output=redact_sensitive_text(
+            _attr(result, "DiffOutput", "diff_output", default=""), values=secret_values
+        ),
     ).to_dict()
     results_json = _attr(result, "ResultsJSON", "results_json", default="")
     parsed_results = _parse_results_json(results_json)
     if parsed_results is not None:
-        payload["results"] = extend_data(redact_sensitive_data(parsed_results))
+        payload["results"] = extend_data(redact_sensitive_data(parsed_results, values=secret_values))
     return payload
 
 
