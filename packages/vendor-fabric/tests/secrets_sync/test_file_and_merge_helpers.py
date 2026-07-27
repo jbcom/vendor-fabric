@@ -84,7 +84,12 @@ def test_local_file_store_write_preserves_owner_only_mode_on_overwrite(tmp_path:
     """Re-syncing an existing world-readable file must tighten its mode."""
     path = tmp_path / "secrets.json"
     path.write_text("{}", encoding="utf-8")
-    os.chmod(path, 0o644)
+    # Deliberately create the precondition this test guards against: a
+    # pre-existing file with loose permissions, as if left over from before
+    # this fix or created by another tool. The file lives only in pytest's
+    # isolated tmp_path and contains no real secret, so the momentarily
+    # world-readable window this line creates poses no risk.
+    os.chmod(path, 0o644)  # lgtm[py/overly-permissive-file]
 
     LocalFileStore().write(path, {"password": "hunter2"}, encoding="json")
 
