@@ -2455,7 +2455,7 @@ wheels = [
 
 [[package]]
 name = "pytest-vendor-fabric"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "packages/pytest-vendor-fabric" }
 dependencies = [
     { name = "pytest" },
@@ -3270,7 +3270,7 @@ wheels = [
 
 [[package]]
 name = "vendor-fabric"
-version = "2.1.3"
+version = "2.1.5"
 source = { editable = "packages/vendor-fabric" }
 dependencies = [
     { name = "extended-data" },
