@@ -4,7 +4,7 @@ Part of vendor-fabric, providing access to Meshy AI's 3D asset generation API.
 
 Usage:
     # Functional interface
-    from vendor_fabric.meshy import text3d, image3d, rigging, animate, retexture
+    from vendor_fabric.meshy import text2image, text3d, image3d, rigging, animate, retexture
 
     # Text to 3D
     model = text3d.generate("a medieval sword")
@@ -27,7 +27,18 @@ Usage:
 
 from __future__ import annotations
 
-from vendor_fabric.meshy import animate, base, image3d, retexture, rigging, text3d
+from vendor_fabric.meshy import (
+    animate,
+    base,
+    image2image,
+    image3d,
+    multiimage3d,
+    remesh,
+    retexture,
+    rigging,
+    text2image,
+    text3d,
+)
 from vendor_fabric.meshy.base import MeshyAPIError, RateLimitError
 from vendor_fabric.meshy.connector import MeshyConnector
 from vendor_fabric.meshy.logging import MESHY_LOGGER_NAME, MESHY_STORAGE_MARKER, create_meshy_logger
@@ -42,8 +53,12 @@ __all__ = [
     "animate",
     "base",
     "create_meshy_logger",
+    "image2image",
     "image3d",
+    "multiimage3d",
+    "remesh",
     "retexture",
     "rigging",
+    "text2image",
     "text3d",
 ]

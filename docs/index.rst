@@ -29,6 +29,7 @@ pipeline semantics, CLI, and gopy binding source live in
    architecture
    pillars
    integrations/connectors
+   integrations/meshy-text-to-image
    secrets-sync/index
    testing
    ownership-map

@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Any
+from typing import Any, Self
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class TaskStatus(StrEnum):
@@ -13,6 +13,7 @@ class TaskStatus(StrEnum):
     IN_PROGRESS = "IN_PROGRESS"
     SUCCEEDED = "SUCCEEDED"
     FAILED = "FAILED"
+    CANCELED = "CANCELED"
     EXPIRED = "EXPIRED"
 
 
@@ -36,6 +37,61 @@ class TexturePBRMapType(StrEnum):
     AO = "ao"
 
 
+# Text-to-Image Models
+
+
+class Text2ImageRequest(BaseModel):
+    ai_model: str = "nano-banana"
+    prompt: str
+    generate_multi_view: bool = False
+    pose_mode: str | None = None
+    aspect_ratio: str | None = None
+
+    @model_validator(mode="after")
+    def validate_multi_view_aspect_ratio(self) -> Self:
+        """Reject the Meshy API's mutually exclusive image layout options."""
+        if self.generate_multi_view and self.aspect_ratio is not None:
+            raise ValueError("aspect_ratio cannot be set when generate_multi_view is true")
+        return self
+
+
+class Text2ImageResult(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    id: str
+    type: str | None = None
+    ai_model: str | None = None
+    prompt: str | None = None
+    status: TaskStatus
+    progress: int = 0
+    created_at: int
+    started_at: int | None = None
+    finished_at: int | None = None
+    expires_at: int | None = None
+    image_urls: list[str] = Field(default_factory=list)
+    task_error: dict[str, Any] | None = None
+    consumed_credits: int | None = None
+
+
+class Image2ImageRequest(BaseModel):
+    ai_model: str = "nano-banana"
+    prompt: str
+    reference_image_urls: list[str]
+    generate_multi_view: bool = False
+    aspect_ratio: str | None = None
+
+    @model_validator(mode="after")
+    def validate_multi_view_aspect_ratio(self) -> Self:
+        """Reject the Meshy API's mutually exclusive image layout options."""
+        if self.generate_multi_view and self.aspect_ratio is not None:
+            raise ValueError("aspect_ratio cannot be set when generate_multi_view is true")
+        return self
+
+
+class Image2ImageResult(Text2ImageResult):
+    """Image-to-image task payload; its result contract matches text-to-image."""
+
+
 # Text-to-3D Models
 
 
@@ -56,6 +112,10 @@ class ModelUrls(BaseModel):
     usdz: str | None = None
     obj: str | None = None
     mtl: str | None = None
+    stl: str | None = None
+    blend: str | None = None
+    three_mf: str | None = Field(default=None, alias="3mf")
+    pre_remeshed_glb: str | None = None
 
 
 class TextureUrls(BaseModel):
@@ -180,6 +240,68 @@ class Image3DResult(BaseModel):
     texture_urls: list[TextureUrls] | None = None
     thumbnail_url: str | None = None
     error: str | None = None
+
+
+class ModelTaskResult(BaseModel):
+    """Common current Meshy task payload for 3D generation and processing APIs."""
+
+    model_config = ConfigDict(extra="allow")
+
+    id: str
+    status: TaskStatus
+    progress: int = 0
+    created_at: int
+    started_at: int | None = None
+    finished_at: int | None = None
+    expires_at: int | None = None
+    model_urls: ModelUrls | None = None
+    texture_urls: list[TextureUrls] | None = None
+    thumbnail_url: str | None = None
+    task_error: dict[str, Any] | None = None
+    preceding_tasks: int = 0
+
+
+class MultiImage3DRequest(BaseModel):
+    input_task_id: str | None = None
+    image_urls: list[str] | None = None
+    ai_model: str = "latest"
+    should_texture: bool = True
+    enable_pbr: bool = False
+    texture_resolution: str = "2k"
+    texture_prompt: str | None = None
+    texture_image_url: str | None = None
+    should_remesh: bool | None = None
+    topology: str | None = None
+    target_polycount: int | None = None
+    decimation_mode: int | None = None
+    save_pre_remeshed_model: bool = False
+    pose_mode: str | None = None
+    image_enhancement: bool = True
+    remove_lighting: bool = True
+    moderation: bool = False
+    target_formats: list[str] | None = None
+    auto_size: bool = False
+    origin_at: str | None = None
+    alpha_thumbnail: bool = False
+    multi_view_thumbnails: bool = False
+
+
+class MultiImage3DResult(ModelTaskResult):
+    """Multi-image-to-3D task payload."""
+
+
+class RemeshRequest(BaseModel):
+    input_task_id: str | None = None
+    model_url: str | None = None
+    target_formats: list[str] = Field(default_factory=lambda: ["glb"])
+    topology: str = "triangle"
+    target_polycount: int | None = None
+    decimation_mode: int | None = None
+    alpha_thumbnail: bool = False
+
+
+class RemeshResult(ModelTaskResult):
+    """Remesh task payload."""
 
 
 # Rigging Models

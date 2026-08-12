@@ -14,12 +14,12 @@ from __future__ import annotations
 import threading
 import time
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping, Sequence
 from typing import Any, cast
 
 import httpx
 
-from extended_data.containers import ExtendedDict, ExtendedString, extend_data, to_builtin
+from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString, extend_data, to_builtin
 from extended_data.inputs import InputProvider
 from extended_data.io.files import decode_file
 from extended_data.primitives.redaction import redact_sensitive_text
@@ -126,7 +126,10 @@ def task_failure_message(error: Any) -> str:
 
 def unexpected_response_message(data: Any) -> str:
     """Return a public, redacted unexpected-response diagnostic."""
-    return f"Unexpected API response: missing 'result' key. Response: {redact_sensitive_text(data)}"
+    return (
+        "Unexpected API response: missing 'result' key; missing task id in "
+        f"'result', 'id', or 'task_id'. Response: {redact_sensitive_text(data)}"
+    )
 
 
 def _decode_response_json(response: httpx.Response) -> Any:
@@ -137,12 +140,16 @@ def _decode_response_json(response: httpx.Response) -> Any:
 
 
 def task_id_from_response(response: httpx.Response) -> ExtendedString:
-    """Extract a non-empty Meshy task id from a create/refine response."""
+    """Extract a non-empty Meshy task id from any documented create-response shape."""
     data = _decode_response_json(response)
-    result = data.get("result") if isinstance(data, Mapping) else None
-    if not isinstance(result, (str, ExtendedString)) or not str(result).strip():
+    task_id: object = None
+    if isinstance(data, Mapping):
+        result = data.get("result")
+        task_id = result.get("id") or result.get("task_id") if isinstance(result, Mapping) else result
+        task_id = task_id or data.get("id") or data.get("task_id")
+    if not isinstance(task_id, (str, ExtendedString)) or not str(task_id).strip():
         raise RuntimeError(unexpected_response_message(data))
-    return ExtendedString(str(result))
+    return ExtendedString(str(task_id))
 
 
 def task_payload_from_response(response: httpx.Response, model_type: type[BaseModel], endpoint: str) -> ExtendedDict:
@@ -152,7 +159,46 @@ def task_payload_from_response(response: httpx.Response, model_type: type[BaseMo
         result = model_type.model_validate(to_builtin(data))
     except ValidationError:
         raise RuntimeError(f"Unexpected API response for {endpoint}: {redact_sensitive_text(data)}") from None
-    return cast(ExtendedDict, extend_data(result.model_dump(mode="json")))
+    return cast(ExtendedDict, extend_data(result.model_dump(mode="json", by_alias=True)))
+
+
+def task_list_from_response(
+    response: httpx.Response, model_type: type[BaseModel], endpoint: str
+) -> ExtendedList[ExtendedDict]:
+    """Validate a Meshy task list and return promoted public mappings."""
+    data = _decode_response_json(response)
+    if not isinstance(data, Sequence) or isinstance(data, (str, bytes, bytearray)):
+        raise RuntimeError(  # noqa: TRY004 -- every invalid provider response has one public exception contract
+            f"Unexpected API response for {endpoint}: {redact_sensitive_text(data)}"
+        )
+    try:
+        results = [model_type.model_validate(to_builtin(item)).model_dump(mode="json", by_alias=True) for item in data]
+    except ValidationError:
+        raise RuntimeError(f"Unexpected API response for {endpoint}: {redact_sensitive_text(data)}") from None
+    return cast(ExtendedList[ExtendedDict], extend_data(results))
+
+
+def poll_task(
+    fetch: Callable[[str], ExtendedDict],
+    task_id: str,
+    interval: float = 5.0,
+    timeout: float = 600.0,
+) -> ExtendedDict:
+    """Poll a Meshy task through its endpoint-specific fetch function."""
+    start = time.time()
+    while True:
+        result = fetch(task_id)
+        status = result.get("status")
+        if status == "SUCCEEDED":
+            return result
+        if status == "FAILED":
+            error = result.get("task_error") or result.get("error")
+            raise RuntimeError(task_failure_message(error))
+        if status in {"CANCELED", "EXPIRED"}:
+            raise RuntimeError(f"Task {str(status).title()}")
+        if time.time() - start > timeout:
+            raise TimeoutError(f"Task timed out after {timeout}s")
+        time.sleep(interval)
 
 
 @retry(

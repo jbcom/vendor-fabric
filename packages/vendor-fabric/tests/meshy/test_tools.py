@@ -15,6 +15,7 @@ from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString,
 
 # Expected capabilities list - canonical reference for all Meshy capabilities
 EXPECTED_MESHY_TOOLS = {
+    "text2image_generate",
     "text3d_generate",
     "image3d_generate",
     "rig_model",
@@ -24,6 +25,68 @@ EXPECTED_MESHY_TOOLS = {
     "check_task_status",
     "get_animation",
 }
+
+
+class TestText2ImageGenerate:
+    """Tests for the text-to-image capability function."""
+
+    def test_successful_generation_returns_first_download_url(self):
+        from vendor_fabric.meshy.tools import text2image_generate
+
+        mock_result = extend_data(
+            {
+                "id": "image-task",
+                "status": "SUCCEEDED",
+                "image_urls": ["https://assets.meshy.ai/first.png", "https://assets.meshy.ai/second.png"],
+            }
+        )
+        with patch("vendor_fabric.meshy.text2image.generate", return_value=mock_result) as generate:
+            result = text2image_generate("painted shrine", ai_model="gpt-image-2", aspect_ratio="3:2")
+
+        assert result == {
+            "task_id": "image-task",
+            "status": "SUCCEEDED",
+            "image_url": "https://assets.meshy.ai/first.png",
+        }
+        generate.assert_called_once_with(
+            "painted shrine",
+            ai_model="gpt-image-2",
+            aspect_ratio="3:2",
+            generate_multi_view=False,
+            pose_mode=None,
+            wait=True,
+        )
+
+    def test_check_task_status_supports_text_to_image(self):
+        from vendor_fabric.meshy.tools import check_task_status
+
+        mock_result = extend_data(
+            {"id": "image-task", "status": "SUCCEEDED", "progress": 100, "image_urls": ["image.png"]}
+        )
+        with patch("vendor_fabric.meshy.text2image.get", return_value=mock_result):
+            result = check_task_status("image-task", "text-to-image")
+
+        assert result["task_id"] == "image-task"
+        assert result["status"] == "SUCCEEDED"
+        assert result["image_url"] == "image.png"
+
+    @pytest.mark.parametrize(
+        ("task_type", "getter"),
+        [
+            ("image-to-image", "vendor_fabric.meshy.image2image.get"),
+            ("multi-image-to-3d", "vendor_fabric.meshy.multiimage3d.get"),
+            ("remesh", "vendor_fabric.meshy.remesh.get"),
+        ],
+    )
+    def test_check_task_status_supports_every_current_async_family(self, task_type: str, getter: str):
+        from vendor_fabric.meshy.tools import check_task_status
+
+        result_payload = extend_data({"id": "task-123", "status": "IN_PROGRESS", "progress": 40})
+        with patch(getter, return_value=result_payload) as get:
+            result = check_task_status("task-123", task_type)
+
+        get.assert_called_once_with("task-123")
+        assert result["status"] == "IN_PROGRESS"
 
 
 class TestToolDefinitions:
