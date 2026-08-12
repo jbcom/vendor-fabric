@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.1.5...vendor-fabric-v2.2.0) (2026-08-12)
+
+
+### Features
+
+* **meshy:** complete text-to-image transport boundary ([#31](https://github.com/jbcom/vendor-fabric/issues/31)) ([5f5f411](https://github.com/jbcom/vendor-fabric/commit/5f5f4112d9c1d4e7ad1069bd67240eaae00c00bc))
+
 ## [2.1.5](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.1.4...vendor-fabric-v2.1.5) (2026-07-27)
 
 
