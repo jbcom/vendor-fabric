@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -153,6 +154,23 @@ def test_cli_methods_json_lists_public_methods() -> None:
     method_names = {method["name"] for method in methods}
     assert "text3d_generate" in method_names
     assert "request_data" not in method_names
+
+
+def test_readme_documents_every_connector_command() -> None:
+    """The package README should enumerate the complete CLI data surface."""
+    readme_lines = (Path(__file__).parents[1] / "README.md").read_text(encoding="utf-8").splitlines()
+    command_section = readme_lines[readme_lines.index("### Connector commands") :]
+
+    for connector_name in sorted(cli_module.BUILTIN_CONNECTORS):
+        row_prefix = f"| `{connector_name}` |"
+        command_row = next(line for line in command_section if line.startswith(row_prefix))
+        connector_class = cli_module._surface_connector_class(connector_name)
+        missing = [
+            method_name
+            for method_name, _ in cli_module.connector_data_methods(connector_class)
+            if f"`{method_name}`" not in command_row
+        ]
+        assert missing == [], f"{connector_name} commands missing from README: {missing}"
 
 
 def test_cli_methods_include_argument_signatures_without_installed_extra(capsys) -> None:
