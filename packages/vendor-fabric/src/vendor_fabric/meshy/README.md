@@ -1,7 +1,8 @@
 # Meshy Connector
 
 Meshy support is part of `vendor-fabric` and lives under
-`vendor_fabric.meshy`. It provides functional API helpers, a
+`vendor_fabric.meshy`. It provides functional API helpers for 2D and 3D
+generation, a
 `MeshyConnector` fabric integration, job orchestration, webhook handling, and
 provider capability metadata.
 
@@ -43,8 +44,57 @@ result = text3d.poll(task_id)
 print(result["status"])
 ```
 
-The package also exposes `image3d`, `rigging`, `animate`, and `retexture`
-modules from `vendor_fabric.meshy`.
+### Text to image
+
+```python
+from vendor_fabric.meshy import base, text2image
+
+result = text2image.generate(
+    "hand-painted forest shrine, orthographic game background",
+    ai_model="nano-banana",
+    aspect_ratio="16:9",
+)
+
+base.download(result["image_urls"][0], "art/forest-shrine.png")
+```
+
+`text2image.generate(..., wait=False)` returns the submitted task ID. With the
+default `wait=True`, it polls `GET /openapi/v1/text-to-image/{id}` until the
+task succeeds and returns the complete extended task payload. Failed,
+canceled, and expired tasks raise a redacted `RuntimeError`; HTTP errors use
+`MeshyAPIError`, and rate-limit/server retries use `RateLimitError`.
+
+For a persisted sidecar manifest plus automatic download of
+`image_urls[0]`, use the job helper:
+
+```python
+from vendor_fabric.meshy.jobs import ImageGenerator
+
+generator = ImageGenerator(output_root="client/public")
+manifest = generator.generate_image(
+    "hand-painted forest shrine, orthographic game background",
+    output_path="art/forest-shrine.png",
+)
+print(manifest["image_path"])
+```
+
+The package also exposes `image2image`, `image3d`, `multiimage3d`, `remesh`,
+`rigging`, `animate`, and `retexture` modules from `vendor_fabric.meshy`.
+The image-to-image, multi-image-to-3D, and remesh modules use the same
+`create` / `get` / `poll` / high-level helper pattern as the original 3D
+modules. Task families documented by Meshy with collection and deletion
+operations also expose `list_tasks` and `delete`.
+
+## API Coverage
+
+The connector covers Meshy's general generation pipeline: text-to-image,
+image-to-image, text-to-3D, image-to-3D, multi-image-to-3D, remesh, retexture,
+rigging, and animation. The account balance endpoint and specialized Convert,
+Resize, UV Unwrap, Multi-Color Print, Analyze Printability, Repair Printability,
+and product-scoped Creative Lab APIs are deliberately outside this generation
+connector pass. Streaming endpoints are also deferred because this connector's
+established task contract is polling plus webhooks; adding an SSE transport
+would be a distinct public API rather than another task module.
 
 ## Connector Fabric
 

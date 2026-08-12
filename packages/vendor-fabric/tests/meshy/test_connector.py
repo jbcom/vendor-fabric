@@ -67,6 +67,68 @@ def test_meshy_image3d_generate_dispatches_to_image3d_module(monkeypatch) -> Non
     )
 
 
+def test_meshy_text2image_generate_dispatches_to_text2image_module(monkeypatch) -> None:
+    """Text-to-image facade should pass current image generation options through."""
+    generate = MagicMock(return_value=ExtendedString("image-task-123"))
+    monkeypatch.setattr(connector_module.text2image, "generate", generate)
+
+    result = MeshyConnector(api_key="test-key").text2image_generate(
+        "painted forest shrine",
+        ai_model="gpt-image-2",
+        aspect_ratio="3:2",
+        wait=False,
+    )
+
+    assert result == "image-task-123"
+    generate.assert_called_once_with(
+        "painted forest shrine",
+        ai_model="gpt-image-2",
+        aspect_ratio="3:2",
+        generate_multi_view=False,
+        pose_mode=None,
+        wait=False,
+    )
+
+
+def test_meshy_additional_generation_facades_dispatch(monkeypatch) -> None:
+    """Current image edit, multi-view, and remesh facades should preserve explicit options."""
+    image_generate = MagicMock(return_value=ExtendedString("edit-task"))
+    multi_generate = MagicMock(return_value=ExtendedString("multi-task"))
+    remesh_apply = MagicMock(return_value=ExtendedString("remesh-task"))
+    monkeypatch.setattr(connector_module.image2image, "generate", image_generate)
+    monkeypatch.setattr(connector_module.multiimage3d, "generate", multi_generate)
+    monkeypatch.setattr(connector_module.remesh, "apply", remesh_apply)
+    connector = MeshyConnector(api_key="test-key")
+
+    assert connector.image2image_generate("gold", ["source.png"], wait=False) == "edit-task"
+    assert connector.multiimage3d_generate(["front.png", "back.png"], wait=False) == "multi-task"
+    assert connector.remesh_model("model-task", topology="quad", target_polycount=1234, wait=False) == "remesh-task"
+
+    image_generate.assert_called_once_with(
+        "gold",
+        ["source.png"],
+        ai_model="nano-banana",
+        aspect_ratio=None,
+        generate_multi_view=False,
+        wait=False,
+    )
+    multi_generate.assert_called_once_with(
+        ["front.png", "back.png"],
+        ai_model="latest",
+        should_texture=True,
+        enable_pbr=False,
+        target_formats=None,
+        wait=False,
+    )
+    remesh_apply.assert_called_once_with(
+        "model-task",
+        target_formats=None,
+        topology="quad",
+        target_polycount=1234,
+        wait=False,
+    )
+
+
 def test_meshy_rig_model_dispatches_to_rigging_module(monkeypatch) -> None:
     """Rigging facade should dispatch to the rigging helper."""
     rig = MagicMock(return_value=ExtendedDict({"id": "rig-task"}))

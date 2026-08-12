@@ -11,13 +11,23 @@ from typing import Any
 from extended_data.containers import ExtendedDict, ExtendedString
 
 from vendor_fabric.base import ConnectorBase
-from vendor_fabric.meshy import animate, image3d, retexture, rigging, text3d
+from vendor_fabric.meshy import (
+    animate,
+    image2image,
+    image3d,
+    multiimage3d,
+    remesh,
+    retexture,
+    rigging,
+    text2image,
+    text3d,
+)
 
 
 class MeshyConnector(ConnectorBase):
     """Meshy AI 3D generation connector.
 
-    Provides access to text-to-3D, image-to-3D, rigging, animation, and retexturing.
+    Provides access to text-to-image, text-to-3D, image-to-3D, rigging, animation, and retexturing.
     """
 
     API_KEY_ENV = "MESHY_API_KEY"
@@ -51,6 +61,25 @@ class MeshyConnector(ConnectorBase):
             wait=wait,
         )
 
+    def text2image_generate(
+        self,
+        prompt: str,
+        ai_model: str = "nano-banana",
+        aspect_ratio: str | None = None,
+        generate_multi_view: bool = False,
+        pose_mode: str | None = None,
+        wait: bool = True,
+    ) -> ExtendedDict | ExtendedString:
+        """Generate an image from a text description."""
+        return text2image.generate(
+            prompt,
+            ai_model=ai_model,
+            aspect_ratio=aspect_ratio,
+            generate_multi_view=generate_multi_view,
+            pose_mode=pose_mode,
+            wait=wait,
+        )
+
     def image3d_generate(
         self,
         image_url: str,
@@ -65,6 +94,61 @@ class MeshyConnector(ConnectorBase):
             topology=topology,
             target_polycount=target_polycount,
             enable_pbr=enable_pbr,
+            wait=wait,
+        )
+
+    def image2image_generate(
+        self,
+        prompt: str,
+        reference_image_urls: list[str],
+        ai_model: str = "nano-banana",
+        aspect_ratio: str | None = None,
+        generate_multi_view: bool = False,
+        wait: bool = True,
+    ) -> ExtendedDict | ExtendedString:
+        """Edit one or more reference images from a text prompt."""
+        return image2image.generate(
+            prompt,
+            reference_image_urls,
+            ai_model=ai_model,
+            aspect_ratio=aspect_ratio,
+            generate_multi_view=generate_multi_view,
+            wait=wait,
+        )
+
+    def multiimage3d_generate(
+        self,
+        image_urls: list[str],
+        ai_model: str = "latest",
+        should_texture: bool = True,
+        enable_pbr: bool = False,
+        target_formats: list[str] | None = None,
+        wait: bool = True,
+    ) -> ExtendedDict | ExtendedString:
+        """Generate a 3D model from multiple subject views."""
+        return multiimage3d.generate(
+            image_urls,
+            ai_model=ai_model,
+            should_texture=should_texture,
+            enable_pbr=enable_pbr,
+            target_formats=target_formats,
+            wait=wait,
+        )
+
+    def remesh_model(
+        self,
+        model_id: str,
+        target_formats: list[str] | None = None,
+        topology: str = "triangle",
+        target_polycount: int | None = None,
+        wait: bool = True,
+    ) -> ExtendedDict | ExtendedString:
+        """Remesh an existing successful Meshy model task."""
+        return remesh.apply(
+            model_id,
+            target_formats=target_formats,
+            topology=topology,
+            target_polycount=target_polycount,
             wait=wait,
         )
 

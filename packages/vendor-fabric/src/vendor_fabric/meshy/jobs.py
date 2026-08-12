@@ -16,8 +16,8 @@ from typing import Any
 from extended_data.containers import ExtendedDict, ExtendedList, extend_data
 from extended_data.io import wrap_raw_data_for_export
 
-from vendor_fabric.meshy import base, text3d
-from vendor_fabric.meshy.models import ArtStyle, AssetIntent, AssetSpec, Text3DRequest
+from vendor_fabric.meshy import base, text2image, text3d
+from vendor_fabric.meshy.models import ArtStyle, AssetIntent, AssetSpec, TaskStatus, Text2ImageRequest, Text3DRequest
 
 
 logger = logging.getLogger("vendor_fabric.meshy.jobs")
@@ -46,6 +46,82 @@ class AssetManifest:
     def to_dict(self) -> ExtendedDict:
         """Return an extended manifest payload."""
         return extend_data(asdict(self))
+
+
+@dataclass
+class ImageManifest:
+    """Persisted metadata for a text-to-image generation job."""
+
+    prompt: str
+    ai_model: str
+    aspect_ratio: str | None
+    requested_path: str
+    task_id: str
+    status: str
+    image_path: str | None = None
+    image_url: str | None = None
+
+    def to_dict(self) -> ExtendedDict:
+        """Return an extended image manifest payload."""
+        return extend_data(asdict(self))
+
+
+class ImageGenerator:
+    """Orchestrate text-to-image submission, polling, download, and persistence."""
+
+    def __init__(self, output_root: str = "client/public"):
+        self.output_root = Path(output_root)
+
+    def _save_manifest(self, manifest: ImageManifest) -> None:
+        """Persist the resumable job manifest beside its requested image path."""
+        manifest_path = self.output_root / f"{manifest.requested_path}.manifest.json"
+        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(manifest_path, "w") as file:
+            file.write(wrap_raw_data_for_export(manifest.to_dict(), allow_encoding="json", indent_2=True))
+
+    def generate_image(
+        self,
+        prompt: str,
+        *,
+        output_path: str,
+        ai_model: str = "nano-banana",
+        aspect_ratio: str | None = None,
+        generate_multi_view: bool = False,
+        pose_mode: str | None = None,
+        wait: bool = True,
+    ) -> ExtendedDict:
+        """Generate and download the first text-to-image result with a sidecar manifest."""
+        task_id = text2image.create(
+            Text2ImageRequest(
+                ai_model=ai_model,
+                prompt=prompt,
+                generate_multi_view=generate_multi_view,
+                pose_mode=pose_mode,
+                aspect_ratio=aspect_ratio,
+            )
+        )
+        manifest = ImageManifest(
+            prompt=prompt,
+            ai_model=ai_model,
+            aspect_ratio=aspect_ratio,
+            requested_path=output_path,
+            task_id=str(task_id),
+            status=TaskStatus.PENDING.value,
+        )
+        self._save_manifest(manifest)
+
+        if not wait:
+            return manifest.to_dict()
+
+        result = text2image.poll(str(task_id))
+        destination = self.output_root / output_path
+        text2image.download_first(result, str(destination))
+        image_urls = result["image_urls"]
+        manifest.status = str(result["status"])
+        manifest.image_path = output_path
+        manifest.image_url = str(image_urls[0])
+        self._save_manifest(manifest)
+        return manifest.to_dict()
 
 
 class AssetGenerator:
