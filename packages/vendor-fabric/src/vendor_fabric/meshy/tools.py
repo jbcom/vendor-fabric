@@ -90,7 +90,10 @@ class CheckTaskStatusSchema(BaseModel):
     task_id: str = Field(..., description="The Meshy task ID")
     task_type: str = Field(
         "text-to-3d",
-        description="Task type (text-to-image, text-to-3d, image-to-3d, rigging, animation, retexture)",
+        description=(
+            "Task type (text-to-image, image-to-image, text-to-3d, image-to-3d, "
+            "multi-image-to-3d, remesh, rigging, animation, retexture)"
+        ),
     )
 
 
@@ -447,18 +450,31 @@ def check_task_status(task_id: str, task_type: str = "text-to-3d") -> ExtendedDi
 
     Args:
         task_id: The Meshy task ID
-        task_type: Task type (text-to-3d, rigging, animation, retexture)
+        task_type: Any supported asynchronous Meshy task family.
 
     Returns:
         Dict with status, progress, and model_url if complete
     """
-    from vendor_fabric.meshy import animate, image3d, retexture, rigging, text2image, text3d
+    from vendor_fabric.meshy import (
+        animate,
+        image2image,
+        image3d,
+        multiimage3d,
+        remesh,
+        retexture,
+        rigging,
+        text2image,
+        text3d,
+    )
 
     # Call the appropriate get function based on task type
     get_funcs: dict[str, Callable[[str], Any]] = {
         "text-to-image": text2image.get,
+        "image-to-image": image2image.get,
         "text-to-3d": text3d.get,
         "image-to-3d": image3d.get,
+        "multi-image-to-3d": multiimage3d.get,
+        "remesh": remesh.get,
         "rigging": rigging.get,
         "animation": animate.get,
         "retexture": retexture.get,

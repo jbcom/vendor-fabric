@@ -8,9 +8,12 @@ from __future__ import annotations
 
 from typing import Any
 
+import httpx
+
 from extended_data.containers import ExtendedDict, ExtendedString
 
 from vendor_fabric.base import ConnectorBase
+from vendor_fabric.capabilities import capability
 from vendor_fabric.meshy import (
     animate,
     image2image,
@@ -61,6 +64,12 @@ class MeshyConnector(ConnectorBase):
             wait=wait,
         )
 
+    @capability(
+        "generate_image",
+        kind="media",
+        aliases=("text2image_generate",),
+        description="Generate a Meshy image from a text prompt.",
+    )
     def text2image_generate(
         self,
         prompt: str,
@@ -78,7 +87,19 @@ class MeshyConnector(ConnectorBase):
             generate_multi_view=generate_multi_view,
             pose_mode=pose_mode,
             wait=wait,
+            requester=self._meshy_request,
         )
+
+    def _meshy_request(
+        self,
+        method: str,
+        endpoint: str,
+        *,
+        version: str = "v2",
+        **kwargs: Any,
+    ) -> httpx.Response:
+        """Route a functional Meshy endpoint through this connector's credentials."""
+        return self.request(method, f"openapi/{version}/{endpoint}", **kwargs)
 
     def image3d_generate(
         self,

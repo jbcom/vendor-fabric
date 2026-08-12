@@ -14,7 +14,7 @@ from __future__ import annotations
 import threading
 import time
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import Any, cast
 
 import httpx
@@ -159,19 +159,46 @@ def task_payload_from_response(response: httpx.Response, model_type: type[BaseMo
         result = model_type.model_validate(to_builtin(data))
     except ValidationError:
         raise RuntimeError(f"Unexpected API response for {endpoint}: {redact_sensitive_text(data)}") from None
-    return cast(ExtendedDict, extend_data(result.model_dump(mode="json")))
+    return cast(ExtendedDict, extend_data(result.model_dump(mode="json", by_alias=True)))
 
 
-def task_list_from_response(response: httpx.Response, model_type: type[BaseModel], endpoint: str) -> ExtendedList[ExtendedDict]:
+def task_list_from_response(
+    response: httpx.Response, model_type: type[BaseModel], endpoint: str
+) -> ExtendedList[ExtendedDict]:
     """Validate a Meshy task list and return promoted public mappings."""
     data = _decode_response_json(response)
     if not isinstance(data, Sequence) or isinstance(data, (str, bytes, bytearray)):
-        raise TypeError(f"Unexpected API response for {endpoint}: {redact_sensitive_text(data)}")
+        raise RuntimeError(  # noqa: TRY004 -- every invalid provider response has one public exception contract
+            f"Unexpected API response for {endpoint}: {redact_sensitive_text(data)}"
+        )
     try:
-        results = [model_type.model_validate(to_builtin(item)).model_dump(mode="json") for item in data]
+        results = [model_type.model_validate(to_builtin(item)).model_dump(mode="json", by_alias=True) for item in data]
     except ValidationError:
         raise RuntimeError(f"Unexpected API response for {endpoint}: {redact_sensitive_text(data)}") from None
     return cast(ExtendedList[ExtendedDict], extend_data(results))
+
+
+def poll_task(
+    fetch: Callable[[str], ExtendedDict],
+    task_id: str,
+    interval: float = 5.0,
+    timeout: float = 600.0,
+) -> ExtendedDict:
+    """Poll a Meshy task through its endpoint-specific fetch function."""
+    start = time.time()
+    while True:
+        result = fetch(task_id)
+        status = result.get("status")
+        if status == "SUCCEEDED":
+            return result
+        if status == "FAILED":
+            error = result.get("task_error") or result.get("error")
+            raise RuntimeError(task_failure_message(error))
+        if status in {"CANCELED", "EXPIRED"}:
+            raise RuntimeError(f"Task {str(status).title()}")
+        if time.time() - start > timeout:
+            raise TimeoutError(f"Task timed out after {timeout}s")
+        time.sleep(interval)
 
 
 @retry(

@@ -9,19 +9,22 @@ Usage:
 
 from __future__ import annotations
 
-import time
+from collections.abc import Callable, Mapping, Sequence
 
-from collections.abc import Mapping, Sequence
+import httpx
 
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString
 
 from vendor_fabric.meshy import base
-from vendor_fabric.meshy.models import TaskStatus, Text2ImageRequest, Text2ImageResult
+from vendor_fabric.meshy.models import Text2ImageRequest, Text2ImageResult
 
 
-def create(request: Text2ImageRequest) -> ExtendedString:
+Requester = Callable[..., httpx.Response]
+
+
+def create(request: Text2ImageRequest, *, requester: Requester | None = None) -> ExtendedString:
     """Create a text-to-image task and return its task ID."""
-    response = base.request(
+    response = (requester or base.request)(
         "POST",
         "text-to-image",
         version="v1",
@@ -30,9 +33,9 @@ def create(request: Text2ImageRequest) -> ExtendedString:
     return base.task_id_from_response(response)
 
 
-def get(task_id: str) -> ExtendedDict:
+def get(task_id: str, *, requester: Requester | None = None) -> ExtendedDict:
     """Get a text-to-image task."""
-    response = base.request("GET", f"text-to-image/{task_id}", version="v1")
+    response = (requester or base.request)("GET", f"text-to-image/{task_id}", version="v1")
     return base.task_payload_from_response(response, Text2ImageResult, "text-to-image")
 
 
@@ -57,27 +60,16 @@ def list_tasks(
     return base.task_list_from_response(response, Text2ImageResult, "text-to-image")
 
 
-def poll(task_id: str, interval: float = 5.0, timeout: float = 600.0) -> ExtendedDict:
+def poll(
+    task_id: str,
+    interval: float = 5.0,
+    timeout: float = 600.0,
+    *,
+    requester: Requester | None = None,
+) -> ExtendedDict:
     """Poll until the text-to-image task succeeds or reaches a terminal state."""
-    start = time.time()
-    while True:
-        result = get(task_id)
-        status = result.get("status")
-        if status == TaskStatus.SUCCEEDED:
-            return result
-        if status == TaskStatus.FAILED:
-            error = result.get("task_error") or result.get("error")
-            raise RuntimeError(base.task_failure_message(error))
-        if status == TaskStatus.CANCELED:
-            msg = "Task Canceled"
-            raise RuntimeError(msg)
-        if status == TaskStatus.EXPIRED:
-            msg = "Task Expired"
-            raise RuntimeError(msg)
-        if time.time() - start > timeout:
-            msg = f"Task timed out after {timeout}s"
-            raise TimeoutError(msg)
-        time.sleep(interval)
+    fetch = get if requester is None else lambda pending_id: get(pending_id, requester=requester)
+    return base.poll_task(fetch, task_id, interval, timeout)
 
 
 def generate(
@@ -88,6 +80,7 @@ def generate(
     generate_multi_view: bool = False,
     pose_mode: str | None = None,
     wait: bool = True,
+    requester: Requester | None = None,
 ) -> ExtendedDict | ExtendedString:
     """Generate images from text, optionally waiting for the completed task."""
     request = Text2ImageRequest(
@@ -97,10 +90,10 @@ def generate(
         pose_mode=pose_mode,
         aspect_ratio=aspect_ratio,
     )
-    task_id = create(request)
+    task_id = create(request) if requester is None else create(request, requester=requester)
     if not wait:
         return task_id
-    return poll(str(task_id))
+    return poll(str(task_id)) if requester is None else poll(str(task_id), requester=requester)
 
 
 def download_first(result: Mapping[str, object], output_path: str) -> int:

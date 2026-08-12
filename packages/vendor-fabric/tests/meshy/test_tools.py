@@ -70,6 +70,24 @@ class TestText2ImageGenerate:
         assert result["status"] == "SUCCEEDED"
         assert result["image_url"] == "image.png"
 
+    @pytest.mark.parametrize(
+        ("task_type", "getter"),
+        [
+            ("image-to-image", "vendor_fabric.meshy.image2image.get"),
+            ("multi-image-to-3d", "vendor_fabric.meshy.multiimage3d.get"),
+            ("remesh", "vendor_fabric.meshy.remesh.get"),
+        ],
+    )
+    def test_check_task_status_supports_every_current_async_family(self, task_type: str, getter: str):
+        from vendor_fabric.meshy.tools import check_task_status
+
+        result_payload = extend_data({"id": "task-123", "status": "IN_PROGRESS", "progress": 40})
+        with patch(getter, return_value=result_payload) as get:
+            result = check_task_status("task-123", task_type)
+
+        get.assert_called_once_with("task-123")
+        assert result["status"] == "IN_PROGRESS"
+
 
 class TestToolDefinitions:
     """Tests for TOOL_DEFINITIONS metadata."""

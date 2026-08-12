@@ -11,8 +11,13 @@ import pytest
 
 from extended_data.containers import ExtendedDict, ExtendedString
 
-from vendor_fabric.meshy import text2image
-from vendor_fabric.meshy.models import TaskStatus, Text2ImageRequest
+from vendor_fabric.meshy import base, text2image
+from vendor_fabric.meshy.models import (
+    Image2ImageRequest,
+    TaskStatus,
+    Text2ImageRequest,
+    Text3DResult,
+)
 
 
 def _json_response(payload: object) -> MagicMock:
@@ -23,15 +28,15 @@ def _json_response(payload: object) -> MagicMock:
 
 
 @pytest.mark.parametrize(
-    "payload",
+    ("payload", "expected"),
     [
-        {"result": "result-task"},
-        {"id": "id-task"},
-        {"task_id": "task-id-task"},
-        {"result": {"id": "nested-result-task"}},
+        ({"result": "result-task"}, "result-task"),
+        ({"id": "id-task"}, "id-task"),
+        ({"task_id": "task-id-task"}, "task-id-task"),
+        ({"result": {"id": "nested-result-task"}}, "nested-result-task"),
     ],
 )
-def test_create_accepts_documented_meshy_task_id_shapes(payload: dict[str, object]) -> None:
+def test_create_accepts_documented_meshy_task_id_shapes(payload: dict[str, object], expected: str) -> None:
     """Create responses vary across Meshy endpoints and must retain their real task ID."""
     request = Text2ImageRequest(prompt="a painted duck", ai_model="nano-banana")
 
@@ -39,7 +44,7 @@ def test_create_accepts_documented_meshy_task_id_shapes(payload: dict[str, objec
         task_id = text2image.create(request)
 
     assert isinstance(task_id, ExtendedString)
-    assert str(task_id) in {"result-task", "id-task", "task-id-task", "nested-result-task"}
+    assert str(task_id) == expected
     api_request.assert_called_once_with(
         "POST",
         "text-to-image",
@@ -163,8 +168,8 @@ def test_poll_returns_succeeded_task_and_times_out_pending_task(monkeypatch: pyt
         "get",
         lambda task_id: ExtendedDict({"id": task_id, "status": TaskStatus.PENDING, "image_urls": []}),
     )
-    monkeypatch.setattr(text2image.time, "time", lambda: next(times))
-    monkeypatch.setattr(text2image.time, "sleep", MagicMock())
+    monkeypatch.setattr(text2image.base.time, "time", lambda: next(times))
+    monkeypatch.setattr(text2image.base.time, "sleep", MagicMock())
     with pytest.raises(TimeoutError, match="Task timed out after 1s"):
         text2image.poll("image-task", interval=0, timeout=1)
 
@@ -220,3 +225,36 @@ def test_delete_task_uses_documented_endpoint() -> None:
         text2image.delete("image-task")
 
     api_request.assert_called_once_with("DELETE", "text-to-image/image-task", version="v1")
+
+
+@pytest.mark.parametrize("request_type", [Text2ImageRequest, Image2ImageRequest])
+def test_multi_view_rejects_aspect_ratio_before_request(request_type) -> None:
+    kwargs: dict[str, object] = {
+        "prompt": "painted duck",
+        "generate_multi_view": True,
+        "aspect_ratio": "1:1",
+    }
+    if request_type is Image2ImageRequest:
+        kwargs["reference_image_urls"] = ["source.png"]
+    with pytest.raises(ValueError, match="aspect_ratio"):
+        request_type(**kwargs)
+
+
+def test_validated_task_payloads_preserve_wire_aliases() -> None:
+    payload = {
+        "id": "model-task",
+        "status": "SUCCEEDED",
+        "created_at": 1700000000,
+        "model_urls": {"3mf": "https://assets.meshy.ai/model.3mf"},
+    }
+    one = base.task_payload_from_response(_json_response(payload), Text3DResult, "text-to-3d")
+    many = base.task_list_from_response(_json_response([payload]), Text3DResult, "text-to-3d")
+
+    assert one["model_urls"]["3mf"] == "https://assets.meshy.ai/model.3mf"
+    assert "three_mf" not in one["model_urls"]
+    assert many[0]["model_urls"]["3mf"] == "https://assets.meshy.ai/model.3mf"
+
+
+def test_task_list_invalid_top_level_shape_uses_public_runtime_error() -> None:
+    with pytest.raises(RuntimeError, match="Unexpected API response for text-to-3d"):
+        base.task_list_from_response(_json_response({"result": []}), Text3DResult, "text-to-3d")

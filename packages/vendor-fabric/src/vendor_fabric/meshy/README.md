@@ -62,7 +62,9 @@ base.download(result["image_urls"][0], "art/forest-shrine.png")
 default `wait=True`, it polls `GET /openapi/v1/text-to-image/{id}` until the
 task succeeds and returns the complete extended task payload. Failed,
 canceled, and expired tasks raise a redacted `RuntimeError`; HTTP errors use
-`MeshyAPIError`, and rate-limit/server retries use `RateLimitError`.
+`MeshyAPIError`. HTTP 429 honors `Retry-After`, and 429, 5xx, and timeout
+failures enter the shared five-attempt exponential retry policy through
+`RateLimitError`.
 
 For a persisted sidecar manifest plus automatic download of
 `image_urls[0]`, use the job helper:

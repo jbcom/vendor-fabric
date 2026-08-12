@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Any
+from typing import Any, Self
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class TaskStatus(StrEnum):
@@ -47,6 +47,13 @@ class Text2ImageRequest(BaseModel):
     pose_mode: str | None = None
     aspect_ratio: str | None = None
 
+    @model_validator(mode="after")
+    def validate_multi_view_aspect_ratio(self) -> Self:
+        """Reject the Meshy API's mutually exclusive image layout options."""
+        if self.generate_multi_view and self.aspect_ratio is not None:
+            raise ValueError("aspect_ratio cannot be set when generate_multi_view is true")
+        return self
+
 
 class Text2ImageResult(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -72,6 +79,13 @@ class Image2ImageRequest(BaseModel):
     reference_image_urls: list[str]
     generate_multi_view: bool = False
     aspect_ratio: str | None = None
+
+    @model_validator(mode="after")
+    def validate_multi_view_aspect_ratio(self) -> Self:
+        """Reject the Meshy API's mutually exclusive image layout options."""
+        if self.generate_multi_view and self.aspect_ratio is not None:
+            raise ValueError("aspect_ratio cannot be set when generate_multi_view is true")
+        return self
 
 
 class Image2ImageResult(Text2ImageResult):

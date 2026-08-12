@@ -79,6 +79,17 @@ class ImageGenerator:
         with open(manifest_path, "w") as file:
             file.write(wrap_raw_data_for_export(manifest.to_dict(), allow_encoding="json", indent_2=True))
 
+    def _validated_destination(self, output_path: str) -> tuple[Path, str]:
+        """Resolve a relative output path without allowing escape from the output root."""
+        requested = Path(output_path)
+        if requested.is_absolute():
+            raise ValueError("output_path must be relative to output_root")
+        root = self.output_root.resolve()
+        destination = (root / requested).resolve()
+        if not destination.is_relative_to(root):
+            raise ValueError("output_path must stay inside output_root")
+        return destination, destination.relative_to(root).as_posix()
+
     def generate_image(
         self,
         prompt: str,
@@ -91,6 +102,7 @@ class ImageGenerator:
         wait: bool = True,
     ) -> ExtendedDict:
         """Generate and download the first text-to-image result with a sidecar manifest."""
+        destination, requested_path = self._validated_destination(output_path)
         task_id = text2image.create(
             Text2ImageRequest(
                 ai_model=ai_model,
@@ -104,7 +116,7 @@ class ImageGenerator:
             prompt=prompt,
             ai_model=ai_model,
             aspect_ratio=aspect_ratio,
-            requested_path=output_path,
+            requested_path=requested_path,
             task_id=str(task_id),
             status=TaskStatus.PENDING.value,
         )
@@ -114,11 +126,10 @@ class ImageGenerator:
             return manifest.to_dict()
 
         result = text2image.poll(str(task_id))
-        destination = self.output_root / output_path
         text2image.download_first(result, str(destination))
         image_urls = result["image_urls"]
         manifest.status = str(result["status"])
-        manifest.image_path = output_path
+        manifest.image_path = requested_path
         manifest.image_url = str(image_urls[0])
         self._save_manifest(manifest)
         return manifest.to_dict()

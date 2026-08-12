@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import time
-
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString
 
 from vendor_fabric.meshy import base
-from vendor_fabric.meshy.models import MultiImage3DRequest, MultiImage3DResult, TaskStatus
+from vendor_fabric.meshy.models import MultiImage3DRequest, MultiImage3DResult
 
 
 ENDPOINT = "multi-image-to-3d"
@@ -40,19 +38,7 @@ def list_tasks(*, page_num: int = 1, page_size: int = 10, sort_by: str = "-creat
 
 def poll(task_id: str, interval: float = 5.0, timeout: float = 600.0) -> ExtendedDict:
     """Poll until the multi-image-to-3D task reaches a terminal state."""
-    start = time.time()
-    while True:
-        result = get(task_id)
-        status = result.get("status")
-        if status == TaskStatus.SUCCEEDED:
-            return result
-        if status == TaskStatus.FAILED:
-            raise RuntimeError(base.task_failure_message(result.get("task_error") or result.get("error")))
-        if status in {TaskStatus.CANCELED, TaskStatus.EXPIRED}:
-            raise RuntimeError(f"Task {str(status).title()}")
-        if time.time() - start > timeout:
-            raise TimeoutError(f"Task timed out after {timeout}s")
-        time.sleep(interval)
+    return base.poll_task(get, task_id, interval, timeout)
 
 
 def generate(

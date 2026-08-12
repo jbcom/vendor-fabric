@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from extended_data.containers import ExtendedDict, ExtendedString
 
@@ -72,7 +72,8 @@ def test_meshy_text2image_generate_dispatches_to_text2image_module(monkeypatch) 
     generate = MagicMock(return_value=ExtendedString("image-task-123"))
     monkeypatch.setattr(connector_module.text2image, "generate", generate)
 
-    result = MeshyConnector(api_key="test-key").text2image_generate(
+    connector = MeshyConnector(api_key="test-key")
+    result = connector.text2image_generate(
         "painted forest shrine",
         ai_model="gpt-image-2",
         aspect_ratio="3:2",
@@ -80,14 +81,29 @@ def test_meshy_text2image_generate_dispatches_to_text2image_module(monkeypatch) 
     )
 
     assert result == "image-task-123"
-    generate.assert_called_once_with(
-        "painted forest shrine",
-        ai_model="gpt-image-2",
-        aspect_ratio="3:2",
-        generate_multi_view=False,
-        pose_mode=None,
-        wait=False,
-    )
+    generate.assert_called_once()
+    assert generate.call_args.args == ("painted forest shrine",)
+    assert generate.call_args.kwargs == {
+        "ai_model": "gpt-image-2",
+        "aspect_ratio": "3:2",
+        "generate_multi_view": False,
+        "pose_mode": None,
+        "wait": False,
+        "requester": connector._meshy_request,
+    }
+
+
+def test_meshy_text2image_uses_instance_transport_and_capability_route() -> None:
+    """Connector credentials and generic capability dispatch must reach the same image method."""
+    connector = MeshyConnector(api_key="instance-key")
+    response = MagicMock()
+    with patch.object(connector, "request", return_value=response) as request:
+        assert connector._meshy_request("POST", "text-to-image", version="v1", json={"prompt": "duck"}) is response
+
+    request.assert_called_once_with("POST", "openapi/v1/text-to-image", json={"prompt": "duck"})
+    assert connector._build_headers()["Authorization"] == "Bearer instance-key"
+    assert MeshyConnector.vendor_capability_methods["generate_image"] == "text2image_generate"
+    assert MeshyConnector.vendor_capability_methods["text2image_generate"] == "text2image_generate"
 
 
 def test_meshy_additional_generation_facades_dispatch(monkeypatch) -> None:

@@ -146,8 +146,10 @@ def test_multiimage3d_generate_builds_current_request() -> None:
 
 def test_remesh_helpers_support_task_ids_and_urls() -> None:
     with (
-        patch("vendor_fabric.meshy.remesh.create", side_effect=[ExtendedString("task-remesh"), ExtendedString("url-remesh")])
-        as create,
+        patch(
+            "vendor_fabric.meshy.remesh.create",
+            side_effect=[ExtendedString("task-remesh"), ExtendedString("url-remesh")],
+        ) as create,
         patch("vendor_fabric.meshy.remesh.poll", return_value=ExtendedDict({"status": "SUCCEEDED"})) as poll,
     ):
         task_result = remesh.apply("model-task", topology="quad", target_polycount=1200)
