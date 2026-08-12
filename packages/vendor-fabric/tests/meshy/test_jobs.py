@@ -6,12 +6,15 @@ import json
 
 from unittest.mock import patch
 
+import pytest
+
 from extended_data.containers import ExtendedDict, ExtendedList, ExtendedString, extend_data
 
 from vendor_fabric.meshy import jobs as jobs_module
 from vendor_fabric.meshy.jobs import (
     AssetGenerator,
     AssetManifest,
+    ImageGenerator,
     example_character_spec,
     example_environment_spec,
     example_prop_spec,
@@ -313,6 +316,77 @@ class TestAssetGenerator:
             assert isinstance(manifests, ExtendedList)
             assert len(manifests) == 1
             assert manifests[0]["asset_id"] == "success-001"
+
+
+class TestImageGenerator:
+    """Tests for persisted text-to-image generation jobs."""
+
+    def test_generate_image_downloads_first_url_and_persists_manifest(self, temp_dir):
+        completed = ExtendedDict(
+            {
+                "id": "image-task",
+                "status": TaskStatus.SUCCEEDED,
+                "image_urls": ["https://assets.meshy.ai/first.png", "https://assets.meshy.ai/second.png"],
+            }
+        )
+        with (
+            patch("vendor_fabric.meshy.jobs.text2image.create", return_value=ExtendedString("image-task")) as create,
+            patch("vendor_fabric.meshy.jobs.text2image.poll", return_value=completed) as poll,
+            patch("vendor_fabric.meshy.jobs.base.download", return_value=123) as download,
+        ):
+            manifest = ImageGenerator(output_root=str(temp_dir)).generate_image(
+                "painted forest shrine",
+                output_path="art/shrine.png",
+                ai_model="gpt-image-2",
+                aspect_ratio="3:2",
+            )
+
+        assert manifest["task_id"] == "image-task"
+        assert manifest["status"] == "SUCCEEDED"
+        assert manifest["image_path"] == "art/shrine.png"
+        request = create.call_args.args[0]
+        assert request.prompt == "painted forest shrine"
+        assert request.ai_model == "gpt-image-2"
+        assert request.aspect_ratio == "3:2"
+        poll.assert_called_once_with("image-task")
+        download.assert_called_once_with(
+            "https://assets.meshy.ai/first.png",
+            str((temp_dir / "art/shrine.png").resolve()),
+        )
+
+        manifest_path = temp_dir / "art/shrine.png.manifest.json"
+        assert manifest_path.exists()
+        saved = json.loads(manifest_path.read_text())
+        assert saved == manifest.as_builtin()
+
+    def test_generate_image_without_wait_persists_pending_resume_data(self, temp_dir):
+        with (
+            patch("vendor_fabric.meshy.jobs.text2image.create", return_value=ExtendedString("image-task")),
+            patch("vendor_fabric.meshy.jobs.text2image.poll") as poll,
+            patch("vendor_fabric.meshy.jobs.base.download") as download,
+        ):
+            manifest = ImageGenerator(output_root=str(temp_dir)).generate_image(
+                "painted forest shrine",
+                output_path="art/shrine.png",
+                wait=False,
+            )
+
+        assert manifest["status"] == "PENDING"
+        assert manifest["image_path"] is None
+        assert (temp_dir / "art/shrine.png.manifest.json").exists()
+        poll.assert_not_called()
+        download.assert_not_called()
+
+    @pytest.mark.parametrize("output_path", ["/tmp/escaped.png", "../escaped.png", "art/../../escaped.png"])
+    def test_generate_image_rejects_paths_outside_output_root_before_spending_credits(self, temp_dir, output_path):
+        with patch("vendor_fabric.meshy.jobs.text2image.create") as create:
+            with pytest.raises(ValueError, match="output_path"):
+                ImageGenerator(output_root=str(temp_dir)).generate_image(
+                    "painted forest shrine",
+                    output_path=output_path,
+                )
+
+        create.assert_not_called()
 
 
 class TestExampleSpecs:

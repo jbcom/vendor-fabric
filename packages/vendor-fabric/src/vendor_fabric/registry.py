@@ -168,7 +168,7 @@ BUILTIN_CONNECTORS: dict[str, BuiltinConnectorSpec] = {
         "MeshyConnector",
         "meshy",
         category="media",
-        capabilities=("3d-generation", "animation", "rigging", "retexturing", "metadata"),
+        capabilities=("2d-generation", "3d-generation", "animation", "rigging", "retexturing", "metadata"),
     ),
     "anthropic": BuiltinConnectorSpec(
         "vendor_fabric.anthropic",

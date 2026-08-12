@@ -6,7 +6,7 @@ Agent framework wrappers belong in agentic-fabric.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 from extended_data.containers import ExtendedDict, extend_data
@@ -32,6 +32,16 @@ class Text3dGenerateSchema(BaseModel):
         True,
         description="Enable PBR materials. API defaults to False; we default to True for better realistic renders. Set False for sculpture.",
     )
+
+
+class Text2ImageGenerateSchema(BaseModel):
+    """Pydantic schema for the text2image_generate tool."""
+
+    prompt: str = Field(..., description="Detailed text description of the image")
+    ai_model: str = Field("nano-banana", description="Meshy text-to-image model ID")
+    aspect_ratio: str | None = Field(None, description="Model-supported output aspect ratio")
+    generate_multi_view: bool = Field(False, description="Generate multiple views of the subject")
+    pose_mode: str | None = Field(None, description="Optional a-pose or t-pose character mode")
 
 
 class Image3dGenerateSchema(BaseModel):
@@ -80,7 +90,10 @@ class CheckTaskStatusSchema(BaseModel):
     task_id: str = Field(..., description="The Meshy task ID")
     task_type: str = Field(
         "text-to-3d",
-        description="Task type (text-to-3d, rigging, animation, retexture)",
+        description=(
+            "Task type (text-to-image, image-to-image, text-to-3d, image-to-3d, "
+            "multi-image-to-3d, remesh, rigging, animation, retexture)"
+        ),
     )
 
 
@@ -189,6 +202,40 @@ def text3d_generate(
         {
             "task_id": _result_get(result, "id"),
             **fields,
+        }
+    )
+
+
+def text2image_generate(
+    prompt: str,
+    ai_model: str = "nano-banana",
+    aspect_ratio: str | None = None,
+    generate_multi_view: bool = False,
+    pose_mode: str | None = None,
+) -> ExtendedDict:
+    """Generate an image from text and expose the first downloadable URL."""
+    from vendor_fabric.meshy import text2image
+
+    result = text2image.generate(
+        prompt,
+        ai_model=ai_model,
+        aspect_ratio=aspect_ratio,
+        generate_multi_view=generate_multi_view,
+        pose_mode=pose_mode,
+        wait=True,
+    )
+    if isinstance(result, str):
+        return extend_data({"task_id": result, "status": "pending", "image_url": None})
+
+    image_urls = _result_get(result, "image_urls", [])
+    image_url = None
+    if isinstance(image_urls, Sequence) and not isinstance(image_urls, (str, bytes, bytearray)) and image_urls:
+        image_url = image_urls[0]
+    return extend_data(
+        {
+            "task_id": _result_get(result, "id"),
+            "status": _result_status(result),
+            "image_url": image_url,
         }
     )
 
@@ -403,17 +450,31 @@ def check_task_status(task_id: str, task_type: str = "text-to-3d") -> ExtendedDi
 
     Args:
         task_id: The Meshy task ID
-        task_type: Task type (text-to-3d, rigging, animation, retexture)
+        task_type: Any supported asynchronous Meshy task family.
 
     Returns:
         Dict with status, progress, and model_url if complete
     """
-    from vendor_fabric.meshy import animate, image3d, retexture, rigging, text3d
+    from vendor_fabric.meshy import (
+        animate,
+        image2image,
+        image3d,
+        multiimage3d,
+        remesh,
+        retexture,
+        rigging,
+        text2image,
+        text3d,
+    )
 
     # Call the appropriate get function based on task type
     get_funcs: dict[str, Callable[[str], Any]] = {
+        "text-to-image": text2image.get,
+        "image-to-image": image2image.get,
         "text-to-3d": text3d.get,
         "image-to-3d": image3d.get,
+        "multi-image-to-3d": multiimage3d.get,
+        "remesh": remesh.get,
         "rigging": rigging.get,
         "animation": animate.get,
         "retexture": retexture.get,
@@ -436,12 +497,18 @@ def check_task_status(task_id: str, task_type: str = "text-to-3d") -> ExtendedDi
     if model_url is None:
         model_url = _result_get(result, "glb_url")
 
+    image_url = None
+    image_urls = _result_get(result, "image_urls", [])
+    if isinstance(image_urls, Sequence) and not isinstance(image_urls, (str, bytes, bytearray)) and image_urls:
+        image_url = image_urls[0]
+
     return extend_data(
         {
             "task_id": task_id,
             "status": status,
             "progress": _result_get(result, "progress"),
             "model_url": model_url,
+            "image_url": image_url,
         }
     )
 
@@ -479,6 +546,14 @@ def get_animation(animation_id: int) -> ExtendedDict:
 
 # Capability definitions with framework-agnostic metadata.
 TOOL_DEFINITIONS = [
+    {
+        "func": text2image_generate,
+        "name": "text2image_generate",
+        "description": (
+            "Generate an image from a text description using Meshy AI. Returns the task ID, status, and first image URL."
+        ),
+        "schema": Text2ImageGenerateSchema,
+    },
     {
         "func": text3d_generate,
         "name": "text3d_generate",
@@ -574,5 +649,6 @@ __all__ = [
     "retexture_model",
     "rig_model",
     # Raw functions (for direct use or custom wrappers)
+    "text2image_generate",
     "text3d_generate",
 ]
