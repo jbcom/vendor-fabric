@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -18,9 +20,15 @@ from vendor_fabric.cli import cmd_call, cmd_info, cmd_list, cmd_methods, main
 class ExampleConnector:
     """Tiny connector shell for CLI call-surface tests."""
 
-    def fetch(self, enabled: bool = False, count: int = 0) -> ExtendedDict:
+    def fetch(
+        self,
+        enabled: bool = False,
+        count: int = 0,
+        metadata: dict[str, object] | None = None,
+        email: str | None = None,
+    ) -> ExtendedDict:
         """Fetch example data."""
-        return ExtendedDict({"enabled": enabled, "count": count})
+        return ExtendedDict({"enabled": enabled, "count": count, "metadata": metadata, "email": email})
 
     def secrets(self) -> ExtendedDict:
         """Fetch example sensitive data."""
@@ -33,6 +41,10 @@ class ExampleConnector:
                 "ok": True,
             }
         )
+
+    def update_password(self, password: str) -> ExtendedDict:
+        """Update an example password."""
+        return ExtendedDict({"updated": bool(password)})
 
 
 def test_cli_list() -> None:
@@ -144,6 +156,67 @@ def test_cli_methods_json_lists_public_methods() -> None:
     assert "request_data" not in method_names
 
 
+def test_readme_documents_every_connector_command() -> None:
+    """The package README should enumerate the complete CLI data surface."""
+    readme_lines = (Path(__file__).parents[1] / "README.md").read_text(encoding="utf-8").splitlines()
+    command_section = readme_lines[readme_lines.index("### Connector commands") :]
+
+    for connector_name in sorted(cli_module.BUILTIN_CONNECTORS):
+        row_prefix = f"| `{connector_name}` |"
+        command_row = next(line for line in command_section if line.startswith(row_prefix))
+        connector_class = cli_module._surface_connector_class(connector_name)
+        missing = [
+            method_name
+            for method_name, _ in cli_module.connector_data_methods(connector_class)
+            if f"`{method_name}`" not in command_row
+        ]
+        assert missing == [], f"{connector_name} commands missing from README: {missing}"
+
+
+def test_cli_methods_include_argument_signatures_without_installed_extra(capsys) -> None:
+    """Built-in method discovery should not require its optional SDK extra."""
+    with patch("vendor_fabric.cli.get_connector_class", side_effect=ImportError("missing github SDK")):
+        exit_code = main(["methods", "github", "--json"])
+
+    assert exit_code == 0
+    methods = json.loads(capsys.readouterr().out)
+    list_repositories = next(method for method in methods if method["name"] == "list_repositories")
+    assert "type_filter" in list_repositories["signature"]
+    assert "include_branches" in list_repositories["signature"]
+
+
+def test_cli_credentials_reports_names_without_values(monkeypatch, capsys) -> None:
+    """Credential discovery should never inspect or print credential values."""
+    monkeypatch.setenv("GITHUB_TOKEN", "private-token-value")
+    monkeypatch.setenv("GITHUB_OWNER", "example-org")
+
+    exit_code = main(["credentials", "github", "--json"])
+
+    assert exit_code == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload == [
+        {
+            "connector": "github",
+            "required": ["GITHUB_TOKEN", "GITHUB_OWNER"],
+            "optional": ["GITHUB_REPO", "GITHUB_BRANCH"],
+            "notes": [],
+        }
+    ]
+    assert "private-token-value" not in json.dumps(payload)
+    assert "example-org" not in json.dumps(payload)
+
+
+def test_cli_credentials_lists_aws_default_chain(capsys) -> None:
+    """AWS credential help should preserve the boto3 default-chain convention."""
+    exit_code = main(["credentials", "aws", "--json"])
+
+    assert exit_code == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload[0]["required"] == []
+    assert payload[0]["optional"] == ["EXECUTION_ROLE_ARN", "ROLE_SESSION_NAME"]
+    assert payload[0]["notes"] == ["Uses the standard boto3 credential and config chain."]
+
+
 def test_cli_call_parses_dynamic_keyword_arguments() -> None:
     """Call command accepts documented --arg value pairs after the method."""
     connector = MagicMock()
@@ -179,6 +252,216 @@ def test_cli_call_accepts_json_flag_after_method() -> None:
     assert exit_code == 0
     connector.fetch.assert_called_once_with()
     assert '"ok": true' in mock_write.call_args.args[0]
+
+
+@pytest.mark.parametrize(
+    "connector_name",
+    ["anthropic", "aws", "cursor", "github", "google", "jules", "meshy", "slack", "vault", "zoom"],
+)
+def test_cli_provider_alias_calls_connector_method(connector_name, monkeypatch) -> None:
+    """Each built-in connector name should be a direct alias for call."""
+    monkeypatch.setenv("GITHUB_OWNER", "example-org")
+    connector = MagicMock()
+    connector.fetch.return_value = {"ok": True}
+
+    with (
+        patch("vendor_fabric.cli.get_connector_class", return_value=ExampleConnector),
+        patch("vendor_fabric.cli.get_connector", return_value=connector),
+        patch("sys.stdout.write") as mock_write,
+    ):
+        exit_code = main([connector_name, "fetch", "--enabled", "true"])
+
+    assert exit_code == 0
+    connector.fetch.assert_called_once_with(enabled=True)
+    assert '"ok": true' in mock_write.call_args.args[0]
+
+
+def test_cli_routes_secrets_sync_through_unified_entrypoint() -> None:
+    """The unified CLI should delegate SecretSync arguments unchanged."""
+    with patch("vendor_fabric.secrets_sync.cli.main", return_value=2) as secrets_main:
+        exit_code = main(["secrets-sync", "pipeline", "--config", "pipeline.yaml", "--dry-run"])
+
+    assert exit_code == 2
+    secrets_main.assert_called_once_with(["pipeline", "--config", "pipeline.yaml", "--dry-run"])
+
+
+def test_cli_routes_secrets_sync_help_through_standalone_parser() -> None:
+    """Unified help should retain the standalone SecretSync command help."""
+    with patch("vendor_fabric.secrets_sync.cli.main", return_value=0) as secrets_main:
+        exit_code = main(["secrets-sync", "--help"])
+
+    assert exit_code == 0
+    secrets_main.assert_called_once_with(["--help"])
+
+
+def test_cli_call_reads_argument_from_environment(monkeypatch) -> None:
+    """Method payloads can be sourced from an environment variable."""
+    monkeypatch.setenv("EXAMPLE_METADATA", '{"service":{"name":"api"}}')
+    connector = MagicMock()
+    connector.fetch.return_value = {"ok": True}
+    args = argparse.Namespace(
+        connector="example",
+        method="fetch",
+        extra=["--metadata-env", "EXAMPLE_METADATA"],
+        json=False,
+    )
+
+    with (
+        patch("vendor_fabric.cli.get_connector_class", return_value=ExampleConnector),
+        patch("vendor_fabric.cli.get_connector", return_value=connector),
+        patch("sys.stdout.write"),
+    ):
+        exit_code = cmd_call(args)
+
+    assert exit_code == 0
+    connector.fetch.assert_called_once_with(metadata={"service": {"name": "api"}})
+
+
+def test_cli_call_reads_argument_from_file(tmp_path) -> None:
+    """Method payloads can be sourced from a file."""
+    payload_path = tmp_path / "metadata.json"
+    payload_path.write_text('{"service":{"name":"api"}}')
+    connector = MagicMock()
+    connector.fetch.return_value = {"ok": True}
+    args = argparse.Namespace(
+        connector="example",
+        method="fetch",
+        extra=["--metadata-file", os.fspath(payload_path)],
+        json=False,
+    )
+
+    with (
+        patch("vendor_fabric.cli.get_connector_class", return_value=ExampleConnector),
+        patch("vendor_fabric.cli.get_connector", return_value=connector),
+        patch("sys.stdout.write"),
+    ):
+        exit_code = cmd_call(args)
+
+    assert exit_code == 0
+    connector.fetch.assert_called_once_with(metadata={"service": {"name": "api"}})
+
+
+def test_cli_call_reads_sensitive_argument_from_stdin() -> None:
+    """Sensitive values can be supplied without placing them in argv."""
+    connector = MagicMock()
+    connector.update_password.return_value = {"updated": True}
+    args = argparse.Namespace(
+        connector="example",
+        method="update_password",
+        extra=["--password-stdin"],
+        json=False,
+    )
+
+    with (
+        patch("vendor_fabric.cli.get_connector_class", return_value=ExampleConnector),
+        patch("vendor_fabric.cli.get_connector", return_value=connector),
+        patch("sys.stdin.read", return_value="safely-piped-value\n"),
+        patch("sys.stdout.write"),
+    ):
+        exit_code = cmd_call(args)
+
+    assert exit_code == 0
+    connector.update_password.assert_called_once_with(password="safely-piped-value")
+
+
+def test_cli_call_rejects_sensitive_literal_argument() -> None:
+    """Sensitive values must not be accepted directly from shell argv."""
+    args = argparse.Namespace(
+        connector="example",
+        method="update_password",
+        extra=["--password", "visible-in-history"],
+        json=False,
+    )
+
+    with (
+        patch("vendor_fabric.cli.get_connector_class", return_value=ExampleConnector),
+        patch("vendor_fabric.cli.get_connector") as get_connector_mock,
+        patch("sys.stderr.write") as mock_write,
+    ):
+        exit_code = cmd_call(args)
+
+    assert exit_code == 1
+    get_connector_mock.assert_not_called()
+    output = mock_write.call_args.args[0]
+    assert "visible-in-history" not in output
+    assert "--password-env" in output
+    assert "--password-file" in output
+    assert "--password-stdin" in output
+
+
+def test_cli_call_rejects_unexpected_positional_argument() -> None:
+    """Stray positional values should fail instead of being silently ignored."""
+    args = argparse.Namespace(connector="example", method="fetch", extra=["unexpected"], json=False)
+
+    with (
+        patch("vendor_fabric.cli.get_connector_class", return_value=ExampleConnector),
+        patch("vendor_fabric.cli.get_connector") as get_connector_mock,
+        patch("sys.stderr.write") as mock_write,
+    ):
+        exit_code = cmd_call(args)
+
+    assert exit_code == 1
+    get_connector_mock.assert_not_called()
+    assert "Unexpected positional argument" in mock_write.call_args.args[0]
+
+
+def test_cli_call_validates_method_arguments_before_connector_creation() -> None:
+    """Missing required method arguments should produce a CLI usage error."""
+    args = argparse.Namespace(connector="example", method="update_password", extra=[], json=False)
+
+    with (
+        patch("vendor_fabric.cli.get_connector_class", return_value=ExampleConnector),
+        patch("vendor_fabric.cli.get_connector") as get_connector_mock,
+        patch("sys.stderr.write") as mock_write,
+    ):
+        exit_code = cmd_call(args)
+
+    assert exit_code == 1
+    get_connector_mock.assert_not_called()
+    assert "password" in mock_write.call_args.args[0]
+
+
+def test_cli_call_sources_github_connector_configuration_from_environment(monkeypatch) -> None:
+    """GitHub's required owner should follow the existing fabric env pattern."""
+    monkeypatch.setenv("GITHUB_OWNER", "example-org")
+    monkeypatch.setenv("GITHUB_REPO", "example-repo")
+    monkeypatch.setenv("GITHUB_BRANCH", "develop")
+    monkeypatch.setenv("GITHUB_TOKEN", "must-not-be-forwarded")
+    connector = MagicMock()
+    connector.fetch.return_value = {"ok": True}
+    args = argparse.Namespace(connector="github", method="fetch", extra=[], json=False)
+
+    with (
+        patch("vendor_fabric.cli.get_connector_class", return_value=ExampleConnector),
+        patch("vendor_fabric.cli.get_connector", return_value=connector) as get_connector_mock,
+        patch("sys.stdout.write"),
+    ):
+        exit_code = cmd_call(args)
+
+    assert exit_code == 0
+    get_connector_mock.assert_called_once_with(
+        "github",
+        github_owner="example-org",
+        github_repo="example-repo",
+        github_branch="develop",
+    )
+
+
+def test_cli_call_requires_github_owner_environment(monkeypatch) -> None:
+    """GitHub calls should explain the required non-secret connector context."""
+    monkeypatch.delenv("GITHUB_OWNER", raising=False)
+    args = argparse.Namespace(connector="github", method="fetch", extra=[], json=False)
+
+    with (
+        patch("vendor_fabric.cli.get_connector_class", return_value=ExampleConnector),
+        patch("vendor_fabric.cli.get_connector") as get_connector_mock,
+        patch("sys.stderr.write") as mock_write,
+    ):
+        exit_code = cmd_call(args)
+
+    assert exit_code == 1
+    get_connector_mock.assert_not_called()
+    assert "GITHUB_OWNER" in mock_write.call_args.args[0]
 
 
 def test_cli_call_serializes_extended_containers_as_data() -> None:
