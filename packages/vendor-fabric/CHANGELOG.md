@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.0](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.2.0...vendor-fabric-v2.3.0) (2026-08-22)
+
+
+### Features
+
+* unify vendor connector CLI ([adaf679](https://github.com/jbcom/vendor-fabric/commit/adaf6792d5493adc5cc46bdfbcdfd6337ceda103))
+
 ## [2.2.0](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.1.5...vendor-fabric-v2.2.0) (2026-08-12)
 
 
