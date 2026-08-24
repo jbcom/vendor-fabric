@@ -98,10 +98,51 @@ jobs:
         with:
           fail-on-severity: high
 
+  sonar:
+    name: SonarQube Cloud
+    if: >
+      github.event_name != 'pull_request_target' &&
+      (github.event_name != 'pull_request' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.11.19"
+          enable-cache: true
+      - run: uv sync --all-packages --all-extras --dev
+      - name: Verify SonarQube Cloud credentials
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: test -n "$SONAR_TOKEN"
+      - name: Create coverage report for SonarQube Cloud
+        run: >-
+          uv run pytest packages/vendor-fabric/tests packages/pytest-vendor-fabric/tests
+          --cov=vendor_fabric --cov=pytest_vendor_fabric --cov-report=xml:coverage.xml
+      - name: Analyze code and wait for the quality gate
+        uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8.2.1
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >-
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.timeout=300
+
   gate:
     name: gate
     if: always() && github.event_name != 'pull_request_target'
-    needs: [test, quality, dependency-review]
+    needs: [test, quality, dependency-review, sonar]
     runs-on: ubuntu-latest
     permissions: {}
     steps:
@@ -111,4 +152,7 @@ jobs:
           test "${{ needs.quality.result }}" = success
           if [ "${{ github.event_name }}" = pull_request ]; then
             test "${{ needs.dependency-review.result }}" = success
+          fi
+          if [ "${{ github.event_name }}" != pull_request ] || { [ "${{ github.event.pull_request.head.repo.full_name }}" = "${{ github.repository }}" ] && [ "${{ github.event.pull_request.user.login }}" != 'dependabot[bot]' ]; }; then
+            test "${{ needs.sonar.result }}" = success
           fi
