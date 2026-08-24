@@ -100,7 +100,7 @@ jobs:
 
   gate:
     name: gate
-    if: github.event_name != 'pull_request_target'
+    if: always() && github.event_name != 'pull_request_target'
     needs: [test, quality, dependency-review]
     runs-on: ubuntu-latest
     permissions: {}
@@ -109,4 +109,6 @@ jobs:
         run: |
           test "${{ needs.test.result }}" = success
           test "${{ needs.quality.result }}" = success
-          test "${{ needs.dependency-review.result }}" = success
+          if [ "${{ github.event_name }}" = pull_request ]; then
+            test "${{ needs.dependency-review.result }}" = success
+          fi
