@@ -102,7 +102,9 @@ jobs:
     name: SonarQube Cloud
     if: >
       github.event_name != 'pull_request_target' &&
-      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+      (github.event_name != 'pull_request' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -151,6 +153,6 @@ jobs:
           if [ "${{ github.event_name }}" = pull_request ]; then
             test "${{ needs.dependency-review.result }}" = success
           fi
-          if [ "${{ github.event_name }}" != pull_request ] || [ "${{ github.event.pull_request.head.repo.full_name }}" = "${{ github.repository }}" ]; then
+          if [ "${{ github.event_name }}" != pull_request ] || { [ "${{ github.event.pull_request.head.repo.full_name }}" = "${{ github.repository }}" ] && [ "${{ github.event.pull_request.user.login }}" != 'dependabot[bot]' ]; }; then
             test "${{ needs.sonar.result }}" = success
           fi
