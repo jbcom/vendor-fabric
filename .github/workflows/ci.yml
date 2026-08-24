@@ -120,6 +120,10 @@ jobs:
           version: "0.11.19"
           enable-cache: true
       - run: uv sync --all-packages --all-extras --dev
+      - name: Verify SonarQube Cloud credentials
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: test -n "$SONAR_TOKEN"
       - name: Create coverage report for SonarQube Cloud
         run: >-
           uv run pytest packages/vendor-fabric/tests packages/pytest-vendor-fabric/tests
