@@ -13,10 +13,13 @@ SOURCE = ROOT / "packages/vendor-fabric/src/vendor_fabric"
 OUTPUT = ROOT / "docs/reference/api.md"
 
 
-def public_members(path: Path) -> list[tuple[str, str, str]]:
+def public_members(path: Path) -> list[tuple[str, str, str, str]]:
     """Return public classes and functions declared directly by one module."""
-    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    members: list[tuple[str, str, str]] = []
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    except (OSError, UnicodeDecodeError, SyntaxError) as error:
+        raise RuntimeError(f"Unable to parse public API source {path}: {error}") from error
+    members: list[tuple[str, str, str, str]] = []
     for node in tree.body:
         if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and not node.name.startswith("_"):
             kind = "class" if isinstance(node, ast.ClassDef) else "function"
@@ -24,7 +27,7 @@ def public_members(path: Path) -> list[tuple[str, str, str]]:
             if not isinstance(node, ast.ClassDef):
                 signature = ast.unparse(node.args)
             summary = (ast.get_docstring(node) or "No module-local docstring is available.").split("\n", 1)[0]
-            members.append((kind, node.name, f"{signature}|{summary}"))
+            members.append((kind, node.name, signature, summary))
     return members
 
 
@@ -57,8 +60,7 @@ def render() -> str:
             continue
         name = module_name(path)
         lines.extend([f"## `{name}`", ""])
-        for kind, member, details in members:
-            signature, summary = details.split("|", 1)
+        for kind, member, signature, summary in members:
             if kind == "class":
                 lines.append(f"### class `{member}`")
             else:
@@ -72,7 +74,10 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true", help="fail if the committed reference is stale")
     args = parser.parse_args()
-    content = render()
+    try:
+        content = render()
+    except RuntimeError as error:
+        raise SystemExit(str(error)) from error
     if args.check:
         return 0 if OUTPUT.is_file() and OUTPUT.read_text(encoding="utf-8") == content else 1
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)

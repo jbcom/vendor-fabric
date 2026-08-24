@@ -18,17 +18,25 @@ REQUIRED = (
 )
 
 
+def read_output(path: str) -> str:
+    """Read a generated text file while retaining a useful build failure."""
+    try:
+        return (DIST / path).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as error:
+        raise SystemExit(f"Unable to read Sourcey output {path}: {error}") from error
+
+
 def main() -> int:
     """Fail for absent context exports, API reference, or repository-owned assets."""
     missing = [path for path in REQUIRED if not (DIST / path).is_file()]
     if missing:
         raise SystemExit(f"Sourcey output is incomplete: {', '.join(missing)}")
-    homepage = (DIST / "index.html").read_text(encoding="utf-8")
+    homepage = read_output("index.html")
     if 'src="assets/vendor-fabric-hero.png"' not in homepage:
         raise SystemExit("Sourcey homepage does not reference the Vendor Fabric hero asset")
     if 'href="/vendor-fabric/"' not in homepage:
         raise SystemExit("Sourcey homepage is not configured for its production subdirectory")
-    context = (DIST / "llms-full.txt").read_text(encoding="utf-8")
+    context = read_output("llms-full.txt")
     if "Vendor Fabric" not in context or "/vendor-fabric/" not in context or ".rst" in context:
         raise SystemExit("Sourcey context export contains an unexpected documentation graph")
     return 0

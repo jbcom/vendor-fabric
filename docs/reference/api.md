@@ -58,9 +58,9 @@ Pydantic schema for the anthropic_create_message tool.
 
 Pydantic schema for the anthropic_list_models tool.
 
-### `anthropic_create_message(model: str, prompt: str, max_tokens: int=1024, system: str )`
+### `anthropic_create_message(model: str, prompt: str, max_tokens: int=1024, system: str | None=None)`
 
- None=None|Create a message using Anthropic Claude.
+Create a message using Anthropic Claude.
 
 ### `anthropic_list_models()`
 
@@ -74,13 +74,13 @@ AWS connector for boto3 client, resource, and external data operations.
 
 ## `vendor_fabric.aws.codedeploy`
 
-### `get_aws_codedeploy_deployments(application_name: str )`
+### `get_aws_codedeploy_deployments(application_name: str | None=None, deployment_group_name: str | None=None, deployment_config_name: str | None=None, statuses: Sequence[str] | None=None, created_after: datetime | str | float | None=None, created_before: datetime | str | float | None=None, tag_filters: Sequence[Mapping[str, Any]] | None=None, include_details: bool=True, limit: int | None=None, next_token: str | None=None, max_pages: int | None=None, codedeploy_client: BaseClient | None=None, aws_connector: AWSConnector | None=None, execution_role_arn: str | None=None, role_session_name: str | None=None, region_name: str | None=None, config: Config | None=None, logging_adapter: Logging | None=None)`
 
- None=None, deployment_group_name: str | None=None, deployment_config_name: str | None=None, statuses: Sequence[str] | None=None, created_after: datetime | str | float | None=None, created_before: datetime | str | float | None=None, tag_filters: Sequence[Mapping[str, Any]] | None=None, include_details: bool=True, limit: int | None=None, next_token: str | None=None, max_pages: int | None=None, codedeploy_client: BaseClient | None=None, aws_connector: AWSConnector | None=None, execution_role_arn: str | None=None, role_session_name: str | None=None, region_name: str | None=None, config: Config | None=None, logging_adapter: Logging | None=None|List CodeDeploy deployments with optional detail hydration.
+List CodeDeploy deployments with optional detail hydration.
 
-### `create_codedeploy_deployment(application_name: str, deployment_group_name: str, revision: Mapping[str, Any], description: str )`
+### `create_codedeploy_deployment(application_name: str, deployment_group_name: str, revision: Mapping[str, Any], description: str | None=None, ignore_application_stop_failures: bool | None=None, file_exists_behavior: str | None=None, auto_rollback_configuration: Mapping[str, Any] | None=None, update_outdated_instances_only: bool | None=None, wait: bool=False, waiter_delay: int=15, waiter_max_attempts: int=120, include_details: bool=True, codedeploy_client: BaseClient | None=None, aws_connector: AWSConnector | None=None, execution_role_arn: str | None=None, role_session_name: str | None=None, region_name: str | None=None, config: Config | None=None, logging_adapter: Logging | None=None, **additional_params: Any)`
 
- None=None, ignore_application_stop_failures: bool | None=None, file_exists_behavior: str | None=None, auto_rollback_configuration: Mapping[str, Any] | None=None, update_outdated_instances_only: bool | None=None, wait: bool=False, waiter_delay: int=15, waiter_max_attempts: int=120, include_details: bool=True, codedeploy_client: BaseClient | None=None, aws_connector: AWSConnector | None=None, execution_role_arn: str | None=None, role_session_name: str | None=None, region_name: str | None=None, config: Config | None=None, logging_adapter: Logging | None=None, **additional_params: Any|Create a CodeDeploy deployment and optionally wait for completion.
+Create a CodeDeploy deployment and optionally wait for completion.
 
 ## `vendor_fabric.aws.organizations`
 
@@ -228,23 +228,23 @@ Route a command through the binding-backed SecretSync CLI.
 
 Show info about a specific connector.
 
-### `main(argv: Sequence[str] )`
+### `main(argv: Sequence[str] | None=None)`
 
- None=None|Main CLI entry point.
+Main CLI entry point.
 
 ## `vendor_fabric.cloud_params`
 
-### `get_cloud_call_params(max_results: int )`
+### `get_cloud_call_params(max_results: int | None=10, no_max_results: bool=False, reject_null: bool=True, first_letter_to_lower: bool=False, first_letter_to_upper: bool=False, **kwargs: Any)`
 
- None=10, no_max_results: bool=False, reject_null: bool=True, first_letter_to_lower: bool=False, first_letter_to_upper: bool=False, **kwargs: Any|Build a parameter dictionary for cloud API calls.
+Build a parameter dictionary for cloud API calls.
 
-### `get_aws_call_params(max_results: int )`
+### `get_aws_call_params(max_results: int | None=100, **kwargs: Any)`
 
- None=100, **kwargs: Any|Build parameters for AWS API calls.
+Build parameters for AWS API calls.
 
-### `get_google_call_params(max_results: int )`
+### `get_google_call_params(max_results: int | None=200, no_max_results: bool=False, **kwargs: Any)`
 
- None=200, no_max_results: bool=False, **kwargs: Any|Build parameters for Google Cloud API calls.
+Build parameters for Google Cloud API calls.
 
 ## `vendor_fabric.connectors`
 
@@ -306,9 +306,9 @@ Validate repository name.
 
 Validate webhook URL to prevent SSRF attacks.
 
-### `sanitize_error(error: Any, *, values: Iterable[Any] )`
+### `sanitize_error(error: Any, *, values: Iterable[Any] | None=None)`
 
- None=None|Sanitize error messages to prevent sensitive data leakage.
+Sanitize error messages to prevent sensitive data leakage.
 
 ### class `CursorConnector`
 
@@ -324,9 +324,9 @@ Pydantic schema for the cursor_launch_agent tool.
 
 Pydantic schema for the cursor_get_agent_status tool.
 
-### `cursor_launch_agent(prompt: str, repository: str, ref: str )`
+### `cursor_launch_agent(prompt: str, repository: str, ref: str | None=None, branch_name: str | None=None)`
 
- None=None, branch_name: str | None=None|Launch a new Cursor coding agent.
+Launch a new Cursor coding agent.
 
 ### `cursor_get_agent_status(agent_id: str)`
 
@@ -346,9 +346,9 @@ Extract error message from a GitHub exception.
 
 GitHub connector for repository operations.
 
-### `build_github_actions_workflow(workflow_name: str, jobs: dict[str, Any], concurrency_group: str )`
+### `build_github_actions_workflow(workflow_name: str, jobs: dict[str, Any], concurrency_group: str | None=None, environment_variables: dict[str, str] | None=None, secrets: dict[str, str] | None=None, use_oidc_auth: bool=True, events: dict[str, Any] | None=None, triggers: dict[str, Any] | None=None, inputs: dict[str, Any] | None=None, pull_requests: dict[str, Any] | None=None)`
 
- None=None, environment_variables: dict[str, str] | None=None, secrets: dict[str, str] | None=None, use_oidc_auth: bool=True, events: dict[str, Any] | None=None, triggers: dict[str, Any] | None=None, inputs: dict[str, Any] | None=None, pull_requests: dict[str, Any] | None=None|Generate a GitHub Actions workflow YAML string.
+Generate a GitHub Actions workflow YAML string.
 
 ## `vendor_fabric.github.tools`
 
@@ -376,29 +376,29 @@ Schema for listing GitHub organization members.
 
 Schema for getting a file from a GitHub repository.
 
-### `list_repositories(github_owner: str, type_filter: str='all', include_branches: bool=False, github_token: str )`
+### `list_repositories(github_owner: str, type_filter: str='all', include_branches: bool=False, github_token: str | None=None, **kwargs: Any)`
 
- None=None, **kwargs: Any|List repositories in a GitHub organization.
+List repositories in a GitHub organization.
 
-### `get_repository(github_owner: str, repo_name: str, github_token: str )`
+### `get_repository(github_owner: str, repo_name: str, github_token: str | None=None, **kwargs: Any)`
 
- None=None, **kwargs: Any|Get details of a specific GitHub repository.
+Get details of a specific GitHub repository.
 
-### `list_teams(github_owner: str, include_members: bool=False, include_repos: bool=False, github_token: str )`
+### `list_teams(github_owner: str, include_members: bool=False, include_repos: bool=False, github_token: str | None=None, **kwargs: Any)`
 
- None=None, **kwargs: Any|List teams in a GitHub organization.
+List teams in a GitHub organization.
 
-### `get_team(github_owner: str, team_slug: str, github_token: str )`
+### `get_team(github_owner: str, team_slug: str, github_token: str | None=None, **kwargs: Any)`
 
- None=None, **kwargs: Any|Get details of a specific GitHub team.
+Get details of a specific GitHub team.
 
-### `list_org_members(github_owner: str, role: str='member', include_pending: bool=False, github_token: str )`
+### `list_org_members(github_owner: str, role: str='member', include_pending: bool=False, github_token: str | None=None, **kwargs: Any)`
 
- None=None, **kwargs: Any|List members of a GitHub organization.
+List members of a GitHub organization.
 
-### `get_repository_file(github_owner: str, github_repo: str, file_path: str, github_branch: str )`
+### `get_repository_file(github_owner: str, github_repo: str, file_path: str, github_branch: str | None=None, github_token: str | None=None, **kwargs: Any)`
 
- None=None, github_token: str | None=None, **kwargs: Any|Get a file from a GitHub repository.
+Get a file from a GitHub repository.
 
 ## `vendor_fabric.google`
 
@@ -572,9 +572,9 @@ Raised when API rate limit is hit.
 
 Raised when API returns an error.
 
-### `configure(api_key: str )`
+### `configure(api_key: str | None=None, **kwargs: Any)`
 
- None=None, **kwargs: Any|Configure Meshy API credentials.
+Configure Meshy API credentials.
 
 ### `get_api_key()`
 
@@ -648,9 +648,9 @@ List image-to-image tasks.
 
 Poll until the image-to-image task reaches a terminal state.
 
-### `generate(prompt: str, reference_image_urls: list[str], *, ai_model: str='nano-banana', aspect_ratio: str )`
+### `generate(prompt: str, reference_image_urls: list[str], *, ai_model: str='nano-banana', aspect_ratio: str | None=None, generate_multi_view: bool=False, wait: bool=True)`
 
- None=None, generate_multi_view: bool=False, wait: bool=True|Edit reference images from a text prompt.
+Edit reference images from a text prompt.
 
 ## `vendor_fabric.meshy.image3d`
 
@@ -670,9 +670,9 @@ Refine preview to full quality. Returns new task_id.
 
 Polls the status of an image-to-3D task until it completes, fails, expires, or times out.
 
-### `generate(image_url: str, *, topology: str )`
+### `generate(image_url: str, *, topology: str | None=None, target_polycount: int | None=None, enable_pbr: bool=True, wait: bool=True)`
 
- None=None, target_polycount: int | None=None, enable_pbr: bool=True, wait: bool=True|Generate a 3D model from an image.
+Generate a 3D model from an image.
 
 ## `vendor_fabric.meshy.jobs`
 
@@ -706,9 +706,9 @@ Example environment asset specification.
 
 ## `vendor_fabric.meshy.logging`
 
-### `create_meshy_logger(*, level: int )`
+### `create_meshy_logger(*, level: int | str='INFO', logger_name: str=MESHY_LOGGER_NAME, enable_console: bool=False, enable_file: bool=False, log_file_name: str | None=None, default_storage_marker: str | None=MESHY_STORAGE_MARKER, allowed_levels: Sequence[str] | None=None, denied_levels: Sequence[str] | None=None, enable_verbose_output: bool=False, verbosity_threshold: int=VERBOSITY)`
 
- str='INFO', logger_name: str=MESHY_LOGGER_NAME, enable_console: bool=False, enable_file: bool=False, log_file_name: str | None=None, default_storage_marker: str | None=MESHY_STORAGE_MARKER, allowed_levels: Sequence[str] | None=None, denied_levels: Sequence[str] | None=None, enable_verbose_output: bool=False, verbosity_threshold: int=VERBOSITY|Create an Extended Data logger configured for Meshy workflows.
+Create an Extended Data logger configured for Meshy workflows.
 
 ## `vendor_fabric.meshy.models`
 
@@ -874,9 +874,9 @@ List multi-image-to-3D tasks.
 
 Poll until the multi-image-to-3D task reaches a terminal state.
 
-### `generate(image_urls: list[str], *, ai_model: str='latest', should_texture: bool=True, enable_pbr: bool=False, target_formats: list[str] )`
+### `generate(image_urls: list[str], *, ai_model: str='latest', should_texture: bool=True, enable_pbr: bool=False, target_formats: list[str] | None=None, wait: bool=True)`
 
- None=None, wait: bool=True|Generate a 3D model from one to four views of the same subject.
+Generate a 3D model from one to four views of the same subject.
 
 ## `vendor_fabric.meshy.persistence.repository`
 
@@ -964,13 +964,13 @@ List remesh tasks.
 
 Poll until the remesh task reaches a terminal state.
 
-### `apply(model_task_id: str, *, target_formats: list[str] )`
+### `apply(model_task_id: str, *, target_formats: list[str] | None=None, topology: str='triangle', target_polycount: int | None=None, decimation_mode: int | None=None, wait: bool=True)`
 
- None=None, topology: str='triangle', target_polycount: int | None=None, decimation_mode: int | None=None, wait: bool=True|Remesh a completed Meshy model task.
+Remesh a completed Meshy model task.
 
-### `apply_from_url(model_url: str, *, target_formats: list[str] )`
+### `apply_from_url(model_url: str, *, target_formats: list[str] | None=None, topology: str='triangle', target_polycount: int | None=None, decimation_mode: int | None=None, wait: bool=True)`
 
- None=None, topology: str='triangle', target_polycount: int | None=None, decimation_mode: int | None=None, wait: bool=True|Remesh a model supplied by public URL or data URI.
+Remesh a model supplied by public URL or data URI.
 
 ## `vendor_fabric.meshy.retexture`
 
@@ -1012,19 +1012,19 @@ Poll until complete or failed.
 
 Rig a model for animation.
 
-### `rig_from_url(model_url: str, *, height_meters: float=1.7, texture_url: str )`
+### `rig_from_url(model_url: str, *, height_meters: float=1.7, texture_url: str | None=None, wait: bool=True)`
 
- None=None, wait: bool=True|Rig a model from URL.
+Rig a model from URL.
 
 ## `vendor_fabric.meshy.text2image`
 
-### `create(request: Text2ImageRequest, *, requester: Requester )`
+### `create(request: Text2ImageRequest, *, requester: Requester | None=None)`
 
- None=None|Create a text-to-image task and return its task ID.
+Create a text-to-image task and return its task ID.
 
-### `get(task_id: str, *, requester: Requester )`
+### `get(task_id: str, *, requester: Requester | None=None)`
 
- None=None|Get a text-to-image task.
+Get a text-to-image task.
 
 ### `delete(task_id: str)`
 
@@ -1034,13 +1034,13 @@ Permanently delete a text-to-image task and its generated images.
 
 List text-to-image tasks using Meshy's pagination contract.
 
-### `poll(task_id: str, interval: float=5.0, timeout: float=600.0, *, requester: Requester )`
+### `poll(task_id: str, interval: float=5.0, timeout: float=600.0, *, requester: Requester | None=None)`
 
- None=None|Poll until the text-to-image task succeeds or reaches a terminal state.
+Poll until the text-to-image task succeeds or reaches a terminal state.
 
-### `generate(prompt: str, *, ai_model: str='nano-banana', aspect_ratio: str )`
+### `generate(prompt: str, *, ai_model: str='nano-banana', aspect_ratio: str | None=None, generate_multi_view: bool=False, pose_mode: str | None=None, wait: bool=True, requester: Requester | None=None)`
 
- None=None, generate_multi_view: bool=False, pose_mode: str | None=None, wait: bool=True, requester: Requester | None=None|Generate images from text, optionally waiting for the completed task.
+Generate images from text, optionally waiting for the completed task.
 
 ### `download_first(result: Mapping[str, object], output_path: str)`
 
@@ -1064,9 +1064,9 @@ Refine preview to full quality. Returns new task_id.
 
 Poll until complete or failed.
 
-### `generate(prompt: str, *, art_style: ArtStyle )`
+### `generate(prompt: str, *, art_style: ArtStyle | str=ArtStyle.REALISTIC, negative_prompt: str='', target_polycount: int=15000, enable_pbr: bool=True, wait: bool=True)`
 
- str=ArtStyle.REALISTIC, negative_prompt: str='', target_polycount: int=15000, enable_pbr: bool=True, wait: bool=True|Generate a 3D model from text.
+Generate a 3D model from text.
 
 ## `vendor_fabric.meshy.tools`
 
@@ -1110,9 +1110,9 @@ Pydantic schema for the get_animation tool.
 
 Generate a 3D model from text description.
 
-### `text2image_generate(prompt: str, ai_model: str='nano-banana', aspect_ratio: str )`
+### `text2image_generate(prompt: str, ai_model: str='nano-banana', aspect_ratio: str | None=None, generate_multi_view: bool=False, pose_mode: str | None=None)`
 
- None=None, generate_multi_view: bool=False, pose_mode: str | None=None|Generate an image from text and expose the first downloadable URL.
+Generate an image from text and expose the first downloadable URL.
 
 ### `image3d_generate(image_url: str, topology: str='', target_polycount: int=15000, enable_pbr: bool=True)`
 
@@ -1276,15 +1276,15 @@ Run a pipeline operation.
 
 Build the CLI argument parser.
 
-### `main(argv: list[str] )`
+### `main(argv: list[str] | None=None)`
 
- None=None|Run the CLI.
+Run the CLI.
 
 ## `vendor_fabric.secrets_sync.deepmerge`
 
-### `deep_merge(dst: Mapping[str, Any] )`
+### `deep_merge(dst: Mapping[str, Any] | None, src: Mapping[str, Any] | None)`
 
- None, src: Mapping[str, Any] | None|Merge ``src`` into ``dst`` using the shared Extended Data semantics.
+Merge ``src`` into ``dst`` using the shared Extended Data semantics.
 
 ### `normalize_for_compare(value: Any)`
 
@@ -1294,9 +1294,9 @@ Normalize JSON-compatible values before equality checks.
 
 Return whether two secret payloads are equal after JSON normalization.
 
-### `compare_secret_json(existing: str )`
+### `compare_secret_json(existing: str | bytes, new: str | bytes)`
 
- bytes, new: str | bytes|Compare two secret strings as JSON when possible, else as raw strings.
+Compare two secret strings as JSON when possible, else as raw strings.
 
 ## `vendor_fabric.secrets_sync.files`
 
@@ -1312,9 +1312,9 @@ Local file store using Extended Data decoding and export.
 
 S3 file store using the AWS connector.
 
-### `sync_mapping_to_file(data: Mapping[str, Any], destination: str )`
+### `sync_mapping_to_file(data: Mapping[str, Any], destination: str | Path, *, encoding: str | None='json', dry_run: bool=False)`
 
- Path, *, encoding: str | None='json', dry_run: bool=False|Sync a mapping to a local file through Extended Data export rules.
+Sync a mapping to a local file through Extended Data export rules.
 
 ## `vendor_fabric.secrets_sync.graph`
 
@@ -1478,13 +1478,13 @@ Validate a config file through the SecretSync binding.
 
 Return public configuration info through the SecretSync binding.
 
-### `run_pipeline(config_path: str, options: SyncOptions )`
+### `run_pipeline(config_path: str, options: SyncOptions | None=None, provider_session: ProviderSession | Mapping[str, Any] | None=None)`
 
- None=None, provider_session: ProviderSession | Mapping[str, Any] | None=None|Run a SecretSync config file through the SecretSync binding.
+Run a SecretSync config file through the SecretSync binding.
 
-### `dry_run(config_path: str, provider_session: ProviderSession )`
+### `dry_run(config_path: str, provider_session: ProviderSession | Mapping[str, Any] | None=None)`
 
- Mapping[str, Any] | None=None|Run a dry-run pipeline through the SecretSync binding.
+Run a dry-run pipeline through the SecretSync binding.
 
 ### `get_targets(config_path: str)`
 
@@ -1494,13 +1494,13 @@ Return target names through the SecretSync binding.
 
 Return source names through the SecretSync binding.
 
-### `merge(config_path: str, *, dry_run: bool=False, provider_session: ProviderSession )`
+### `merge(config_path: str, *, dry_run: bool=False, provider_session: ProviderSession | Mapping[str, Any] | None=None)`
 
- Mapping[str, Any] | None=None|Run only the merge phase through the SecretSync binding.
+Run only the merge phase through the SecretSync binding.
 
-### `sync(config_path: str, *, dry_run: bool=False, provider_session: ProviderSession )`
+### `sync(config_path: str, *, dry_run: bool=False, provider_session: ProviderSession | Mapping[str, Any] | None=None)`
 
- Mapping[str, Any] | None=None|Run only the sync phase through the SecretSync binding.
+Run only the sync phase through the SecretSync binding.
 
 ### `diff_trees(target: str, phase: str, before: Mapping[str, Any], after: Mapping[str, Any])`
 
@@ -1570,9 +1570,9 @@ Schema for getting configuration information.
 
 Validate a secrets sync pipeline configuration file.
 
-### `run_pipeline(config_path: str, dry_run: bool=False, operation: str='pipeline', targets: str )`
+### `run_pipeline(config_path: str, dry_run: bool=False, operation: str='pipeline', targets: str | None=None, continue_on_error: bool=True)`
 
- None=None, continue_on_error: bool=True|Run the secrets synchronization pipeline.
+Run the secrets synchronization pipeline.
 
 ### `dry_run(config_path: str)`
 
@@ -1692,9 +1692,9 @@ Schema for listing Vault secrets.
 
 Schema for reading a Vault secret.
 
-### `list_secrets(root_path: str='/', mount_point: str='secret', max_depth: int )`
+### `list_secrets(root_path: str='/', mount_point: str='secret', max_depth: int | None=10)`
 
- None=10|List secrets recursively from Vault KV v2 engine.
+List secrets recursively from Vault KV v2 engine.
 
 ### `read_secret(path: str, mount_point: str='secret')`
 
