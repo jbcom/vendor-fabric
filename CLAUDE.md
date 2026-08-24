@@ -27,14 +27,14 @@ Workspace root (`pyproject.toml` is `package = false`); packages live under `pac
 
 ## Notes
 
-- **Pillars (`docs/pillars.rst`) are the project's non-negotiable design rules:**
+- **Pillars (`docs/pillars.md`) are the project's non-negotiable design rules:**
   - Providers are data extensions of `ExtendedData`, not utility islands.
   - Capability-driven dispatch — providers declare capabilities once; facade routes generically; avoid hardcoded pass-throughs.
   - Optional means discoverable — missing extras surface via registry state + install guidance, never import failures in ordinary imports.
   - Sync (file + secret) is a first-class capability; compose `extended-data` primitives, delegate canonical SecretSync pipeline semantics to the `jbcom/secrets-sync` binding facade.
   - Agent runtime is out of scope — belongs in `agentic-fabric`. This package exposes capability functions/schemas/metadata only.
   - Tests define the public provider contract; `pytest-vendor-fabric` must make downstream testing straightforward.
-- **Boundary (`docs/architecture.rst`):** `vendor-fabric` owns vendor behavior for the Extended Data stack (discovery, connector base classes, SDK adapters, capability dispatch, sync, SecretSync binding facade, pytest support). `extended-data` owns base data primitives; `agentic-fabric` owns agent runtime. `VendorData` extends `ExtendedData` with provider context.
+- **Boundary (`docs/architecture.md`):** `vendor-fabric` owns vendor behavior for the Extended Data stack (discovery, connector base classes, SDK adapters, capability dispatch, sync, SecretSync binding facade, pytest support). `extended-data` owns base data primitives; `agentic-fabric` owns agent runtime. `VendorData` extends `ExtendedData` with provider context.
 - **Docs are Sourcey Markdown** under `docs/`. `docs/sourcey.config.ts` owns production navigation and branding; `docs/reference/api.md` is generated from Python source by `scripts/generate_api_reference.py`. Build with `tox -e docs`.
 - **release-please-config.json** present; workflows: `ci.yml`, `release.yml`, `cd.yml`, `automerge.yml`.
 - **Sourcey context exports:** `docs/dist/llms.txt` and `docs/dist/llms-full.txt` are generated during the docs build; repository operating instructions are in `AGENTS.md`.

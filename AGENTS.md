@@ -28,8 +28,8 @@ Extended Data stack. Two packages live in this `uv` workspace:
 classes, SDK adapters, capability dispatch, sync, the SecretSync
 binding facade, and pytest support. `extended-data` owns base data
 primitives (`ExtendedData`, containers, inputs, logging, files,
-workflows). `agentic-fabric` owns agent runtime orchestration. Full
-boundary in `docs/architecture.rst` and `docs/ownership-map.rst`.
+workflows). `agentic-fabric` owns agent runtime orchestration. The full
+boundary is in `docs/architecture.md` and `docs/ownership.md`.
 
 ### Data flow
 
@@ -52,7 +52,7 @@ discovery without instantiation.
 
 ## Non-negotiables
 
-These come from `docs/pillars.rst`. Every change must keep them true.
+These come from `docs/pillars.md`. Every change must keep them true.
 
 1. **Providers are data extensions of `ExtendedData`**, not utility
    islands. Provider inputs and outputs promote into extended

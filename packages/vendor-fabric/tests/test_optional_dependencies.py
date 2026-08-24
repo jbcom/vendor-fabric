@@ -134,7 +134,7 @@ def test_secretsync_surface_is_first_class_but_not_a_connector() -> None:
 
 def test_ownership_map_documents_current_package_boundaries() -> None:
     """Moved surfaces should have explicit destination ownership in public docs."""
-    ownership_map = (REPO_ROOT / "docs" / "ownership-map.rst").read_text(encoding="utf-8")
+    ownership_map = (REPO_ROOT / "docs" / "ownership.md").read_text(encoding="utf-8")
 
     for expected_text in (
         "jbcom/extended-data",
