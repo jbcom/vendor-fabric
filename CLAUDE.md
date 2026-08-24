@@ -21,7 +21,7 @@ Workspace root (`pyproject.toml` is `package = false`); packages live under `pac
 - **Lint:** `tox -e lint` (ruff check, `select=ALL` with curated ignores, line-length 120, target py311)
 - **Typecheck:** `tox -e typecheck` (mypy strict)
 - **Build (per-package wheels):** `tox -e build`
-- **Docs:** `tox -e docs` (Sphinx `-W -E -b html docs docs/_build/html`)
+- **Docs:** `tox -e docs` (locked Sourcey build plus generated-reference and output checks)
 
 `skip_missing_interpreters = false` — all of py311/312/313/314 are required; missing interpreters fail rather than skip.
 
@@ -35,6 +35,6 @@ Workspace root (`pyproject.toml` is `package = false`); packages live under `pac
   - Agent runtime is out of scope — belongs in `agentic-fabric`. This package exposes capability functions/schemas/metadata only.
   - Tests define the public provider contract; `pytest-vendor-fabric` must make downstream testing straightforward.
 - **Boundary (`docs/architecture.rst`):** `vendor-fabric` owns vendor behavior for the Extended Data stack (discovery, connector base classes, SDK adapters, capability dispatch, sync, SecretSync binding facade, pytest support). `extended-data` owns base data primitives; `agentic-fabric` owns agent runtime. `VendorData` extends `ExtendedData` with provider context.
-- **Docs are Sphinx (.rst)** under `docs/` — `index.rst`, `architecture.rst`, `pillars.rst`, `integrations/`, `secrets-sync/` subdir, `testing.rst`, `ownership-map.rst`, `api/`. Build with `tox -e docs` (treats warnings as errors).
+- **Docs are Sourcey Markdown** under `docs/`. `docs/sourcey.config.ts` owns production navigation and branding; `docs/reference/api.md` is generated from Python source by `scripts/generate_api_reference.py`. Build with `tox -e docs`.
 - **release-please-config.json** present; workflows: `ci.yml`, `release.yml`, `cd.yml`, `automerge.yml`.
-- **AGENTS.md: missing** — standard-repo requires it for extended operating protocols/architecture/patterns. Flag as a gap to create; do not inline that content in CLAUDE.md.
+- **Sourcey context exports:** `docs/dist/llms.txt` and `docs/dist/llms-full.txt` are generated during the docs build; repository operating instructions are in `AGENTS.md`.

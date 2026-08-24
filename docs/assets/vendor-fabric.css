@@ -1,0 +1,15 @@
+:root {
+  --vf-indigo: #243a82;
+  --vf-copper: #d98f3c;
+}
+
+.sourcey-hero img,
+main > article > p:first-of-type img {
+  border: 1px solid color-mix(in srgb, var(--vf-indigo), transparent 75%);
+  border-radius: 1rem;
+  box-shadow: 0 1.25rem 3.5rem color-mix(in srgb, var(--vf-indigo), transparent 82%);
+}
+
+pre {
+  border-left: 3px solid var(--vf-copper);
+}

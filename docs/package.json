@@ -1,0 +1,14 @@
+{
+  "name": "vendor-fabric-docs",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Sourcey documentation toolchain for vendor-fabric",
+  "scripts": {
+    "dev": "sourcey dev",
+    "build": "python3 ../scripts/generate_api_reference.py --check && sourcey build && python3 ../scripts/copy_docs_assets.py && python3 ../scripts/verify_sourcey_output.py",
+    "validate": "npm run build"
+  },
+  "devDependencies": {
+    "sourcey": "3.6.5"
+  }
+}
