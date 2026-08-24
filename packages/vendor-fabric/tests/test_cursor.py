@@ -126,6 +126,8 @@ class TestValidators:
             validate_webhook_url("https://192.168.1.1/webhook")
         with pytest.raises(CursorValidationError, match="internal"):
             validate_webhook_url("https://10.0.0.1/webhook")
+        with pytest.raises(CursorValidationError, match="internal"):
+            validate_webhook_url("https://169.254.169.254/webhook")
 
     def test_validate_webhook_url_ipv6_internal(self):
         """IPv6 internal addresses should fail (SSRF protection)."""

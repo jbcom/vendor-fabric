@@ -27,6 +27,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
+from ipaddress import ip_address
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
@@ -76,7 +77,6 @@ BLOCKED_HOSTNAME_PATTERNS = [
     re.compile(r"^10\."),
     re.compile(r"^172\.(1[6-9]|2[0-9]|3[0-1])\."),
     re.compile(r"^192\.168\."),
-    re.compile(r"^169\.254\."),
     re.compile(r"^0\."),
     # IPv6 addresses (urlparse strips brackets, so match raw addresses)
     re.compile(r"^::1$"),  # IPv6 localhost
@@ -283,6 +283,15 @@ def validate_webhook_url(url: str) -> None:
 
     hostname = (parsed.hostname or "").lower()
 
+    try:
+        address = ip_address(hostname)
+    except ValueError:
+        address = None
+
+    if address is not None and (address.is_loopback or address.is_private or address.is_link_local or address.is_unspecified):
+        msg = "Webhook URL cannot point to internal/private addresses"
+        raise CursorValidationError(msg)
+
     # Security: Block internal/private IP ranges
     for pattern in BLOCKED_HOSTNAME_PATTERNS:
         if pattern.search(hostname):
@@ -290,7 +299,7 @@ def validate_webhook_url(url: str) -> None:
             raise CursorValidationError(msg)
 
     # Security: Block cloud metadata endpoints
-    if hostname in ("169.254.169.254", "metadata.google.internal"):
+    if hostname == "metadata.google.internal":
         msg = "Webhook URL cannot point to cloud metadata services"
         raise CursorValidationError(msg)
 

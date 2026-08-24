@@ -292,6 +292,7 @@ def test_decode_response_file_returns_artifact_with_metadata() -> None:
     assert artifact.metadata["status_code"] == 200
     assert artifact.metadata["content_type"] == "application/json"
     assert artifact.metadata["method"] == "GET"
+    assert artifact.metadata["is_url"] is True
 
 
 def test_decode_response_file_handles_empty_body_with_fallback_metadata() -> None:
@@ -307,6 +308,7 @@ def test_decode_response_file_handles_empty_body_with_fallback_metadata() -> Non
     assert artifact.metadata["source"] == "response"
     assert artifact.metadata["data_type"] == "NoneType"
     assert artifact.metadata["status_code"] == 204
+    assert artifact.metadata["is_url"] is False
 
 
 def test_decode_response_file_preserves_unknown_binary_payload() -> None:

@@ -522,7 +522,7 @@ def test_label_aws_accounts_builds_metadata(mocker, organizations_connector: _Te
     assert account["execution_role_arn"].endswith("role/CustomRole")
     assert account["environment"] == "prod"
     assert account["spoke"] is True
-    assert ".example.com" in account["subdomain"]
+    assert account["subdomain"].endswith(".example.com")
 
 
 def test_build_labeled_account_handles_root_user_defaults_and_unit_name_lookup(
