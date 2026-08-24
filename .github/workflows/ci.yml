@@ -4,6 +4,16 @@ on:
   push:
     branches: [main]
   pull_request:
+    # A release-please PR contains only generated release metadata. Filtering it
+    # here prevents GitHub from creating a pull_request run that would require
+    # approval for the github-actions bot before any job can publish `gate`.
+    # `release-gate` below runs from the trusted base workflow and supplies the
+    # required check without reading pull-request content.
+    paths-ignore:
+      - .release-please-manifest.json
+      - packages/*/CHANGELOG.md
+      - packages/*/pyproject.toml
+      - packages/*/src/*/__init__.py
   pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review]
   workflow_dispatch:
@@ -35,6 +45,19 @@ jobs:
             exit 1
           fi
 
+  release-gate:
+    name: gate
+    if: >-
+      github.event_name == 'pull_request_target' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login == 'github-actions[bot]' &&
+      startsWith(github.event.pull_request.head.ref, 'release-please--')
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Accept trusted generated release metadata
+        run: true
+
   route:
     name: CI route
     if: github.event_name != 'pull_request_target'
@@ -65,10 +88,7 @@ jobs:
           DEPENDABOT_UPDATE_TYPE: ${{ steps.dependabot.outputs['update-type'] }}
         run: |
           set -euo pipefail
-          if [ "$EVENT_NAME" = pull_request ] && [ "$HEAD_REPOSITORY" = "$BASE_REPOSITORY" ] && [[ "$HEAD_REF" == release-please--* ]]; then
-            echo 'fast-path=true' >> "$GITHUB_OUTPUT"
-            echo 'reason=release-please' >> "$GITHUB_OUTPUT"
-          elif [ "$EVENT_NAME" = pull_request ] && [ "$AUTHOR" = 'dependabot[bot]' ] && [ "$HEAD_REPOSITORY" = "$BASE_REPOSITORY" ] && { [ "$DEPENDABOT_UPDATE_TYPE" = version-update:semver-minor ] || [ "$DEPENDABOT_UPDATE_TYPE" = version-update:semver-patch ]; }; then
+          if [ "$EVENT_NAME" = pull_request ] && [ "$AUTHOR" = 'dependabot[bot]' ] && [ "$HEAD_REPOSITORY" = "$BASE_REPOSITORY" ] && { [ "$DEPENDABOT_UPDATE_TYPE" = version-update:semver-minor ] || [ "$DEPENDABOT_UPDATE_TYPE" = version-update:semver-patch ]; }; then
             echo 'fast-path=true' >> "$GITHUB_OUTPUT"
             echo 'reason=dependabot-non-major' >> "$GITHUB_OUTPUT"
           else
