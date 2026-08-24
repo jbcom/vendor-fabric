@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.4.1](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.4.0...vendor-fabric-v2.4.1) (2026-08-24)
+
+
+### Bug Fixes
+
+* strengthen URL security handling ([a48b76a](https://github.com/jbcom/vendor-fabric/commit/a48b76a284f694e7c4103b914a8ecc00240e6ff9))
+* strengthen URL security handling ([9e2bb89](https://github.com/jbcom/vendor-fabric/commit/9e2bb894c39faf0dc1ed42aa5a22a56aeb4c7a85))
+
 ## [2.4.0](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.3.0...vendor-fabric-v2.4.0) (2026-08-24)
 
 
