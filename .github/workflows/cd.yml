@@ -53,6 +53,11 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.13"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
       - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           version: "0.11.19"
@@ -68,6 +73,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    environment: pypi
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -87,6 +93,7 @@ jobs:
             *) echo "unsupported package: ${{ inputs.package }}" >&2; exit 1 ;;
           esac
       - run: uv build --package "${{ inputs.package }}" --out-dir dist --clear
+      - run: uv run --with twine twine check dist/*
       - run: uv publish --trusted-publishing always dist/*
 
   publish-docs:
@@ -106,25 +113,20 @@ jobs:
         with:
           ref: ${{ inputs.tag }}
           persist-credentials: false
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          python-version: "3.13"
-      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
-        with:
-          version: "0.11.19"
-          enable-cache: true
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
         with:
           enablement: true
-      - run: uv sync --all-packages --all-extras --dev
-      - name: Build docs
-        run: |
-          uv tool install tox --with tox-uv --with tox-gh
-          tox -e docs
+      - name: Build Sourcey docs from trusted release source
+        run: npm ci --ignore-scripts --prefix docs && npm run validate --prefix docs
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          path: docs/_build/html
+          path: docs/dist
       - id: deployment
         name: Deploy docs
         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0

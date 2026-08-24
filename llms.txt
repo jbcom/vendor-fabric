@@ -1,0 +1,5 @@
+# Vendor Fabric repository context
+
+Read [AGENTS.md](AGENTS.md) before changing this repository. Vendor Fabric is a Python `uv` workspace containing the `vendor-fabric` connector package and `pytest-vendor-fabric` plugin. It owns provider integration and capability dispatch; generic data belongs to `extended-data`, while agent runtime belongs to `agentic-fabric`.
+
+Run the complete quality matrix from the repository root with `tox -e lint,typecheck,py311,py312,py313,py314,plugin,providers,docs,build`. Documentation is Sourcey-only: author `docs/*.md`, generate `docs/reference/api.md` with `scripts/generate_api_reference.py`, and run `npm run validate --prefix docs`. The build-generated documentation context exports are in `docs/dist/llms.txt` and `docs/dist/llms-full.txt`.

@@ -21,6 +21,7 @@ pytest-vendor-fabric = { workspace = true }
 [dependency-groups]
 dev = [
     "mypy>=1.20.1",
+    "pre-commit>=4.6.0",
     "ruff>=0.16.0",
     "tox>=4.11",
     "tox-gh>=1.3",

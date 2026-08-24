@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 64" role="img" aria-label="Vendor Fabric">
+  <rect width="64" height="64" rx="16" fill="#92a7ed"/>
+  <path fill="#243a82" d="M16 17h12l12 30H28zM36 17h12L36 47H24z"/>
+  <text x="80" y="42" fill="#f7f8ff" font-family="Arial, sans-serif" font-size="30" font-weight="700">Vendor Fabric</text>
+</svg>

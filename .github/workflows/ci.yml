@@ -4,13 +4,40 @@ on:
   push:
     branches: [main]
   pull_request:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
   workflow_dispatch:
 
 permissions: {}
 
 jobs:
+  policy:
+    name: Repository Policy / gate
+    if: github.event_name == 'pull_request_target'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Reject untrusted control-plane changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [ "$HEAD_REPOSITORY" = "$BASE_REPOSITORY" ]; then
+            exit 0
+          fi
+          gh api --paginate "repos/$BASE_REPOSITORY/pulls/$PR_NUMBER/files" --jq '.[].filename' > changed-files.txt
+          if grep -Eq '^(\.github/(workflows|actions)/|\.github/dependabot\.yml$|\.coderabbit\.yaml$|sonar-project\.properties$|release-please-config\.json$|\.release-please-manifest\.json$|docs/sourcey\.config\.ts$|docs/package(-lock)?\.json$|pyproject\.toml$|uv\.lock$|tox\.ini$|\.pre-commit-config\.yaml$)' changed-files.txt; then
+            echo "External forks cannot modify repository control-plane files." >&2
+            exit 1
+          fi
+
   test:
     name: Python ${{ matrix.python-version }}
+    if: github.event_name != 'pull_request_target'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -34,7 +61,8 @@ jobs:
       - run: tox -e "py$(echo '${{ matrix.python-version }}' | tr -d '.')"
 
   quality:
-    name: Quality, plugin, providers, docs, build
+    name: Quality
+    if: github.event_name != 'pull_request_target'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -45,10 +73,40 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.13"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
       - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           version: "0.11.19"
           enable-cache: true
       - run: uv sync --all-packages --all-extras --dev
+      - run: uv run pre-commit run --all-files
       - run: uv tool install tox --with tox-uv --with tox-gh
       - run: tox -e lint,typecheck,plugin,providers,docs,build
+
+  dependency-review:
+    name: Dependency Review / gate
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+
+  gate:
+    name: gate
+    if: github.event_name != 'pull_request_target'
+    needs: [test, quality, dependency-review]
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Confirm required validation completed
+        run: |
+          test "${{ needs.test.result }}" = success
+          test "${{ needs.quality.result }}" = success
+          test "${{ needs.dependency-review.result }}" = success

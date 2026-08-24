@@ -28,8 +28,8 @@ Extended Data stack. Two packages live in this `uv` workspace:
 classes, SDK adapters, capability dispatch, sync, the SecretSync
 binding facade, and pytest support. `extended-data` owns base data
 primitives (`ExtendedData`, containers, inputs, logging, files,
-workflows). `agentic-fabric` owns agent runtime orchestration. Full
-boundary in `docs/architecture.rst` and `docs/ownership-map.rst`.
+workflows). `agentic-fabric` owns agent runtime orchestration. The full
+boundary is in `docs/architecture.md` and `docs/ownership.md`.
 
 ### Data flow
 
@@ -52,7 +52,7 @@ discovery without instantiation.
 
 ## Non-negotiables
 
-These come from `docs/pillars.rst`. Every change must keep them true.
+These come from `docs/pillars.md`. Every change must keep them true.
 
 1. **Providers are data extensions of `ExtendedData`**, not utility
    islands. Provider inputs and outputs promote into extended
@@ -169,15 +169,24 @@ only version-shaping input.
 
 | File | Purpose |
 |------|---------|
-| `docs/pillars.rst` | The six non-negotiable design rules |
-| `docs/architecture.rst` | Boundary, VendorData, capability registry, sync |
-| `docs/ownership-map.rst` | What belongs here vs. `extended-data`/`agentic-fabric` |
-| `docs/integrations/connectors.rst` | Connector usage examples |
-| `docs/secrets-sync/index.rst` | SecretSync binding facade usage |
-| `docs/testing.rst` | pytest-vendor-fabric fixture inventory |
-| `docs/api/internal.rst` | Orphaned-but-reachable internal modules (`_optional`, `_binding`) |
+| `docs/sourcey.config.ts` | Production Sourcey navigation, branding, and deployment paths |
+| `docs/*.md` | Authored Sourcey guide pages |
+| `docs/reference/api.md` | Generated Python public-reference overview; never edit by hand |
+| `scripts/generate_api_reference.py` | Deterministic Python AST reference generator |
+| `docs/package.json` | Locked Node-only Sourcey toolchain (`dev`, `build`, `validate`) |
 | `tox.ini` | All test/lint/build/docs environments |
 | `pyproject.toml` | Workspace config, ruff/mypy/coverage settings |
 | `packages/vendor-fabric/pyproject.toml` | Extras, entry-points, package metadata |
 | `.agent-state/directive.md` | The active work queue (this file drives continuous work) |
-| `ASSESSMENT.md` | The completeness audit that produced the current remediation queue |
+| `.github/workflows/ci.yml` | Untrusted validation, including Sourcey verification |
+| `.github/workflows/release.yml` | release-please coordination only |
+| `.github/workflows/cd.yml` | Trusted publication and Sourcey Pages deployment |
+
+## Documentation
+
+Sourcey is the sole production documentation renderer. Run `npm ci --prefix
+docs --ignore-scripts` once, then `npm run dev --prefix docs` for a local site
+or `npm run validate --prefix docs` for the deterministic production build.
+The build writes untracked output to `docs/dist/`, including the public
+`llms.txt` and `llms-full.txt` exports. Do not reintroduce Sphinx or maintain a
+second documentation site.
