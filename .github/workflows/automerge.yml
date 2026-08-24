@@ -8,10 +8,45 @@ name: Automerge
 on:
   pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pull-request-number:
+        description: Release-please pull request number to merge
+        required: true
+        type: string
 
 permissions: {}
 
 jobs:
+  release-pr:
+    name: Classify release-please update
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      eligible: ${{ steps.classify.outputs.eligible }}
+      url: ${{ steps.classify.outputs.url }}
+    steps:
+      - id: classify
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pull-request-number }}
+          REPOSITORY: ${{ github.repository }}
+          SERVER_URL: ${{ github.server_url }}
+        run: |
+          set -euo pipefail
+          pr="$(gh api "repos/$REPOSITORY/pulls/$PR_NUMBER")"
+          test "$(jq -r '.state' <<<"$pr")" = open
+          test "$(jq -r '.user.login' <<<"$pr")" = 'github-actions[bot]'
+          test "$(jq -r '.head.repo.full_name' <<<"$pr")" = "$REPOSITORY"
+          case "$(jq -r '.head.ref' <<<"$pr")" in
+            release-please--*) ;;
+            *) exit 1 ;;
+          esac
+          echo 'eligible=true' >> "$GITHUB_OUTPUT"
+          echo "url=$SERVER_URL/$REPOSITORY/pull/$PR_NUMBER" >> "$GITHUB_OUTPUT"
+
   dependabot-metadata:
     name: Classify Dependabot update
     if: >-
@@ -32,11 +67,15 @@ jobs:
 
   automerge:
     name: Enable auto-merge
-    needs: dependabot-metadata
+    needs: [release-pr, dependabot-metadata]
     runs-on: ubuntu-latest
     if: >-
       always() && (
-        (startsWith(github.event.pull_request.head.ref, 'release-please--') &&
+        (github.event_name == 'workflow_dispatch' &&
+        needs.release-pr.outputs.eligible == 'true') ||
+        (github.event_name == 'pull_request_target' &&
+        github.event.pull_request.user.login == 'github-actions[bot]' &&
+        startsWith(github.event.pull_request.head.ref, 'release-please--') &&
         github.event.pull_request.head.repo.full_name == github.repository) ||
         (github.event.pull_request.user.login == 'dependabot[bot]' &&
         github.event.pull_request.head.repo.full_name == github.repository &&
@@ -48,8 +87,13 @@ jobs:
       - name: Enable auto-merge (merge commit)
         env:
           GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_URL: ${{ github.event_name == 'workflow_dispatch' && needs.release-pr.outputs.url || github.event.pull_request.html_url }}
         run: |
           set -euo pipefail
           test -n "$GH_TOKEN"
+          # This creates a merge commit when the generated branch is behind
+          # main; it never rebases or rewrites the release-please branch.
+          if [ "$(gh pr view "$PR_URL" --json mergeStateStatus --jq '.mergeStateStatus')" = BEHIND ]; then
+            gh pr update-branch "$PR_URL"
+          fi
           gh pr merge --auto --merge "$PR_URL"

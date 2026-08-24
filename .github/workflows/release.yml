@@ -21,6 +21,19 @@ jobs:
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+      - name: Request trusted release PR auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN"
+          # release-please reports prs_created=false when it finds an existing,
+          # unchanged PR. Query its fixed branch so that a prior transient
+          # workflow failure is retried on every trusted main push.
+          gh pr list --repo "$GH_REPO" --state open --head release-please--branches--main --json number --jq '.[].number' | while IFS= read -r pr_number; do
+            gh workflow run automerge.yml --repo "$GH_REPO" --ref main -f "pull-request-number=$pr_number"
+          done
       - name: Dispatch vendor-fabric continuous delivery
         if: steps.release.outputs['packages/vendor-fabric--release_created'] == 'true'
         env:
