@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.4.0](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.3.0...vendor-fabric-v2.4.0) (2026-08-24)
+
+
+### Features
+
+* harden autonomous development and migrate docs ([9727c83](https://github.com/jbcom/vendor-fabric/commit/9727c83559eb553f4bf2de875820a63ebe31884c))
+
+
+### Bug Fixes
+
+* keep ownership documentation checks sourcey aware ([5e95916](https://github.com/jbcom/vendor-fabric/commit/5e959164d43754ce1c7f5ee76d71c9daeed5afd3))
+* resolve automated review findings ([e1514f0](https://github.com/jbcom/vendor-fabric/commit/e1514f03beb1122241964208996ff85497de22b1))
+* resolve automated review findings ([e549993](https://github.com/jbcom/vendor-fabric/commit/e54999340f3f9fe1a455f19836bd784702d5b862))
+
 ## [2.3.0](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.2.0...vendor-fabric-v2.3.0) (2026-08-22)
 
 
