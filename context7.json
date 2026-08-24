@@ -1,0 +1,29 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "Vendor Fabric",
+  "description": "Extended Data-native Python vendor connectors, capability dispatch, SecretSync integration, and pytest support.",
+  "branch": "main",
+  "folders": [
+    "docs",
+    "packages/vendor-fabric",
+    "packages/pytest-vendor-fabric"
+  ],
+  "excludeFolders": [
+    ".agent-state",
+    ".github",
+    ".tox",
+    "docs/apidocs",
+    "docs/dist",
+    "docs/node_modules",
+    "packages/vendor-fabric/tests",
+    "packages/pytest-vendor-fabric/tests"
+  ],
+  "rules": [
+    "Vendor Fabric extends Extended Data. Keep generic capability routing in VendorData instead of adding provider-specific facade methods.",
+    "Providers must keep optional SDK imports lazy and present missing extras with actionable installation guidance.",
+    "Keep the SecretSync binding facade thin. Do not create a competing sync pipeline in vendor-fabric.",
+    "Agent orchestration, runners, and MCP helpers belong in agentic-fabric, not this package.",
+    "Sourcey Markdown in docs is the authoritative public documentation. Do not reintroduce Sphinx or a parallel documentation site.",
+    "pytest-vendor-fabric is for provider and connector testing. Live vendor E2E tests remain explicitly opt-in with --e2e."
+  ]
+}
