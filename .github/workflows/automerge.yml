@@ -91,4 +91,9 @@ jobs:
         run: |
           set -euo pipefail
           test -n "$GH_TOKEN"
+          # This creates a merge commit when the generated branch is behind
+          # main; it never rebases or rewrites the release-please branch.
+          if [ "$(gh pr view "$PR_URL" --json mergeStateStatus --jq '.mergeStateStatus')" = BEHIND ]; then
+            gh pr update-branch "$PR_URL"
+          fi
           gh pr merge --auto --merge "$PR_URL"
