@@ -25,6 +25,7 @@ jobs:
       update-type: ${{ steps.metadata.outputs['update-type'] }}
     steps:
       - id: metadata
+        # This pinned action is explicitly allowed by the repository selected-actions policy.
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
         with:
           github-token: ${{ github.token }}
