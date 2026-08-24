@@ -43,7 +43,7 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
-      fast-path: ${{ steps.route.outputs.fast-path }}
+      fast-path: ${{ steps.route.outputs['fast-path'] }}
       reason: ${{ steps.route.outputs.reason }}
     steps:
       - id: dependabot
@@ -61,7 +61,7 @@ jobs:
           HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
           BASE_REPOSITORY: ${{ github.repository }}
           AUTHOR: ${{ github.event.pull_request.user.login }}
-          DEPENDABOT_UPDATE_TYPE: ${{ steps.dependabot.outputs.update-type }}
+          DEPENDABOT_UPDATE_TYPE: ${{ steps.dependabot.outputs['update-type'] }}
         run: |
           set -euo pipefail
           if [ "$EVENT_NAME" = pull_request ] && [ "$HEAD_REPOSITORY" = "$BASE_REPOSITORY" ] && [[ "$HEAD_REF" == release-please--* ]]; then
@@ -78,7 +78,7 @@ jobs:
   test:
     name: Python ${{ matrix.python-version }}
     needs: route
-    if: github.event_name != 'pull_request_target' && needs.route.outputs.fast-path != 'true'
+    if: github.event_name != 'pull_request_target' && needs.route.outputs['fast-path'] != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -104,7 +104,7 @@ jobs:
   quality:
     name: Quality
     needs: route
-    if: github.event_name != 'pull_request_target' && needs.route.outputs.fast-path != 'true'
+    if: github.event_name != 'pull_request_target' && needs.route.outputs['fast-path'] != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -132,7 +132,7 @@ jobs:
   dependency-review:
     name: Dependency Review / gate
     needs: route
-    if: github.event_name == 'pull_request' && needs.route.outputs.fast-path != 'true'
+    if: github.event_name == 'pull_request' && needs.route.outputs['fast-path'] != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -146,7 +146,7 @@ jobs:
     needs: route
     if: >
       github.event_name != 'pull_request_target' &&
-      needs.route.outputs.fast-path != 'true' &&
+      needs.route.outputs['fast-path'] != 'true' &&
       (github.event_name != 'pull_request' ||
       (github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.user.login != 'dependabot[bot]'))
@@ -194,7 +194,7 @@ jobs:
       - name: Confirm required validation completed
         run: |
           test "${{ needs.route.result }}" = success
-          if [ "${{ needs.route.outputs.fast-path }}" = true ]; then
+          if [ "${{ needs.route.outputs['fast-path'] }}" = true ]; then
             exit 0
           fi
           test "${{ needs.test.result }}" = success

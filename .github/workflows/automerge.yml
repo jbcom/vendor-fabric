@@ -22,7 +22,7 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
-      update-type: ${{ steps.metadata.outputs.update-type }}
+      update-type: ${{ steps.metadata.outputs['update-type'] }}
     steps:
       - id: metadata
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
@@ -39,8 +39,8 @@ jobs:
         github.event.pull_request.head.repo.full_name == github.repository) ||
         (github.event.pull_request.user.login == 'dependabot[bot]' &&
         github.event.pull_request.head.repo.full_name == github.repository &&
-        (needs.dependabot-metadata.outputs.update-type == 'version-update:semver-minor' ||
-        needs.dependabot-metadata.outputs.update-type == 'version-update:semver-patch'))
+        (needs.dependabot-metadata.outputs['update-type'] == 'version-update:semver-minor' ||
+        needs.dependabot-metadata.outputs['update-type'] == 'version-update:semver-patch'))
       )
     permissions: {}
     steps:
