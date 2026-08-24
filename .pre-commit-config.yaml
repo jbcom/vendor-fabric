@@ -15,6 +15,7 @@ repos:
         # These tests contain intentionally invalid PEM-shaped fixture material.
         exclude: ^packages/vendor-fabric/tests/test_google_(services|workspace|cloud|billing|connector)\.py$
       - id: detect-aws-credentials
+        args: [--allow-missing-credentials]
       - id: end-of-file-fixer
         # py.typed is a packaging marker and is intentionally zero bytes.
         exclude: ^(ASSESSMENT\.md|\.agent-state/directive\.md|packages/pytest-vendor-fabric/src/pytest_vendor_fabric/py\.typed)$
