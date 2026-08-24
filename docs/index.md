@@ -7,17 +7,19 @@ description: Data-native vendor connectors and synchronization capabilities for 
 
 Vendor Fabric is the optional integration layer for the Extended Data stack. It keeps provider SDKs optional, exposes a discoverable connector catalog, and returns `ExtendedData`-shaped results so vendor data composes with the rest of the stack.
 
-::card{title="Install only what you use" icon="package"}
+## Why Vendor Fabric
+
+### Install only what you use
+
 The base package exposes the catalog without installing every vendor SDK. Extras add the providers you select.
-::
 
-::card{title="Route by capability" icon="route"}
+### Route by capability
+
 Providers declare capabilities once; `VendorData` and `ConnectorFabric` discover and dispatch them consistently.
-::
 
-::card{title="Keep sync native" icon="refresh-cw"}
+### Keep sync native
+
 The SecretSync facade shapes Python results and credentials while preserving the canonical SecretSync runtime boundary.
-::
 
 ## What belongs here
 
