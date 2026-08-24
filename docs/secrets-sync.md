@@ -22,4 +22,4 @@ session_result = run_pipeline("pipeline.yaml", SyncOptions(dry_run=True), provid
 
 When provider authentication is available, pass it through `ProviderSession`; do not log or persist raw credential values. The supported contract is the `secrets_sync` module from `secrets-sync-python-binding`.
 
-The `vendor-fabric-secrets-sync` command uses the same facade. Agent runtimes should invoke these provider capabilities through `VendorData` from `agentic-fabric`.
+The `vendor-fabric-secrets-sync` command uses the same facade. Agent runtime orchestration belongs to `agentic-fabric`; use `vendor_fabric.vendor_data.VendorData` as this package's capability facade.

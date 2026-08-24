@@ -116,6 +116,28 @@ def test_connector_extras_exist_in_pyproject() -> None:
         assert extra in extras, f"{name} uses missing extra {extra}"
 
 
+def test_documented_provider_extras_exist_in_pyproject() -> None:
+    """Installation guidance must not advertise removed provider extras."""
+    installation = (REPO_ROOT / "docs/installation.md").read_text(encoding="utf-8")
+    documented = {
+        "aws",
+        "google",
+        "github",
+        "slack",
+        "vault",
+        "anthropic",
+        "meshy",
+        "webhooks",
+        "vector",
+        "secrets-sync",
+    }
+    extras = _pyproject()["project"]["optional-dependencies"]
+
+    for extra in documented:
+        assert f"`{extra}`" in installation
+        assert extra in extras, f"installation documents missing extra {extra}"
+
+
 def test_secretsync_surface_is_first_class_but_not_a_connector() -> None:
     """SecretSync is a vendor-fabric capability, not a connector entry point."""
     pyproject = _pyproject()
