@@ -11,7 +11,7 @@ on:
 permissions: {}
 
 jobs:
-  policy:
+  fork-policy:
     name: Repository Policy / gate
     if: github.event_name == 'pull_request_target'
     runs-on: ubuntu-latest
@@ -35,9 +35,50 @@ jobs:
             exit 1
           fi
 
+  route:
+    name: CI route
+    if: github.event_name != 'pull_request_target'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      fast-path: ${{ steps.route.outputs.fast-path }}
+      reason: ${{ steps.route.outputs.reason }}
+    steps:
+      - id: dependabot
+        if: >-
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.user.login == 'dependabot[bot]' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: ${{ github.token }}
+      - id: route
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPOSITORY: ${{ github.repository }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          DEPENDABOT_UPDATE_TYPE: ${{ steps.dependabot.outputs.update-type }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = pull_request ] && [ "$HEAD_REPOSITORY" = "$BASE_REPOSITORY" ] && [[ "$HEAD_REF" == release-please--* ]]; then
+            echo 'fast-path=true' >> "$GITHUB_OUTPUT"
+            echo 'reason=release-please' >> "$GITHUB_OUTPUT"
+          elif [ "$EVENT_NAME" = pull_request ] && [ "$AUTHOR" = 'dependabot[bot]' ] && [ "$HEAD_REPOSITORY" = "$BASE_REPOSITORY" ] && { [ "$DEPENDABOT_UPDATE_TYPE" = version-update:semver-minor ] || [ "$DEPENDABOT_UPDATE_TYPE" = version-update:semver-patch ]; }; then
+            echo 'fast-path=true' >> "$GITHUB_OUTPUT"
+            echo 'reason=dependabot-non-major' >> "$GITHUB_OUTPUT"
+          else
+            echo 'fast-path=false' >> "$GITHUB_OUTPUT"
+            echo 'reason=full-validation' >> "$GITHUB_OUTPUT"
+          fi
+
   test:
     name: Python ${{ matrix.python-version }}
-    if: github.event_name != 'pull_request_target'
+    needs: route
+    if: github.event_name != 'pull_request_target' && needs.route.outputs.fast-path != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -62,7 +103,8 @@ jobs:
 
   quality:
     name: Quality
-    if: github.event_name != 'pull_request_target'
+    needs: route
+    if: github.event_name != 'pull_request_target' && needs.route.outputs.fast-path != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -89,7 +131,8 @@ jobs:
 
   dependency-review:
     name: Dependency Review / gate
-    if: github.event_name == 'pull_request'
+    needs: route
+    if: github.event_name == 'pull_request' && needs.route.outputs.fast-path != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -100,8 +143,10 @@ jobs:
 
   sonar:
     name: SonarQube Cloud
+    needs: route
     if: >
       github.event_name != 'pull_request_target' &&
+      needs.route.outputs.fast-path != 'true' &&
       (github.event_name != 'pull_request' ||
       (github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.user.login != 'dependabot[bot]'))
@@ -142,12 +187,16 @@ jobs:
   gate:
     name: gate
     if: always() && github.event_name != 'pull_request_target'
-    needs: [test, quality, dependency-review, sonar]
+    needs: [route, test, quality, dependency-review, sonar]
     runs-on: ubuntu-latest
     permissions: {}
     steps:
       - name: Confirm required validation completed
         run: |
+          test "${{ needs.route.result }}" = success
+          if [ "${{ needs.route.outputs.fast-path }}" = true ]; then
+            exit 0
+          fi
           test "${{ needs.test.result }}" = success
           test "${{ needs.quality.result }}" = success
           if [ "${{ github.event_name }}" = pull_request ]; then

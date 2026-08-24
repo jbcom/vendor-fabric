@@ -1,31 +1,54 @@
 name: Automerge
 
-# Enables GitHub native auto-merge on dependabot + release-please PRs.
-# Native auto-merge waits for required checks + any required reviews,
-# then uses a merge commit without further action. This workflow does not check
-# out PR code; pull_request_target is used only to enable auto-merge from
-# the base workflow context.
+# Release-please PRs and non-major Dependabot updates are trusted, encapsulated
+# maintenance changes. CI classifies the same fast paths and reports the required
+# gate as successful without executing PR code. This workflow only enables native
+# merge-commit auto-merge after a metadata-only classification; it never checks
+# out pull request content.
 on:
   pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review]
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 jobs:
+  dependabot-metadata:
+    name: Classify Dependabot update
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      update-type: ${{ steps.metadata.outputs.update-type }}
+    steps:
+      - id: metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: ${{ github.token }}
+
   automerge:
     name: Enable auto-merge
+    needs: dependabot-metadata
     runs-on: ubuntu-latest
-    if: >
-      github.event.pull_request.user.login == 'dependabot[bot]' ||
-      (
-        startsWith(github.event.pull_request.head.ref, 'release-please--') &&
-        github.event.pull_request.head.repo.full_name == github.repository
+    if: >-
+      always() && (
+        (startsWith(github.event.pull_request.head.ref, 'release-please--') &&
+        github.event.pull_request.head.repo.full_name == github.repository) ||
+        (github.event.pull_request.user.login == 'dependabot[bot]' &&
+        github.event.pull_request.head.repo.full_name == github.repository &&
+        (needs.dependabot-metadata.outputs.update-type == 'version-update:semver-minor' ||
+        needs.dependabot-metadata.outputs.update-type == 'version-update:semver-patch'))
       )
+    permissions: {}
     steps:
       - name: Enable auto-merge (merge commit)
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
-        run: gh pr merge --auto --merge "$PR_URL"
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN"
+          gh pr merge --auto --merge "$PR_URL"
