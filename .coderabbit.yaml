@@ -1,0 +1,34 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: en-US
+reviews:
+  profile: assertive
+  request_changes_workflow: true
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: true
+  path_instructions:
+    - path: "packages/**/src/**/*.py"
+      instructions: |
+        Preserve the ExtendedData -> VendorData boundary. Flag credential exposure,
+        unredacted diagnostics, eager optional-SDK imports, public API incompatibility,
+        and capability dispatch that duplicates provider metadata.
+    - path: ".github/**"
+      instructions: |
+        Treat workflow and repository automation changes as security-sensitive. Require
+        least-privilege permissions, immutable action SHAs, no secrets or privileged
+        execution of fork code, and merge-commit-only automation.
+    - path: "docs/**"
+      instructions: |
+        Verify Sourcey configuration, subdirectory-safe links, generated-reference
+        freshness, and that claims match the Python public API.
+    - path: "**/tests/**/*.py"
+      instructions: |
+        Require focused regression coverage and preserve the opt-in boundary for paid
+        live provider tests.
+knowledge_base:
+  code_guidelines:
+    filePatterns:
+      - AGENTS.md
+      - CLAUDE.md
+      - llms.txt

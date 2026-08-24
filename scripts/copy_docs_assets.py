@@ -1,9 +1,9 @@
-#!/usr/bin/env python3
 """Copy authored documentation assets that Sourcey's markdown adapter references."""
 
 from __future__ import annotations
 
 import shutil
+
 from pathlib import Path
 
 

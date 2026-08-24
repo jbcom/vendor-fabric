@@ -1,0 +1,26 @@
+default_language_version:
+  python: python3.13
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-ast
+      - id: check-json
+      - id: check-toml
+      - id: check-yaml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+      - id: detect-private-key
+        # These tests contain intentionally invalid PEM-shaped fixture material.
+        exclude: ^packages/vendor-fabric/tests/test_google_(services|workspace|cloud|billing|connector)\.py$
+      - id: detect-aws-credentials
+      - id: end-of-file-fixer
+        # py.typed is a packaging marker and is intentionally zero bytes.
+        exclude: ^(ASSESSMENT\.md|\.agent-state/directive\.md|packages/pytest-vendor-fabric/src/pytest_vendor_fabric/py\.typed)$
+      - id: trailing-whitespace
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.4
+    hooks:
+      - id: ruff-check
+        args: [--fix, --ignore, INP001]

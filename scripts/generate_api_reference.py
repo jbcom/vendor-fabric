@@ -1,10 +1,10 @@
-#!/usr/bin/env python3
 """Generate the committed Sourcey Python API reference from public source modules."""
 
 from __future__ import annotations
 
 import argparse
 import ast
+
 from pathlib import Path
 
 
@@ -68,6 +68,7 @@ def render() -> str:
 
 
 def main() -> int:
+    """Write the reference or report whether the committed output is current."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true", help="fail if the committed reference is stale")
     args = parser.parse_args()

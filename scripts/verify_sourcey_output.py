@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Validate the committed Sourcey site contract without browser-only assumptions."""
 
 from __future__ import annotations
