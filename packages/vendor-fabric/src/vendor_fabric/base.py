@@ -35,6 +35,7 @@ from abc import ABC
 from collections.abc import Mapping
 from contextlib import suppress
 from typing import TYPE_CHECKING, Any, ClassVar, Self
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -376,6 +377,12 @@ class ConnectorBase(CapabilityProviderMixin, InputProvider, ABC):
             response_metadata.update(metadata)
         return response_metadata
 
+    @staticmethod
+    def _is_web_url(value: str) -> bool:
+        """Return whether a value is an absolute HTTP-family URL."""
+        parsed = urlsplit(value)
+        return parsed.scheme.casefold() in {"http", "https"} and bool(parsed.netloc)
+
     def decode_response_file(
         self,
         response: httpx.Response,
@@ -403,7 +410,7 @@ class ConnectorBase(CapabilityProviderMixin, InputProvider, ABC):
                         "source": artifact_source,
                         "encoding": resolved_suffix or "raw",
                         "path": None,
-                        "is_url": artifact_source.startswith(("http://", "https://")),
+                        "is_url": self._is_web_url(artifact_source),
                         "data_type": "NoneType",
                         **artifact_metadata,
                     }
@@ -420,7 +427,7 @@ class ConnectorBase(CapabilityProviderMixin, InputProvider, ABC):
                         "source": artifact_source,
                         "encoding": "raw",
                         "path": None,
-                        "is_url": artifact_source.startswith(("http://", "https://")),
+                        "is_url": self._is_web_url(artifact_source),
                         "data_type": type(response.content).__name__,
                         **artifact_metadata,
                     }

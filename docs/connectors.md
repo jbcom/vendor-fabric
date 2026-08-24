@@ -43,3 +43,10 @@ result = data.call("get_object", "aws", bucket="my-bucket", key="config.json")
 ```
 
 Do not add a hard-coded facade method when a provider capability and `VendorData.call` express the same contract.
+
+## Webhook safety
+
+The optional Cursor connector accepts webhook callbacks only over HTTPS. Before a
+webhook is used, it rejects loopback, private, link-local, unspecified, and
+cloud-metadata addresses so a caller cannot use the connector to reach an
+internal service.
