@@ -47,12 +47,28 @@ class TestKeyValidation:
         assert is_valid_key(key)
 
     @pytest.mark.parametrize(
+        ("key", "shape"),
+        [
+            ("QQQQQ-WWWWW-EEEEE-RRRRR-TTTTT", "five groups, as Humble bundle keys use"),
+            ("AAAAA-BBBBB-CCCCC-DDDDD", "four groups"),
+            ("QQQQ-WWWW-EEEE-RRRR", "four groups of four, as some titles use"),
+            ("QQQQWWWWEEEERRRR", "undashed, as some publishers issue"),
+        ],
+    )
+    def test_accepts_the_other_shapes_steam_issues(self, key, shape):
+        """Rejecting these discards keys that would have activated.
+
+        Found against a real 1,053-key Humble library: two keys were being
+        skipped permanently because only the three-group form was accepted.
+        """
+        assert is_valid_key(key), shape
+
+    @pytest.mark.parametrize(
         "key",
         [
             "",
             "AAAAA-BBBBB",
-            "AAAAA-BBBBB-CCCCC-DDDDD",
-            "AAAA-BBBBB-CCCCC",
+            "AAA-BBB-CCC",
             "AAAAA_BBBBB_CCCCC",
             "AAAAA-BBBBB-CCCC!",
             None,
@@ -65,6 +81,21 @@ class TestKeyValidation:
 
     def test_tolerates_surrounding_whitespace(self):
         assert is_valid_key("  AAAAA-BBBBB-CCCCC  ")
+
+    @pytest.mark.parametrize(
+        "link",
+        [
+            "https://www.humblebundle.com/gift?key=Fuf4vTFqh7rYyt4b",
+            "https://humblebundle.com/gift",
+        ],
+    )
+    def test_rejects_gift_links(self, link):
+        """Humble stores these in the same field as real keys.
+
+        Sending one to Steam spends one of about ten failed activations an
+        hour, so widening the accepted shapes must not let them through.
+        """
+        assert not is_valid_key(link)
 
 
 class TestRedemptionResult:
@@ -334,9 +365,7 @@ class TestMalformedSteamResponses:
                 200,
                 json={
                     "success": 1,
-                    "purchase_receipt_info": {
-                        "line_items": [{"line_item_description": "Portal 2"}, "junk", {}]
-                    },
+                    "purchase_receipt_info": {"line_items": [{"line_item_description": "Portal 2"}, "junk", {}]},
                 },
             )
 
