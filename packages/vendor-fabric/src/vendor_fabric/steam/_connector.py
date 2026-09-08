@@ -195,7 +195,11 @@ class SteamConnector(ConnectorBase):
 
         apps = applist.get("applist", {}).get("apps", [])
         return self.extend_result(
-            {int(app["appid"]): str(app["name"]) for app in apps if app.get("appid") in owned_ids}
+            {
+                int(app["appid"]): str(app["name"])
+                for app in apps
+                if isinstance(app, dict) and app.get("appid") in owned_ids and app.get("name") is not None
+            }
         )
 
     @capability("owns_app", kind="library")
@@ -256,9 +260,9 @@ class SteamConnector(ConnectorBase):
         if payload.get("success") == RedemptionResult.OK:
             receipt = payload.get("purchase_receipt_info") or {}
             items = [
-                str(line.get("line_item_description", ""))
+                str(line["line_item_description"])
                 for line in receipt.get("line_items", [])
-                if line.get("line_item_description")
+                if isinstance(line, dict) and line.get("line_item_description")
             ]
             return {
                 "success": True,

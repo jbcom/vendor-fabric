@@ -18,17 +18,17 @@ HTTP status or body; see :mod:`vendor_fabric.steam._eresult`.
 from __future__ import annotations
 
 import base64
+import secrets
 import time
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import Any
+from urllib.parse import urlsplit
+
+import httpx
 
 from vendor_fabric._optional import require_extra
 from vendor_fabric.steam._eresult import EResult, parse_eresult
-
-
-if TYPE_CHECKING:
-    import httpx
 
 
 AUTH_BASE = "https://api.steampowered.com/IAuthenticationService"
@@ -64,7 +64,6 @@ class SteamGuardRequiredError(SteamAuthError):
 
 
 # Steam Guard confirmation types returned in ``allowed_confirmations``.
-CONFIRM_NONE = 1
 CONFIRM_EMAIL_CODE = 2
 CONFIRM_DEVICE_CODE = 3
 CONFIRM_DEVICE_CONFIRMATION = 4
@@ -169,7 +168,10 @@ def _finalize(client: httpx.Client, refresh_token: str, steam_id: str) -> dict[s
     Raises:
         SteamAuthError: If Steam declines to issue cookies.
     """
-    session_id = base64.b64encode(f"{steam_id}{time.time()}".encode()).decode("ascii")[:24]
+    # The session id is a CSRF token echoed back on state-changing requests,
+    # so it must be unguessable. Deriving it from the clock would make it
+    # predictable to anyone who knows roughly when the login happened.
+    session_id = secrets.token_hex(12)
 
     response = client.post(
         f"{LOGIN_BASE}/jwt/finalizelogin",
@@ -182,13 +184,22 @@ def _finalize(client: httpx.Client, refresh_token: str, steam_id: str) -> dict[s
 
     cookies: dict[str, dict[str, str]] = {}
     for transfer in body["transfer_info"]:
+        # Steam lists several domains; one failing or malformed entry must not
+        # abandon the whole login, since the remaining domains still work.
         url = transfer.get("url", "")
+        host = urlsplit(url).netloc
+        if not host:
+            continue
+
         params = dict(transfer.get("params", {}))
         params["steamID"] = steam_id
-        transfer_response = client.post(url, data=params, timeout=DEFAULT_TIMEOUT)
+        try:
+            transfer_response = client.post(url, data=params, timeout=DEFAULT_TIMEOUT)
+        except httpx.HTTPError:
+            continue
+
         for cookie_name, cookie_value in transfer_response.cookies.items():
-            domain = url.split("/")[2]
-            cookies.setdefault(domain, {})[cookie_name] = cookie_value
+            cookies.setdefault(host, {})[cookie_name] = cookie_value
 
     for jar in cookies.values():
         jar.setdefault("sessionid", session_id)
@@ -293,8 +304,6 @@ def login(
         )
         if poll.get("refresh_token"):
             break
-        if poll.get("had_remote_interaction") is False and time.monotonic() > deadline:
-            raise SteamAuthError("Timed out waiting for Steam login confirmation", EResult.EXPIRED)
         if time.monotonic() > deadline:
             raise SteamAuthError("Timed out waiting for Steam login confirmation", EResult.EXPIRED)
         time.sleep(interval)

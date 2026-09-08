@@ -244,3 +244,53 @@ class TestSteamSession:
     def test_unknown_domain_returns_none(self):
         session = SteamSession(steam_id="1", access_token="a", refresh_token="r")
         assert session.session_id("store.steampowered.com") is None
+
+
+class TestFinalizeRobustness:
+    """The cookie-exchange step must tolerate hostile or partial responses."""
+
+    @staticmethod
+    def _handler_with(transfers: list[dict]):
+        def handler(request: httpx.Request) -> httpx.Response:
+            path = request.url.path
+            if "GetPasswordRSAPublicKey" in path:
+                return _json({"publickey_mod": _MODULUS, "publickey_exp": _EXPONENT, "timestamp": "1"})
+            if "BeginAuthSessionViaCredentials" in path:
+                return _json({"client_id": "c", "request_id": "r", "steamid": "1", "interval": 0})
+            if "PollAuthSessionStatus" in path:
+                return _json({"refresh_token": "r", "access_token": "a"})
+            if "finalizelogin" in path:
+                return httpx.Response(200, json={"transfer_info": transfers})
+            if "unreachable.invalid" in (request.url.host or ""):
+                raise httpx.ConnectError("refused")
+            return httpx.Response(200, json={}, headers={"set-cookie": "steamLoginSecure=abc; Path=/"})
+
+        return handler
+
+    def test_session_id_is_not_derived_from_the_clock(self):
+        """A predictable session id would be guessable; it is a CSRF token."""
+        handler = self._handler_with([{"url": "https://store.steampowered.com/x", "params": {}}])
+        ids = set()
+        for _ in range(5):
+            with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+                ids.add(login(client, "user", "pw").session_id("store.steampowered.com"))
+        assert len(ids) == 5
+
+    def test_a_failing_transfer_does_not_abandon_the_login(self):
+        handler = self._handler_with(
+            [
+                {"url": "https://unreachable.invalid/x", "params": {}},
+                {"url": "https://store.steampowered.com/x", "params": {}},
+            ]
+        )
+        with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+            session = login(client, "user", "pw")
+        assert session.session_id("store.steampowered.com")
+
+    def test_a_malformed_transfer_url_is_skipped(self):
+        handler = self._handler_with(
+            [{"url": "not-a-url", "params": {}}, {"url": "https://store.steampowered.com/x", "params": {}}]
+        )
+        with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+            session = login(client, "user", "pw")
+        assert "store.steampowered.com" in session.cookies

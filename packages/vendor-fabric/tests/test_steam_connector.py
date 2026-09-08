@@ -303,3 +303,42 @@ class TestAuthenticationState:
         with _connector(handler) as connector:
             assert connector.session is not None
             assert connector.session.steam_id == "76561197960287930"
+
+
+class TestMalformedSteamResponses:
+    """Steam's payloads are not guaranteed to be well-formed."""
+
+    def test_app_list_entries_missing_fields_are_skipped(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            if "dynamicstore" in request.url.path:
+                return httpx.Response(200, json={"rgOwnedApps": [220, 440]})
+            return httpx.Response(
+                200,
+                json={
+                    "applist": {
+                        "apps": [
+                            {"appid": 220, "name": "Half-Life 2"},
+                            {"appid": 440},  # no name
+                            "not-a-dict",
+                        ]
+                    }
+                },
+            )
+
+        with _connector(handler) as connector:
+            assert connector.list_owned_apps() == {220: "Half-Life 2"}
+
+    def test_non_dict_line_items_are_skipped(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(
+                200,
+                json={
+                    "success": 1,
+                    "purchase_receipt_info": {
+                        "line_items": [{"line_item_description": "Portal 2"}, "junk", {}]
+                    },
+                },
+            )
+
+        with _connector(handler) as connector:
+            assert connector.redeem_key(VALID_KEY)["items"] == ["Portal 2"]
