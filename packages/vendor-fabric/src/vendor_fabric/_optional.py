@@ -34,6 +34,7 @@ PACKAGE_TO_EXTRA: dict[str, str] = {
     "python_graphql_client": "github",
     "slack_sdk": "slack",
     "hvac": "vault",
+    "Cryptodome": "steam",
     "anthropic": "anthropic",
     "rich": "meshy",
     "numpy": "meshy",
@@ -162,6 +163,7 @@ CONNECTOR_REQUIREMENTS: dict[str, list[str]] = {
     "github": ["github"],
     "jules": ["googleapiclient"],
     "slack": ["slack_sdk"],
+    "steam": ["Cryptodome"],  # pycryptodomex, for the login RSA step
     "vault": ["hvac"],
 }
 
@@ -174,6 +176,7 @@ CONNECTOR_EXTRAS: dict[str, str] = {
     "jules": "google",
     "meshy": "meshy",
     "slack": "slack",
+    "steam": "steam",
     "vault": "vault",
     "zoom": "zoom",
 }

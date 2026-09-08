@@ -121,6 +121,7 @@ are not installed.
 | `jules` | `JULES_API_KEY` |
 | `meshy` | `MESHY_API_KEY` |
 | `slack` | `SLACK_TOKEN`, `SLACK_BOT_TOKEN` |
+| `steam` | `STEAM_ACCOUNT_NAME`, `STEAM_PASSWORD`; Steam Guard code supplied per call |
 | `vault` | `VAULT_ADDR`; `VAULT_TOKEN` or `VAULT_ROLE_ID` plus `VAULT_SECRET_ID`; optional `VAULT_NAMESPACE` and `VAULT_APPROLE_PATH` |
 | `zoom` | `ZOOM_CLIENT_ID`, `ZOOM_CLIENT_SECRET`, `ZOOM_ACCOUNT_ID` |
 
@@ -141,6 +142,7 @@ Every command below is available through both
 | `jules` | `add_user_response`, `approve_plan`, `create_session`, `get_session`, `list_sessions`, `list_sources`, `resume_session` |
 | `meshy` | `apply_animation`, `image2image_generate`, `image3d_generate`, `multiimage3d_generate`, `remesh_model`, `retexture_model`, `rig_model`, `text2image_generate`, `text3d_generate` |
 | `slack` | `get_bot_channels`, `list_conversations`, `list_usergroups`, `list_users`, `send_message` |
+| `steam` | `list_owned_apps`, `redeem_key`, `redeem_keys` |
 | `vault` | `generate_aws_credentials`, `get_aws_iam_role`, `get_secret`, `list_aws_iam_roles`, `list_secrets`, `read_secret` |
 | `zoom` | `get_meeting`, `get_user`, `list_meetings`, `list_users` |
 

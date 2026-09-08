@@ -50,3 +50,38 @@ The optional Cursor connector accepts webhook callbacks only over HTTPS. Before 
 webhook is used, it rejects loopback, private, link-local, unspecified, and
 cloud-metadata addresses so a caller cannot use the connector to reach an
 internal service.
+
+## Steam sessions and redemption limits
+
+The Steam connector implements Steam's `IAuthenticationService` login flow
+directly over HTTPS, so no third-party Steam SDK is required. Only the RSA step
+needs an extra: `pip install vendor-fabric[steam]`.
+
+```python
+from vendor_fabric import SteamConnector
+
+with SteamConnector(account_name="user", password="...") as steam:
+    steam.authenticate(steam_guard_code="ABCDE")
+    owned = steam.list_owned_apps()
+    outcome = steam.redeem_key("AAAAA-BBBBB-CCCCC")
+```
+
+Two behaviours are easy to get wrong and are handled explicitly:
+
+- **Session ids are per-domain.** Steam issues a different `sessionid` cookie
+  for `store.`, `help.`, and `steamcommunity.com`. Flattening the jar yields a
+  token the store rejects, so `SteamSession.session_id(domain)` always takes the
+  domain being posted to.
+- **Failures are scarcer than successes.** Steam permits roughly 50 activations
+  per hour but only 10 *failed* ones, and duplicates count as failures. Check
+  ownership with `list_owned_apps()` before redeeming. `redeem_keys()` stops as
+  soon as Steam reports `RedemptionResult.RATE_LIMITED`, because further
+  attempts during a cooldown only extend it.
+
+A missing `purchase_result_details` is reported as `RedemptionResult.UNKNOWN`
+rather than being assumed to be a rate limit, so an unexpected failure surfaces
+instead of turning into an unbounded retry.
+
+Errors arrive in the `x-eresult` response header rather than the HTTP status or
+body — a rejected password is an `HTTP 200` with an empty JSON body — so
+responses are validated against that header.
