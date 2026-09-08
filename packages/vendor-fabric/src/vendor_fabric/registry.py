@@ -198,6 +198,13 @@ BUILTIN_CONNECTORS: dict[str, BuiltinConnectorSpec] = {
         category="communications",
         capabilities=("users", "meetings"),
     ),
+    "steam": BuiltinConnectorSpec(
+        "vendor_fabric.steam",
+        "SteamConnector",
+        "steam",
+        category="gaming",
+        capabilities=("library", "redemption"),
+    ),
     "vault": BuiltinConnectorSpec(
         "vendor_fabric.vault",
         "VaultConnector",

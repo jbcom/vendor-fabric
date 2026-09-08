@@ -51,6 +51,7 @@ github = [
     "python-graphql-client>=0.4.3",
 ]
 slack = ["slack-sdk>=3.41.0"]
+steam = ["pycryptodomex>=3.20.0"]
 vault = ["hvac>=2.4.0"]
 zoom = []
 anthropic = ["anthropic>=0.96.0"]
@@ -103,6 +104,7 @@ all = [
     "hvac>=2.4.0",
     "numpy>=2.2.6",
     "PyGithub>=2.9.1",
+    "pycryptodomex>=3.20.0",
     "pyngrok>=8.0.0",
     "python-graphql-client>=0.4.3",
     "rich>=13.7.0,<16.0.0",
@@ -127,6 +129,7 @@ anthropic = "vendor_fabric.anthropic:AnthropicConnector"
 aws = "vendor_fabric.aws:AWSConnector"
 slack = "vendor_fabric.slack:SlackConnector"
 zoom = "vendor_fabric.zoom:ZoomConnector"
+steam = "vendor_fabric.steam:SteamConnector"
 vault = "vendor_fabric.vault:VaultConnector"
 
 [tool.hatch.build.targets.wheel]

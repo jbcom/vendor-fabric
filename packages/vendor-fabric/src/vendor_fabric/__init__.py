@@ -52,6 +52,7 @@ if TYPE_CHECKING:
         list_connectors_by_category,
     )
     from vendor_fabric.slack import SlackConnector
+    from vendor_fabric.steam import SteamConnector
     from vendor_fabric.vault import VaultConnector
     from vendor_fabric.zoom import ZoomConnector
 
@@ -77,6 +78,7 @@ _LAZY_EXPORTS = {
     "JulesConnector": ("vendor_fabric.google", "JulesConnector"),
     "MeshyConnector": ("vendor_fabric.meshy", "MeshyConnector"),
     "SlackConnector": ("vendor_fabric.slack", "SlackConnector"),
+    "SteamConnector": ("vendor_fabric.steam", "SteamConnector"),
     "VaultConnector": ("vendor_fabric.vault", "VaultConnector"),
     "ZoomConnector": ("vendor_fabric.zoom", "ZoomConnector"),
     "get_connector": ("vendor_fabric.registry", "get_connector"),
@@ -129,6 +131,7 @@ __all__ = [
     "JulesConnector",
     "MeshyConnector",
     "SlackConnector",
+    "SteamConnector",
     "VaultConnector",
     "ZoomConnector",
     "__version__",
