@@ -32,18 +32,25 @@ STEAM_REDEEM_API = f"{STORE_BASE}/account/ajaxregisterkey/"
 STEAM_KEYS_PAGE = f"{STORE_BASE}/account/registerkey"
 STEAM_APP_LIST_API = "https://api.steampowered.com/ISteamApps/GetAppList/v2/"
 
-# Steam product keys are three dash-separated groups of five characters.
-_KEY_PATTERN = re.compile(r"^[A-Za-z0-9]{5}(-[A-Za-z0-9]{5}){2}$")
+# Steam issues product keys in several shapes, and rejecting one discards keys
+# that would have activated. Seen in real libraries: the common three groups of
+# five, five-group keys on Humble bundle entries, four groups of four, and
+# undashed runs. What has to hold is that a gift link never passes, so this is
+# strict about the alphabet and the length rather than about one layout.
+_KEY_PATTERN = re.compile(r"^(?:[A-Za-z0-9]{4,5}(?:-[A-Za-z0-9]{4,5}){2,4}|[A-Za-z0-9]{15,30})$")
 
 
 def is_valid_key(key: object) -> bool:
     """Report whether ``key`` looks like a Steam product key.
 
+    Rejects the gift links Humble stores in the same field as real keys.
+    Sending one to Steam spends one of about ten failed activations an hour.
+
     Args:
         key: Candidate value of any type.
 
     Returns:
-        ``True`` when the value matches ``AAAAA-BBBBB-CCCCC``.
+        ``True`` when the value looks like a Steam product key.
     """
     return isinstance(key, str) and bool(_KEY_PATTERN.match(key.strip()))
 
@@ -223,7 +230,11 @@ class SteamConnector(ConnectorBase):
         """Redeem a Steam product key on the signed-in account.
 
         Args:
-            key: Product key in ``AAAAA-BBBBB-CCCCC`` form.
+            key: A Steam product key. Steam issues several shapes — three to
+                five dash-separated groups of four or five characters, and
+                undashed runs — so callers should pass the key as Humble or
+                the publisher gave it rather than pre-filtering on one layout.
+                Use :func:`is_valid_key` to check a value first.
 
         Returns:
             Mapping with ``success``, ``result`` (a
