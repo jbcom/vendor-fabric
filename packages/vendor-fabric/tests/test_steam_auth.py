@@ -261,7 +261,7 @@ class TestFinalizeRobustness:
                 return _json({"refresh_token": "r", "access_token": "a"})
             if "finalizelogin" in path:
                 return httpx.Response(200, json={"transfer_info": transfers})
-            if "unreachable.invalid" in (request.url.host or ""):
+            if request.url.host == "unreachable.invalid":
                 raise httpx.ConnectError("refused")
             return httpx.Response(200, json={}, headers={"set-cookie": "steamLoginSecure=abc; Path=/"})
 
@@ -293,4 +293,4 @@ class TestFinalizeRobustness:
         )
         with httpx.Client(transport=httpx.MockTransport(handler)) as client:
             session = login(client, "user", "pw")
-        assert "store.steampowered.com" in session.cookies
+        assert session.cookies.get("store.steampowered.com") is not None
