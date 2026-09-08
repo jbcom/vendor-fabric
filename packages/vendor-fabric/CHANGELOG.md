@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.5.0](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.4.1...vendor-fabric-v2.5.0) (2026-09-08)
+
+
+### Features
+
+* add Steam connector for library ownership and key redemption ([4dec9c0](https://github.com/jbcom/vendor-fabric/commit/4dec9c05fc881fdac12654ccbca0f6e3476c518f))
+* add Steam connector for library ownership and key redemption ([b53b4d9](https://github.com/jbcom/vendor-fabric/commit/b53b4d98e3e6eaba3431d50eb36e7f792b3c1c4a))
+
+
+### Bug Fixes
+
+* harden Steam auth against predictable ids and malformed responses ([cc1e347](https://github.com/jbcom/vendor-fabric/commit/cc1e347eb161654a531831284baf849445db4e15))
+* untrack agent session cache and use exact host matching in tests ([11c1e90](https://github.com/jbcom/vendor-fabric/commit/11c1e90790182d7b210ddd3263b2065bfae089ae))
+
 ## [2.4.1](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.4.0...vendor-fabric-v2.4.1) (2026-08-24)
 
 
