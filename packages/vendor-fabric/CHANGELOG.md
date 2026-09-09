@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.5.1](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.5.0...vendor-fabric-v2.5.1) (2026-09-09)
+
+
+### Bug Fixes
+
+* accept every product-key shape Steam issues ([c0d0ca2](https://github.com/jbcom/vendor-fabric/commit/c0d0ca2a70bb5f4cf0257f910ef4f4c324795622))
+* accept every product-key shape Steam issues ([7e4d50f](https://github.com/jbcom/vendor-fabric/commit/7e4d50ff1eaf5a9922518d632c103e8fa0fe33fe))
+
 ## [2.5.0](https://github.com/jbcom/vendor-fabric/compare/vendor-fabric-v2.4.1...vendor-fabric-v2.5.0) (2026-09-08)
 
 
