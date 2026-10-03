@@ -1,4 +1,4 @@
 {
-  "packages/vendor-fabric": "2.5.0",
+  "packages/vendor-fabric": "2.5.1",
   "packages/pytest-vendor-fabric": "0.1.1"
 }
