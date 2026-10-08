@@ -177,7 +177,6 @@ only version-shaping input.
 | `tox.ini` | All test/lint/build/docs environments |
 | `pyproject.toml` | Workspace config, ruff/mypy/coverage settings |
 | `packages/vendor-fabric/pyproject.toml` | Extras, entry-points, package metadata |
-| `.agent-state/directive.md` | The active work queue (this file drives continuous work) |
 | `.github/workflows/ci.yml` | Untrusted validation, including Sourcey verification |
 | `.github/workflows/release.yml` | release-please coordination only |
 | `.github/workflows/cd.yml` | Trusted publication and Sourcey Pages deployment |

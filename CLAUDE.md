@@ -1,13 +1,13 @@
-<!-- profile: python-lib agent-state standard-repo v1 -->
 # vendor-fabric
 
 `uv` workspace for the Vendor Fabric Python stack — data-native vendor connectors and sync capabilities for the Extended Data stack, plus `pytest-vendor-fabric` fixtures.
 
-## Profiles loaded
+## Contributor guidance
 
-@/Users/jbogaty/.claude/profiles/python-lib.md
-@/Users/jbogaty/.claude/profiles/agent-state.md
-@/Users/jbogaty/.claude/profiles/standard-repo.md
+Read `README.md` and `CONTRIBUTING.md` for setup and contribution conventions,
+and `AGENTS.md` for architecture and provider contracts. Install the workspace
+with `uv sync --all-packages`. Document behavior, write tests, then implement;
+use Conventional Commits and keep optional SDK imports discoverable.
 
 ## Repo-specific
 
