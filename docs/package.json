@@ -9,6 +9,6 @@
     "validate": "npm run build"
   },
   "devDependencies": {
-    "sourcey": "3.6.5"
+    "sourcey": "3.9.5"
   }
 }
